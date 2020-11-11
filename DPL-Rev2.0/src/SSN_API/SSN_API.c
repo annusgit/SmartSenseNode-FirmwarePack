@@ -6,14 +6,14 @@
 /** Our SSN UDP communication socket */
 SOCKET SSN_UDP_SOCKET;
 /** SSN Server Address */
-uint8_t SSN_SERVER_IP[] = {192, 168, 10, 7};
+uint8_t SSN_SERVER_IP[] = {192, 168, 0, 130};
 /** SSN Server PORT */
 uint16_t SSN_SERVER_PORT = 9999;
 
 /** Static IP Assignment */
-uint8_t SSN_STATIC_IP[4] = {192, 168, 10, 130};
+uint8_t SSN_STATIC_IP[4] = {192, 168, 0, 164};
 uint8_t SSN_SUBNET_MASK[4]      = {255, 255, 255, 0};
-uint8_t SSN_GATWAY_ADDRESS[4]   = {192, 168, 10, 1};
+uint8_t SSN_GATWAY_ADDRESS[4]   = {192, 168, 0, 1};
 
 /** A counter to maintain how many messages have been sent from SSN to Server since wakeup */
 uint32_t SSN_SENT_MESSAGES_COUNTER = 0;
@@ -104,7 +104,7 @@ void SSN_GET_MAC() {
         }
         // request a MAC address after every 5 seconds
         if (SendAfter % 50 == 0) {
-            Send_GETMAC_Message(&SSN_MAC_ADDRESS[4], SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+            Send_GETMAC_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
         }
         // Try to receive a message every 100 milliseconds
         Receive_MAC(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
@@ -134,7 +134,7 @@ void SSN_GET_CONFIG() {
         }
         // request a Configuration after every 5 seconds
         if (SendAfter % 50 == 0) {
-            Send_GETCONFIG_Message(&SSN_MAC_ADDRESS[4], SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+            Send_GETCONFIG_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
         }
         // Try to receive a message every 100 milliseconds
         if (Receive_CONFIG(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, SSN_CONFIG, &SSN_REPORT_INTERVAL, SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_THRESHOLDS, 
@@ -157,7 +157,7 @@ void SSN_GET_CONFIG_WITH_5_SECONDS_HALT() {
     // Wait for new configurations for five seconds
     printf("LOG: Waiting for updated configurations from Server...\n");
     // Notify the server you are waiting for configurations
-    Send_GETCONFIG_Message(&SSN_MAC_ADDRESS[4], SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+    Send_GETCONFIG_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
     uint16_t SendAfter = 0; 
     bool NewConfigsReceived = false;        
     while (SendAfter < 50) {
@@ -196,7 +196,7 @@ void SSN_GET_CONFIG_WITH_5_SECONDS_HALT() {
             }
             // request a MAC address after every 5 seconds
             if (SendAfter % 50 == 0) {
-                Send_GETCONFIG_Message(&SSN_MAC_ADDRESS[4], SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+                Send_GETCONFIG_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
             }
             // Try to receive a message every 100 milliseconds
             if (Receive_CONFIG(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, SSN_CONFIG, &SSN_REPORT_INTERVAL, SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_THRESHOLDS, 
@@ -227,7 +227,7 @@ void SSN_GET_TIMEOFDAY() {
         }
         // request a MAC address after every 5 seconds
         if (SendAfter % 50 == 0) {
-            Send_GETTimeOfDay_Message(&SSN_MAC_ADDRESS[4], SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+            Send_GETTimeOfDay_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
         }
         // Try to receive a message every 100 milliseconds
         if (Receive_TimeOfDay(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT)) {
@@ -375,6 +375,18 @@ void current_test() {
     }
     // we should never get to this point
     return;
+}
+
+int AM2320_test() {
+        SSN_Setup();
+        printf("Start\n");
+        while (1) {
+                printf("Working\n");
+                // Read temperature and humidity sensor
+                SSN_GET_AMBIENT_CONDITION();
+                sleep_for_microseconds(2000000);
+        }
+        return 0;
 }
 
 void network_test() {

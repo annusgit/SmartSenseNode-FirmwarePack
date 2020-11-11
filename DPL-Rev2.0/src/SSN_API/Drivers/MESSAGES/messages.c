@@ -30,8 +30,12 @@ uint8_t construct_get_mac_message(uint8_t* message_array, uint8_t* node_id) {
         uint8_t count = 0;
 
         /* Send the NODE ID */
-        message_array[count++] = node_id[0];
-        message_array[count++] = node_id[1];
+//        message_array[count++] = node_id[0];
+//        message_array[count++] = node_id[1];
+//        message_array[count++] = node_id[2];
+//        message_array[count++] = node_id[3];
+        message_array[count++] = node_id[4];
+        message_array[count++] = node_id[5];
 
         /* Send the MESSAGE ID */
         message_array[count++] = GET_MAC_MESSAGE_ID;
@@ -44,8 +48,12 @@ uint8_t construct_get_configuration_message(uint8_t* message_array, uint8_t* nod
         uint8_t count = 0;
 
         /* Send the NODE ID */
-        message_array[count++] = node_id[0];
-        message_array[count++] = node_id[1];
+//        message_array[count++] = node_id[0];
+//        message_array[count++] = node_id[1];
+//        message_array[count++] = node_id[2];
+//        message_array[count++] = node_id[3];
+        message_array[count++] = node_id[4];
+        message_array[count++] = node_id[5];
 
         /* Send the MESSAGE ID */
         message_array[count++] = GET_CONFIG_MESSAGE_ID;
@@ -58,8 +66,12 @@ uint8_t construct_ack_configuration_message(uint8_t* message_array, uint8_t* nod
         uint8_t count = 0;
 
         /* Send the NODE ID */
-        message_array[count++] = node_id[0];
-        message_array[count++] = node_id[1];
+//        message_array[count++] = node_id[0];
+//        message_array[count++] = node_id[1];
+//        message_array[count++] = node_id[2];
+//        message_array[count++] = node_id[3];
+        message_array[count++] = node_id[4];
+        message_array[count++] = node_id[5];
 
         /* Send the MESSAGE ID */
         message_array[count++] = ACK_CONFIG_MESSAGE_ID;
@@ -77,8 +89,12 @@ uint8_t construct_get_timeofday_message(uint8_t* message_array, uint8_t* node_id
         uint8_t count = 0;
 
         /* Send the NODE ID */
-        message_array[count++] = node_id[0];
-        message_array[count++] = node_id[1];
+//        message_array[count++] = node_id[0];
+//        message_array[count++] = node_id[1];
+//        message_array[count++] = node_id[2];
+//        message_array[count++] = node_id[3];
+        message_array[count++] = node_id[4];
+        message_array[count++] = node_id[5];
 
         /* Send the MESSAGE ID */
         message_array[count++] = GET_TIMEOFDAY_MESSAGE_ID;
@@ -95,10 +111,10 @@ uint8_t construct_status_update_message(uint8_t* message_array, uint8_t* node_id
         uint8_t temp_array[4];
 
         /* Send the NODE ID */
-        message_array[count++] = node_id[0];
-        message_array[count++] = node_id[1];
-        message_array[count++] = node_id[2];
-        message_array[count++] = node_id[3];
+//        message_array[count++] = node_id[0];
+//        message_array[count++] = node_id[1];
+//        message_array[count++] = node_id[2];
+//        message_array[count++] = node_id[3];
         message_array[count++] = node_id[4];
         message_array[count++] = node_id[5];
 

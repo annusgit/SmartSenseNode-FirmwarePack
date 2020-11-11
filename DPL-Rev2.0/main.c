@@ -93,7 +93,7 @@ int main() {
     //InterruptEnabled = true;
     while(SSN_IS_ALIVE) {
         // Read temperature and humidity sensor
-        //SSN_GET_AMBIENT_CONDITION();
+        SSN_GET_AMBIENT_CONDITION();
         // Network critical section begins here. Disable all interrupts
         DisableGlobalInterrupt();
         // Receive time of day or new configurations if they are sent from the server
@@ -124,5 +124,17 @@ int main() {
     return 1;
 }
 
+//int main() {
+//        SSN_Setup();
+//        printf("Start\n");
+//        while (1) {
+//                printf("Working\n");
+//                // Read temperature and humidity sensor
+//                SSN_GET_AMBIENT_CONDITION();
+//                printf("Abnormal Activity: %d\n", abnormal_activity);
+//                sleep_for_microseconds(2000000);
+//        }
+//        return 0;
+//}
 
 

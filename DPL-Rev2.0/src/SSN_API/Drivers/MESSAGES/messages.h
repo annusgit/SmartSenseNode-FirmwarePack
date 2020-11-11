@@ -49,7 +49,7 @@
 #define GET_CONFIG_MESSAGE_Size         3
 #define SET_CONFIG_MESSAGE_Size         14
 #define ACK_CONFIG_MESSAGE_Size         16
-#define STATUS_UPDATE_MESSAGE_Size      65
+#define STATUS_UPDATE_MESSAGE_Size      61
 #define RESET_MACHINE_TIME_MESSAGE_Size 4
 
 
