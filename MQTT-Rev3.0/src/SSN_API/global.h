@@ -58,6 +58,10 @@
 //#define __UDP_COMMUNICATION
 #define __MQTT_COMMUNICATION
 
+/** SSN Fault Count Variable */
+uint32_t fault_count;
+
+
 // Debugging macros for each module. Enable them for printing status
 //#define _SMARTSENSE_DEBUG_
 //#define _UART_DEBUG_
@@ -66,15 +70,15 @@
 //#define _TEMPSENSOR_DEBUG_
 //#define _NETWORK_DEBUG_
 
-//#define TH_AM2320
-#define TH_DHT22
+#define TH_AM2320
+//#define TH_DHT22
 
 /** 
  * A simple loop count based delay 
  * @param counter The number of empty loop iterations to wait for
- */ 
+ */
 static inline void delay(uint32_t counter) {
-    while(counter--);
+    while (counter--);
 }
 
 /**
@@ -113,15 +117,15 @@ static inline uint32_t get_uint32_from_bytes(uint8_t* bytes) {
  * @param float_val
  * @return 2-decimal place rounded-off floating point number
  */
-static inline float round_float_to_2_decimal_place(float float_val) { 
+static inline float round_float_to_2_decimal_place(float float_val) {
     // https://www.geeksforgeeks.org/rounding-floating-point-number-two-decimal-places-c-c/
     // 37.66666 * 100 =3766.66 
     // 3766.66 + .5 =3767.16    for rounding off value 
     // then type cast to int so value is 3767 
     // then divided by 100 so the value converted into 37.67 
-    int rounded_float = (int)(float_val*100.0+0.5); 
-    return (float)rounded_float/100.0f; 
-} 
+    int rounded_float = (int) (float_val * 100.0 + 0.5);
+    return (float) rounded_float / 100.0f;
+}
 
 /** 
  * Sleep for microseconds 
@@ -130,34 +134,34 @@ static inline float round_float_to_2_decimal_place(float float_val) {
 static inline void sleep_for_microseconds(unsigned int us) {
     T5CON = 0x8000; // enable Timer5, source PBCLK, 1:1 prescaler
     // delay 100us per loop until less than 100us remain
-    while( us >= 100) {
-        us-=100;
+    while (us >= 100) {
+        us -= 100;
         TMR5 = 0;
-        while( TMR5 < PERIPH_CLK/10000);
+        while (TMR5 < PERIPH_CLK / 10000);
     }
     // delay 10us per loop until less than 10us remain
-    while( us >= 10) {
-        us-=10;
+    while (us >= 10) {
+        us -= 10;
         TMR5 = 0;
-        while( TMR5 < PERIPH_CLK/100000);
+        while (TMR5 < PERIPH_CLK / 100000);
     }
     // delay 1us per loop until finished
-    while( us > 0) {
+    while (us > 0) {
         us--;
         TMR5 = 0;
-        while( TMR5 < PERIPH_CLK/1000000);
+        while (TMR5 < PERIPH_CLK / 1000000);
     }
     // turn off Timer5 so function is self-contained
     T5CONCLR = 0x8000;
 }
 
 static inline void EnableWatchdog() {
-    WDTCONbits.WDTCLR = 1;    
-    WDTCONbits.ON = 1;    
+    WDTCONbits.WDTCLR = 1;
+    WDTCONbits.ON = 1;
 }
 
 static inline void ServiceWatchdog() {
-    WDTCONbits.WDTCLR = 1;    
+    WDTCONbits.WDTCLR = 1;
 }
 
 /** 
@@ -246,49 +250,49 @@ static inline void Abnormal_Activity_LED_INDICATE() {
 static inline void SSN_LED_INDICATE(uint8_t this_state) {
     /* This one function will determine the state of SSN and give the proper LED heartbeat indication */
 
-    switch(this_state) {
-        
-        /* No mac address? */
+    switch (this_state) {
+
+            /* No mac address? */
         case NO_MAC_STATE:
             Node_Up_Not_Configured_LED_INDICATE();
             break;
 
-        /* No configuration? */
+            /* No configuration? */
         case NO_CONFIG_STATE:
             Node_Up_Not_Configured_LED_INDICATE();
             break;
 
-        /* No time of day? */
+            /* No time of day? */
         case NO_TIMEOFDAY_STATE:
             Node_Up_Not_Configured_LED_INDICATE();
             break;
 
-        /* CONFIG received so ack config? */
+            /* CONFIG received so ack config? */
         case ACK_CONFIG_STATE:
             Node_Up_Not_Configured_LED_INDICATE();
             break;
-            
-        /* there is no ethernet ? */
+
+            /* there is no ethernet ? */
         case NO_ETHERNET_STATE:
             No_Ethernet_LED_INDICATE();
             break;
-            
-        /* self tests have failed, so... */
+
+            /* self tests have failed, so... */
         case SELF_TEST_FAILED_STATE:
             Self_Test_Failed_LED_INDICATE();
             break;
-            
-        /* there is no ethernet ? */
+
+            /* there is no ethernet ? */
         case NO_CURRENT_SENSOR_STATE:
             Current_Sensors_Disconnected_LED_INDICATE();
             break;
-            
-        /* self tests have failed, so... */
+
+            /* self tests have failed, so... */
         case ABNORMAL_ACTIVITY_STATE:
             Abnormal_Activity_LED_INDICATE();
             break;
 
-        /* status update message? */               
+            /* status update message? */
         case NORMAL_ACTIVITY_STATE:
             Normal_Operation_LED_INDICATE();
             break;

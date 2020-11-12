@@ -6,14 +6,14 @@
 /** Our SSN UDP communication socket */
 SOCKET SSN_UDP_SOCKET;
 /** SSN Server Address */
-uint8_t SSN_SERVER_IP[] = {192, 168, 0, 120};
+uint8_t SSN_SERVER_IP[] = {172, 16, 0, 41};
 /** SSN Server PORT */
 uint16_t SSN_SERVER_PORT = 9999;
 
 /** Static IP Assignment */
-uint8_t SSN_STATIC_IP[4] = {192, 168, 0, 20};
-uint8_t SSN_SUBNET_MASK[4] = {255, 255, 255, 0};
-uint8_t SSN_GATWAY_ADDRESS[4] = {192, 168, 0, 1};
+uint8_t SSN_STATIC_IP[4] = {172, 16, 0, 58};
+uint8_t SSN_SUBNET_MASK[4] = {255, 255, 255, 192};
+uint8_t SSN_GATWAY_ADDRESS[4] = {172, 16, 0, 1};
 
 /** A counter to maintain how many messages have been sent from SSN to Server since wakeup */
 uint32_t SSN_SENT_MESSAGES_COUNTER = 0;
@@ -76,416 +76,454 @@ bool socket_ok = true;
 uint8_t i;
 
 void SSN_Setup() {
-        // Setup calls for all our peripherals/devices
-        setup_printf(19200);
-        setup_EEPROM();
-        setup_Ethernet(5000000);
-        setup_Current_Sensors();
-        setup_Temperature_Humidity_Sensor();
-        setup_LED_Indicator();
-        setup_Interrupts();
+	// Setup calls for all our peripherals/devices
+	setup_printf(19200);
+	setup_EEPROM();
+	setup_Ethernet(5000000);
+	setup_Current_Sensors();
+	setup_Temperature_Humidity_Sensor();
+	setup_LED_Indicator();
+	setup_Interrupts();
+	fault_count = 0;
 }
 
 void SSN_COPY_MAC_FROM_MEMORY() {
-        SSN_PREV_STATE = SSN_CURRENT_STATE;
-        SSN_CURRENT_STATE = FindMACInFlashMemory(SSN_MAC_ADDRESS, SSN_DEFAULT_MAC);
-        if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
-                Clear_LED_INDICATOR();
-        }
+	SSN_PREV_STATE = SSN_CURRENT_STATE;
+	SSN_CURRENT_STATE = FindMACInFlashMemory(SSN_MAC_ADDRESS, SSN_DEFAULT_MAC);
+	if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
+		Clear_LED_INDICATOR();
+	}
 }
 
 void SSN_GET_MAC() {
-        uint16_t SendAfter = 0;
-        // When we will receive a MAC address (if we didn't have it), we will reset the controller
-        while (SSN_CURRENT_STATE == NO_MAC_STATE) {
-                SSN_CHECK_ETHERNET_CONNECTION();
-                SSN_PREV_STATE = SSN_CURRENT_STATE;
-                SSN_CURRENT_STATE = NO_MAC_STATE;
-                if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
-                        Clear_LED_INDICATOR();
-                }
-                // request a MAC address after every 5 seconds
-                if (SendAfter % 50 == 0) {
-                        Send_GETMAC_Message(&SSN_MAC_ADDRESS[4], SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
-                }
-                // Try to receive a message every 100 milliseconds
-                //Receive_MAC(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
-                // Give LED indication every second
-                if (SendAfter % 10 == 0) {
-                        SSN_LED_INDICATE(SSN_CURRENT_STATE);
-                }
-                SendAfter++;
-                ServiceWatchdog();
-                // 100 milliseconds
-                sleep_for_microseconds(100000);
-        }
-        return;
+	uint16_t SendAfter = 0;
+	// When we will receive a MAC address (if we didn't have it), we will reset the controller
+	while (SSN_CURRENT_STATE == NO_MAC_STATE) {
+		SSN_CHECK_ETHERNET_CONNECTION();
+		SSN_PREV_STATE = SSN_CURRENT_STATE;
+		SSN_CURRENT_STATE = NO_MAC_STATE;
+		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
+			Clear_LED_INDICATOR();
+		}
+		// request a MAC address after every 5 seconds
+		if (SendAfter % 50 == 0) {
+			Send_GETMAC_Message(&SSN_MAC_ADDRESS[4], SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+		}
+		// Try to receive a message every 100 milliseconds
+		//Receive_MAC(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+		// Give LED indication every second
+		if (SendAfter % 10 == 0) {
+			SSN_LED_INDICATE(SSN_CURRENT_STATE);
+		}
+		SendAfter++;
+		ServiceWatchdog();
+		// 100 milliseconds
+		sleep_for_microseconds(100000);
+	}
+	return;
 }
 
 void SSN_GET_CONFIG() {
-        // Find configurations in EEPROM
-        SSN_PREV_STATE = SSN_CURRENT_STATE;
-        SSN_CURRENT_STATE = FindSensorConfigurationsInFlashMemory(SSN_CONFIG, &SSN_REPORT_INTERVAL, SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_THRESHOLDS, SSN_CURRENT_SENSOR_MAXLOADS);
-        uint16_t SendAfter = 0;
-        while (SSN_CURRENT_STATE == NO_CONFIG_STATE) {
-                SSN_CHECK_ETHERNET_CONNECTION();
-                SSN_PREV_STATE = SSN_CURRENT_STATE;
-                SSN_CURRENT_STATE = NO_CONFIG_STATE;
-                if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
-                        Clear_LED_INDICATOR();
-                }
-                // request a Configuration after every 5 seconds
-                if (SendAfter % 50 == 0) {
-                        Send_GETCONFIG_Message(&SSN_MAC_ADDRESS[4], SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
-                }
-                if (CONFIG_received) {
-                        break;
-                }
-                // Try to receive a message every 100 milliseconds
-                //                    if (Receive_CONFIG(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, SSN_CONFIG, &SSN_REPORT_INTERVAL, SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_THRESHOLDS,
-                //                            SSN_CURRENT_SENSOR_MAXLOADS, Machine_status)) {
-                //                              break;
-                //                    }
-                // Give LED indication every second
-                if (SendAfter % 10 == 0) {
-                        SSN_LED_INDICATE(SSN_CURRENT_STATE);
-                }
-                SendAfter++;
-                ServiceWatchdog();
-                // 100 milliseconds
-                sleep_for_microseconds(100000);
-        }
-        return;
+	// Find configurations in EEPROM
+	SSN_PREV_STATE = SSN_CURRENT_STATE;
+	SSN_CURRENT_STATE = FindSensorConfigurationsInFlashMemory(SSN_CONFIG, &SSN_REPORT_INTERVAL, SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_THRESHOLDS, SSN_CURRENT_SENSOR_MAXLOADS);
+	uint16_t SendAfter = 0;
+	while (SSN_CURRENT_STATE == NO_CONFIG_STATE) {
+		SSN_CHECK_ETHERNET_CONNECTION();
+		SSN_PREV_STATE = SSN_CURRENT_STATE;
+		SSN_CURRENT_STATE = NO_CONFIG_STATE;
+		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
+			Clear_LED_INDICATOR();
+		}
+		// request a Configuration after every 5 seconds
+		if (SendAfter % 50 == 0) {
+			Send_GETCONFIG_Message(&SSN_MAC_ADDRESS[4], SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+		}
+		if (CONFIG_received) {
+			break;
+		}
+		// Try to receive a message every 100 milliseconds
+		//                    if (Receive_CONFIG(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, SSN_CONFIG, &SSN_REPORT_INTERVAL, SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_THRESHOLDS,
+		//                            SSN_CURRENT_SENSOR_MAXLOADS, Machine_status)) {
+		//                              break;
+		//                    }
+		// Give LED indication every second
+		if (SendAfter % 10 == 0) {
+			SSN_LED_INDICATE(SSN_CURRENT_STATE);
+		}
+		SendAfter++;
+		ServiceWatchdog();
+		// 100 milliseconds
+		sleep_for_microseconds(100000);
+	}
+	return;
 }
 
 void SSN_GET_TIMEOFDAY() {
-        uint16_t SendAfter = 0;
-        while (1) {
-                SSN_CHECK_ETHERNET_CONNECTION();
-                SSN_PREV_STATE = SSN_CURRENT_STATE;
-                SSN_CURRENT_STATE = NO_CONFIG_STATE;
-                if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
-                        Clear_LED_INDICATOR();
-                }
-                // request a MAC address after every 5 seconds
-                if (SendAfter % 50 == 0) {
-                        Send_GETTimeOfDay_Message(&SSN_MAC_ADDRESS[4], SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
-                }
-                if (TimeOfDay_received) {
-                        break;
-                }
-                // Try to receive a message every 100 milliseconds
-                //                    if (Receive_TimeOfDay(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT)) {
-                //                              // initialize SSN's uptime
-                //                              ssn_uptime_in_seconds = 0;
-                //                              SSN_PREV_STATE = SSN_CURRENT_STATE;
-                //                              SSN_CURRENT_STATE = NORMAL_ACTIVITY_STATE;
-                //                              if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
-                //                                        Clear_LED_INDICATOR();
-                //                              }
-                //                              break;
-                //                    }
-                // Give LED indication every second
-                if (SendAfter % 10 == 0) {
-                        SSN_LED_INDICATE(SSN_CURRENT_STATE);
-                }
-                SendAfter++;
-                ServiceWatchdog();
-                // 100 milliseconds
-                sleep_for_microseconds(100000);
-        }
-        return;
+	uint16_t SendAfter = 0;
+	while (1) {
+		SSN_CHECK_ETHERNET_CONNECTION();
+		SSN_PREV_STATE = SSN_CURRENT_STATE;
+		SSN_CURRENT_STATE = NO_CONFIG_STATE;
+		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
+			Clear_LED_INDICATOR();
+		}
+		// request a MAC address after every 5 seconds
+		if (SendAfter % 50 == 0) {
+			Send_GETTimeOfDay_Message(&SSN_MAC_ADDRESS[4], SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+		}
+		if (TimeOfDay_received) {
+			break;
+		}
+		// Try to receive a message every 100 milliseconds
+		//                    if (Receive_TimeOfDay(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT)) {
+		//                              // initialize SSN's uptime
+		//                              ssn_uptime_in_seconds = 0;
+		//                              SSN_PREV_STATE = SSN_CURRENT_STATE;
+		//                              SSN_CURRENT_STATE = NORMAL_ACTIVITY_STATE;
+		//                              if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
+		//                                        Clear_LED_INDICATOR();
+		//                              }
+		//                              break;
+		//                    }
+		// Give LED indication every second
+		if (SendAfter % 10 == 0) {
+			SSN_LED_INDICATE(SSN_CURRENT_STATE);
+		}
+		SendAfter++;
+		ServiceWatchdog();
+		// 100 milliseconds
+		sleep_for_microseconds(100000);
+	}
+	return;
 }
 
 void SSN_RECEIVE_ASYNC_MESSAGE() {
-        // We can receive configurations and time of day on the fly
-        Receive_CONFIG(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, SSN_CONFIG, &SSN_REPORT_INTERVAL, SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_THRESHOLDS, SSN_CURRENT_SENSOR_MAXLOADS,
-                Machine_status);
-        Receive_TimeOfDay(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+	// We can receive configurations and time of day on the fly
+	Receive_CONFIG(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, SSN_CONFIG, &SSN_REPORT_INTERVAL, SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_THRESHOLDS, SSN_CURRENT_SENSOR_MAXLOADS,
+		Machine_status);
+	Receive_TimeOfDay(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
 }
 
 void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
-        unsigned char testbuffer[BUFFER_SIZE];
-        MQTTMessage* message = md->message;
-        // printf("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n");
-        clear_array(testbuffer, 100);
-        if (MQTTOptions.showtopics) {
-                memcpy(testbuffer, (char*) message->payload, (int) message->payloadlen);
-                *(testbuffer + (int) (message->payloadlen) + 1) = "\n";
+	unsigned char testbuffer[BUFFER_SIZE];
+	MQTTMessage* message = md->message;
+	// printf("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n");
+	clear_array(testbuffer, 100);
+	if (MQTTOptions.showtopics) {
+		memcpy(testbuffer, (char*) message->payload, (int) message->payloadlen);
+		*(testbuffer + (int) (message->payloadlen) + 1) = "\n";
 
-                uint8_t received_message_id;
-                uint32_t TimeOFDayTick;
-                received_message_id = decipher_received_message(testbuffer, params);
+		uint8_t received_message_id;
+		uint32_t TimeOFDayTick;
+		received_message_id = decipher_received_message(testbuffer, params);
 
-                // based on which message was received (received_message_id), we extract and save the data
-                switch (received_message_id) {
-                        case SET_MAC_MESSAGE_ID:
-                                printf("<- SET_MAC MESSAGE RECEIVED: %X:%X:%X:%X:%X:%X\n", params[0], params[1], params[2], params[3], params[4], params[5]);
-                                printf("Resetting Controller Now...\n");
-                                // write the new MAC addresses to designated location in EEPROM
-                                EEPROM_Write_Array(EEPROM_BLOCK_0, EEPROM_MAC_LOC, params, EEPROM_MAC_SIZE);
-                                // reset the SSN from software
-                                SoftReset();
-                                while (1);
-                                break;
+		// based on which message was received (received_message_id), we extract and save the data
+		switch (received_message_id) {
+			case SET_MAC_MESSAGE_ID:
+				printf("<- SET_MAC MESSAGE RECEIVED: %X:%X:%X:%X:%X:%X\n", params[0], params[1], params[2], params[3], params[4], params[5]);
+				printf("Resetting Controller Now...\n");
+				// write the new MAC addresses to designated location in EEPROM
+				EEPROM_Write_Array(EEPROM_BLOCK_0, EEPROM_MAC_LOC, params, EEPROM_MAC_SIZE);
+				// reset the SSN from software
+				SoftReset();
+				while (1);
+				break;
 
-                        case SET_TIMEOFDAY_MESSAGE_ID:
-                                TimeOFDayTick = get_uint32_from_bytes(params);
-                                printf("<- SET_TIMEOFDAY MESSAGE RECEIVED: %d\n", TimeOFDayTick);
-                                // assign incoming clock time to SSN Global Clock (Pseudo Clock because we don't have an RTCC)
-                                set_ssn_time(TimeOFDayTick);
-                                ssn_uptime_in_seconds = 0;
-                                TimeOfDay_received = true;
-                                //                return 1;
-                                break;
+			case SET_TIMEOFDAY_MESSAGE_ID:
+				TimeOFDayTick = get_uint32_from_bytes(params);
+				printf("<- SET_TIMEOFDAY MESSAGE RECEIVED: %d\n", TimeOFDayTick);
+				// assign incoming clock time to SSN Global Clock (Pseudo Clock because we don't have an RTCC)
+				set_ssn_time(TimeOFDayTick);
+				ssn_uptime_in_seconds = 0;
+				TimeOfDay_received = true;
+				//                return 1;
+				break;
 
-                        case SET_CONFIG_MESSAGE_ID:
-                                // write the new config to designated location in EEPROM
-                                EEPROM_Write_Array(EEPROM_BLOCK_0, EEPROM_CONFIG_LOC, params, EEPROM_CONFIG_SIZE);
-                                // Copy received configurations to the SSN_CONFIG array
-                                uint8_t i; for (i = 0; i < EEPROM_CONFIG_SIZE; i++) {
-                                        SSN_CONFIG[i] = params[i];
-                                }
-                                // Copy from the configurations, the sensor ratings, thresholds and maximum load values to our variables
-                                for (i = 0; i < NO_OF_MACHINES; i++) {
-                                        /* Get the parameters from the Configurations */
-                                        SSN_CURRENT_SENSOR_RATINGS[i] = SSN_CONFIG[3 * i + 0];
-                                        SSN_CURRENT_SENSOR_THRESHOLDS[i] = SSN_CONFIG[3 * i + 1];
-                                        SSN_CURRENT_SENSOR_MAXLOADS[i] = SSN_CONFIG[3 * i + 2];
-                                }
-                                // save new reporting interval
-                                SSN_REPORT_INTERVAL = SSN_CONFIG[EEPROM_CONFIG_SIZE - 1];
-                                printf("LOG: Received New Current Sensor Configuration from SSN Server: \n"
-                                        "     >> S1-Rating: %03d A | M1-Threshold: %03d A | M1-Maxload: %03d A |\n"
-                                        "     >> S2-Rating: %03d A | M2-Threshold: %03d A | M2-Maxload: %03d A |\n"
-                                        "     >> S3-Rating: %03d A | M3-Threshold: %03d A | M3-Maxload: %03d A |\n"
-                                        "     >> S4-Rating: %03d A | M4-Threshold: %03d A | M4-Maxload: %03d A |\n"
-                                        "     >> Reporting Interval: %d sec\n",
-                                        SSN_CURRENT_SENSOR_RATINGS[0], SSN_CURRENT_SENSOR_THRESHOLDS[0], SSN_CURRENT_SENSOR_MAXLOADS[0],
-                                        SSN_CURRENT_SENSOR_RATINGS[1], SSN_CURRENT_SENSOR_THRESHOLDS[1], SSN_CURRENT_SENSOR_MAXLOADS[1],
-                                        SSN_CURRENT_SENSOR_RATINGS[2], SSN_CURRENT_SENSOR_THRESHOLDS[2], SSN_CURRENT_SENSOR_MAXLOADS[2],
-                                        SSN_CURRENT_SENSOR_RATINGS[3], SSN_CURRENT_SENSOR_THRESHOLDS[3], SSN_CURRENT_SENSOR_MAXLOADS[3], SSN_REPORT_INTERVAL);
-                                // Reset Machine States 
-                                for (i = 0; i < NO_OF_MACHINES; i++) {
-                                        Machine_status[i] = SENSOR_NOT_CONNECTED;
-                                }
-                                CONFIG_received = true;
-                                break;
+			case SET_CONFIG_MESSAGE_ID:
+				// write the new config to designated location in EEPROM
+				EEPROM_Write_Array(EEPROM_BLOCK_0, EEPROM_CONFIG_LOC, params, EEPROM_CONFIG_SIZE);
+				// Copy received configurations to the SSN_CONFIG array
+				uint8_t i;
+				for (i = 0; i < EEPROM_CONFIG_SIZE; i++) {
+					SSN_CONFIG[i] = params[i];
+				}
+				// Copy from the configurations, the sensor ratings, thresholds and maximum load values to our variables
+				for (i = 0; i < NO_OF_MACHINES; i++) {
+					/* Get the parameters from the Configurations */
+					SSN_CURRENT_SENSOR_RATINGS[i] = SSN_CONFIG[3 * i + 0];
+					SSN_CURRENT_SENSOR_THRESHOLDS[i] = SSN_CONFIG[3 * i + 1];
+					SSN_CURRENT_SENSOR_MAXLOADS[i] = SSN_CONFIG[3 * i + 2];
+				}
+				// save new reporting interval
+				SSN_REPORT_INTERVAL = SSN_CONFIG[EEPROM_CONFIG_SIZE - 1];
+				printf("LOG: Received New Current Sensor Configuration from SSN Server: \n"
+					"     >> S1-Rating: %03d A | M1-Threshold: %03d A | M1-Maxload: %03d A |\n"
+					"     >> S2-Rating: %03d A | M2-Threshold: %03d A | M2-Maxload: %03d A |\n"
+					"     >> S3-Rating: %03d A | M3-Threshold: %03d A | M3-Maxload: %03d A |\n"
+					"     >> S4-Rating: %03d A | M4-Threshold: %03d A | M4-Maxload: %03d A |\n"
+					"     >> Reporting Interval: %d sec\n",
+					SSN_CURRENT_SENSOR_RATINGS[0], SSN_CURRENT_SENSOR_THRESHOLDS[0], SSN_CURRENT_SENSOR_MAXLOADS[0],
+					SSN_CURRENT_SENSOR_RATINGS[1], SSN_CURRENT_SENSOR_THRESHOLDS[1], SSN_CURRENT_SENSOR_MAXLOADS[1],
+					SSN_CURRENT_SENSOR_RATINGS[2], SSN_CURRENT_SENSOR_THRESHOLDS[2], SSN_CURRENT_SENSOR_MAXLOADS[2],
+					SSN_CURRENT_SENSOR_RATINGS[3], SSN_CURRENT_SENSOR_THRESHOLDS[3], SSN_CURRENT_SENSOR_MAXLOADS[3], SSN_REPORT_INTERVAL);
+				// Reset Machine States 
+				for (i = 0; i < NO_OF_MACHINES; i++) {
+					Machine_status[i] = SENSOR_NOT_CONNECTED;
+				}
+				CONFIG_received = true;
+				break;
 
-                                // Only for debugging, will be removed
-                                // This message will clear the EEPROM of our SSN
-                        case DEBUG_EEPROM_CLEAR_MESSAGE_ID:
-                                // stop the global timer
-                                stop_Global_Clock();
-                                printf("(DEBUG): Clearing EEPROM Now...\n");
-                                // Clear EEPROM and reset node
-                                EEPROM_Clear();
-                                // reset the SSN
-                                printf("(DEBUG): Resetting Controller Now...\n");
-                                SoftReset();
-                                while (1);
-                                break;
+				// Only for debugging, will be removed
+				// This message will clear the EEPROM of our SSN
+			case DEBUG_EEPROM_CLEAR_MESSAGE_ID:
+				// stop the global timer
+				stop_Global_Clock();
+				printf("(DEBUG): Clearing EEPROM Now...\n");
+				// Clear EEPROM and reset node
+				EEPROM_Clear();
+				// reset the SSN
+				printf("(DEBUG): Resetting Controller Now...\n");
+				SoftReset();
+				while (1);
+				break;
 
-                                // Only for debugging, will be removed
-                                // This message will reset our SSN
-                        case DEBUG_RESET_SSN_MESSAGE_ID:
-                                // stop the global timer
-                                stop_Global_Clock();
-                                // reset the SSN
-                                printf("(DEBUG): Resetting Controller Now...\n");
-                                sleep_for_microseconds(1000000);
-                                SoftReset();
-                                while (1);
-                                break;
+				// Only for debugging, will be removed
+				// This message will reset our SSN
+			case DEBUG_RESET_SSN_MESSAGE_ID:
+				// stop the global timer
+				stop_Global_Clock();
+				// reset the SSN
+				printf("(DEBUG): Resetting Controller Now...\n");
+				sleep_for_microseconds(1000000);
+				SoftReset();
+				while (1);
+				break;
 
-                        default:
-                                break;
-                }
-                // printf("testbuffer %s\r\n", testbuffer);
-                //        printf("%s\r\n",message->payload);
-                clear_array(testbuffer, 100);
-                //        printf("testbuffer %s\r\n",testbuffer); 
+			default:
+				break;
+		}
+		// printf("testbuffer %s\r\n", testbuffer);
+		//        printf("%s\r\n",message->payload);
+		clear_array(testbuffer, 100);
+		//        printf("testbuffer %s\r\n",testbuffer); 
 
-        }
-//        if (MQTTOptions.nodelimiter) {
-//                printf("%.*s", (int) message->payloadlen, (char*) message->payload);
-//        } else {
-//                printf("%.*s%s", (int) message->payloadlen, (char*) message->payload, MQTTOptions.delimiter);
-//        }
+	}
+	//        if (MQTTOptions.nodelimiter) {
+	//                printf("%.*s", (int) message->payloadlen, (char*) message->payload);
+	//        } else {
+	//                printf("%.*s%s", (int) message->payloadlen, (char*) message->payload, MQTTOptions.delimiter);
+	//        }
 }
 
 void SSN_CHECK_ETHERNET_CONNECTION() {
-        bool LinkWasOkay = true;
-        // Check Ethernet Physical Link Status before sending message
-        while (Ethernet_get_physical_link_status() == PHY_LINK_OFF) {
-                SSN_PREV_STATE = SSN_CURRENT_STATE;
-                SSN_CURRENT_STATE = NO_ETHERNET_STATE;
-                if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
-                        LinkWasOkay = false;
-                        Clear_LED_INDICATOR();
-                }
-                printf("LOG: I Am Stuck :/ Ethernet Physical Link BAD...\n");
-                SSN_LED_INDICATE(SSN_CURRENT_STATE);
-                // Service the watchdog timer to make sure we don't reset 
-                ServiceWatchdog();
-                sleep_for_microseconds(500000);
-        }
-        if (!LinkWasOkay) {
-                SSN_PREV_STATE = SSN_CURRENT_STATE;
-                SSN_CURRENT_STATE = NORMAL_ACTIVITY_STATE;
-                if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
-                        LinkWasOkay = false;
-                        Clear_LED_INDICATOR();
-                }
-                printf("LOG: Ethernet Physical Link Recovered :)\n");
-                // reconnect to MQTT broker after breaking previous socket connection
-                close(TCP_SOCKET);
-                SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, "SSNMAN", SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
-        }
-        return;
+	bool LinkWasOkay = true;
+	// Check Ethernet Physical Link Status before sending message
+	while (Ethernet_get_physical_link_status() == PHY_LINK_OFF) {
+		SSN_PREV_STATE = SSN_CURRENT_STATE;
+		SSN_CURRENT_STATE = NO_ETHERNET_STATE;
+		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
+			LinkWasOkay = false;
+			Clear_LED_INDICATOR();
+		}
+		printf("LOG: I Am Stuck :/ Ethernet Physical Link BAD...\n");
+		SSN_LED_INDICATE(SSN_CURRENT_STATE);
+		// Service the watchdog timer to make sure we don't reset 
+		ServiceWatchdog();
+		sleep_for_microseconds(500000);
+	}
+	if (!LinkWasOkay) {
+		SSN_PREV_STATE = SSN_CURRENT_STATE;
+		SSN_CURRENT_STATE = NORMAL_ACTIVITY_STATE;
+		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
+			LinkWasOkay = false;
+			Clear_LED_INDICATOR();
+		}
+		printf("LOG: Ethernet Physical Link Recovered :)\n");
+		// reconnect to MQTT broker after breaking previous socket connection
+		close(TCP_SOCKET);
+		SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, "SSNMAN", SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
+	}
+	return;
 }
 
 void SSN_GET_AMBIENT_CONDITION() {
-        // sample sensors and do calculations
+	// sample sensors and do calculations
 #ifdef TH_AM2320
-        temp_humidity_recv_status = sample_Temperature_Humidity_bytes_using_AM2320(temperature_bytes, relative_humidity_bytes);
+	temp_humidity_recv_status = sample_Temperature_Humidity_bytes_using_AM2320(temperature_bytes, relative_humidity_bytes);
 #endif
 #ifdef TH_DHT22
-        temp_humidity_recv_status = sample_Temperature_Humidity_bytes_using_DHT22(temperature_bytes, relative_humidity_bytes);
+	temp_humidity_recv_status = sample_Temperature_Humidity_bytes_using_DHT22(temperature_bytes, relative_humidity_bytes);
 #endif
-        if (temp_humidity_recv_status == SENSOR_READ_ERROR) {
-                abnormal_activity = TEMP_SENSOR_READ_ERROR_CONDITION;
+	if (temp_humidity_recv_status == SENSOR_READ_ERROR) {
+		abnormal_activity = TEMP_SENSOR_READ_ERROR_CONDITION;
 #ifdef TH_DHT22_DEBUG
-                printf("DHT22 Read Timeout Occurred\n");
+		printf("DHT22 Read Timeout Occurred\n");
 #endif
-                return;
-        }
-        if (temp_humidity_recv_status == SENSOR_CRC_ERROR) {
-                abnormal_activity = TEMP_SENSOR_CRC_ERROR_CONDITION;
+		return;
+	}
+	if (temp_humidity_recv_status == SENSOR_CRC_ERROR) {
+		abnormal_activity = TEMP_SENSOR_CRC_ERROR_CONDITION;
 #ifdef TH_DHT22_DEBUG
-                printf("DHT22 CheckSum Error Occurred\n");
+		printf("DHT22 CheckSum Error Occurred\n");
 #endif
-                return;
-        }
-        abnormal_activity = ambient_condition_status();
-        if (abnormal_activity == NORMAL_AMBIENT_CONDITION) {
-                SSN_PREV_STATE = SSN_CURRENT_STATE;
-                SSN_CURRENT_STATE = NORMAL_ACTIVITY_STATE;
-                if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
-                        Clear_LED_INDICATOR();
-                }
-        } else {
-                SSN_PREV_STATE = SSN_CURRENT_STATE;
-                SSN_CURRENT_STATE = ABNORMAL_ACTIVITY_STATE;
-                if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
-                        Clear_LED_INDICATOR();
-                }
-        }
-        return;
+		return;
+	}
+	abnormal_activity = ambient_condition_status();
+	if (abnormal_activity == NORMAL_AMBIENT_CONDITION) {
+		SSN_PREV_STATE = SSN_CURRENT_STATE;
+		SSN_CURRENT_STATE = NORMAL_ACTIVITY_STATE;
+		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
+			Clear_LED_INDICATOR();
+		}
+	} else {
+		SSN_PREV_STATE = SSN_CURRENT_STATE;
+		SSN_CURRENT_STATE = ABNORMAL_ACTIVITY_STATE;
+		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
+			Clear_LED_INDICATOR();
+		}
+	}
+	return;
 }
 
 void SSN_RESET_AFTER_N_SECONDS(uint32_t seconds) {
-        /* Check if we should reset (after given minutes when machines are not ON) */
-        if (ssn_uptime_in_seconds > seconds) {
-                printf("Time to have some rest... I'll wake up in about 5 seconds...\n");
-                SoftReset();
-                while (1);
-        }
-        return;
+	/* Check if we should reset (after given minutes when machines are not ON) */
+	if (ssn_uptime_in_seconds > seconds) {
+		printf("Time to have some rest... I'll wake up in about 5 seconds...\n");
+		SoftReset();
+		while (1);
+	}
+	return;
 }
 
 void SSN_RESET_AFTER_N_SECONDS_IF_NO_MACHINE_ON(uint32_t seconds) {
-        /* Check if we should reset (after given minutes when machines are not ON) */
-        if (ssn_uptime_in_seconds > seconds && Machine_status[0] != MACHINE_ON && Machine_status[1] != MACHINE_ON && Machine_status[2] != MACHINE_ON && Machine_status[3] != MACHINE_ON) {
-                printf("Time to have some rest... I'll wake up in about 5 seconds...\n");
-                SoftReset();
-                while (1);
-        }
-        return;
+	/* Check if we should reset (after given minutes when machines are not ON) */
+	if (ssn_uptime_in_seconds > seconds && Machine_status[0] != MACHINE_ON && Machine_status[1] != MACHINE_ON && Machine_status[2] != MACHINE_ON && Machine_status[3] != MACHINE_ON) {
+		printf("Time to have some rest... I'll wake up in about 5 seconds...\n");
+		SoftReset();
+		while (1);
+	}
+	return;
 }
 
 void SSN_RESET_IF_SOCKET_CORRUPTED() {
-        if (!socket_ok) {
-                SSN_PREV_STATE = SSN_CURRENT_STATE;
-                SSN_CURRENT_STATE = NO_ETHERNET_STATE;
-                if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
-                        Clear_LED_INDICATOR();
-                }
-                printf("-> Socket Corrupted. Reinitializing SSN..\n");
-                SoftReset();
-        }
+	if (!socket_ok) {
+		SSN_PREV_STATE = SSN_CURRENT_STATE;
+		SSN_CURRENT_STATE = NO_ETHERNET_STATE;
+		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
+			Clear_LED_INDICATOR();
+		}
+		printf("-> Socket Corrupted. Reinitializing SSN..\n");
+		SoftReset();
+	}
 }
 
 void led_blink_test() {
-        SSN_Setup();
-        Clear_LED_INDICATOR();
-        while (true) {
-                No_Ethernet_LED_INDICATE();
-                printf("Trying to show a sign of life...\n");
-                // sleep for a second
-                sleep_for_microseconds(1000000);
-        }
-        // we should never get to this point
-        return;
+	SSN_Setup();
+	Clear_LED_INDICATOR();
+	while (true) {
+		No_Ethernet_LED_INDICATE();
+		printf("Trying to show a sign of life...\n");
+		// sleep for a second
+		sleep_for_microseconds(1000000);
+	}
+	// we should never get to this point
+	return;
 }
 
 void current_test() {
-        SSN_Setup();
-        SSN_CURRENT_SENSOR_RATINGS[0] = 100;
-        SSN_CURRENT_SENSOR_RATINGS[1] = 000;
-        SSN_CURRENT_SENSOR_RATINGS[2] = 030;
-        SSN_CURRENT_SENSOR_RATINGS[3] = 000;
-        while (true) {
-                printf("In here\n");
-                Calculate_RMS_Current_On_All_Channels(SSN_CURRENT_SENSOR_RATINGS, 400, Machine_load_currents);
-                // sleep for a second
-                sleep_for_microseconds(1000000);
-        }
-        // we should never get to this point
-        return;
+	SSN_Setup();
+	SSN_CURRENT_SENSOR_RATINGS[0] = 100;
+	SSN_CURRENT_SENSOR_RATINGS[1] = 000;
+	SSN_CURRENT_SENSOR_RATINGS[2] = 030;
+	SSN_CURRENT_SENSOR_RATINGS[3] = 000;
+	while (true) {
+		printf("In here\n");
+		Calculate_RMS_Current_On_All_Channels(SSN_CURRENT_SENSOR_RATINGS, 400, Machine_load_currents);
+		// sleep for a second
+		sleep_for_microseconds(1000000);
+	}
+	// we should never get to this point
+	return;
 }
 
 void network_test() {
-        SSN_Setup();
-        SSN_UDP_SOCKET = SetupConnectionWithStaticIPAndReturnSocket(SSN_UDP_SOCKET_NUM, SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS);
-        uint8_t test_message_array[100] = "I am Annus Zulfiqar and I am trying to test this network";
-        uint8_t test_message_size = 56;
-        while (true) {
-                socket_ok = SendMessage(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, test_message_array, test_message_size);
-                if (!socket_ok) {
-                        printf("Socket Corrupted. Reinitializing..\n");
-                        setup_Ethernet(5000000);
-                        SSN_UDP_SOCKET = SetupConnectionWithStaticIPAndReturnSocket(SSN_UDP_SOCKET_NUM, SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS);
-                        printf("Reinitialization Successful.\n");
-                }
-                sleep_for_microseconds(1000000);
-        }
-        // we should never get to this point
-        return;
+	SSN_Setup();
+	SSN_UDP_SOCKET = SetupConnectionWithStaticIPAndReturnSocket(SSN_UDP_SOCKET_NUM, SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS);
+	uint8_t test_message_array[100] = "I am Annus Zulfiqar and I am trying to test this network";
+	uint8_t test_message_size = 56;
+	while (true) {
+		socket_ok = SendMessage(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, test_message_array, test_message_size);
+		if (!socket_ok) {
+			printf("Socket Corrupted. Reinitializing..\n");
+			setup_Ethernet(5000000);
+			SSN_UDP_SOCKET = SetupConnectionWithStaticIPAndReturnSocket(SSN_UDP_SOCKET_NUM, SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS);
+			printf("Reinitialization Successful.\n");
+		}
+		sleep_for_microseconds(1000000);
+	}
+	// we should never get to this point
+	return;
 }
 
 void watchdog_test() {
-        SSN_Setup();
-        printf("################# Testing Watchdog #################\n");
-        EnableWatchdog();
-        int seconds = 1;
-        while (true) {
-                ServiceWatchdog();
-                printf("Sleeping for %d seconds\n", seconds);
-                sleep_for_microseconds(seconds * 1000000);
-                seconds++;
-        }
-        return;
+	SSN_Setup();
+	printf("################# Testing Watchdog #################\n");
+	EnableWatchdog();
+	int seconds = 1;
+	while (true) {
+		ServiceWatchdog();
+		printf("Sleeping for %d seconds\n", seconds);
+		sleep_for_microseconds(seconds * 1000000);
+		seconds++;
+	}
+	return;
 }
 
 int DHT22_Sensor_Test() {
-        SSN_Setup();
-        while (true) {
-                SSN_GET_AMBIENT_CONDITION();
-                sleep_for_microseconds(2000000);
-        }
-        return 1;
+	SSN_Setup();
+	while (true) {
+		SSN_GET_AMBIENT_CONDITION();
+		ambient_condition_status();
+		sleep_for_microseconds(2000000);
+	}
+	return 1;
 }
+
+//unsigned char tempBuffer[BUFFER_SIZE] = {};
+//unsigned char TargetName[40] = "m11.cloudmqtt.com";
+//uint8_t DNS_ADDRESS[4] = {8, 8, 8, 8};
+//uint8_t MQTT_IP[4];
+//
+//
+//int main() {
+//        // Basic setup for our SSN to work    
+//        SSN_Setup();
+//        SSN_COPY_MAC_FROM_MEMORY();
+//        Ethernet_Register_MAC(SSN_MAC_ADDRESS);
+//        Ethernet_set_Static_IP(SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS);
+//        printf("HELLOWORLD\n");
+//        printf("***%d.%d.%d.%d\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
+//
+//        Network n;
+//        n.my_socket = 0;
+//        DNS_init(1, tempBuffer);
+//
+//        while(1) {
+//                T5CON = 0x8000;
+//                TMR5 = 0;
+//                strcpy(TargetName, "www.carepvtltd.com");
+//                while ((DNS_run(DNS_ADDRESS, TargetName, MQTT_IP) == 0) && (TMR5 < PERIPH_CLK));
+//                TMR5 = 0;
+//                T5CONCLR = 0x8000;
+//                printf("***%s\n", TargetName);
+//                printf("***%d.%d.%d.%d\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
+//                sleep_for_microseconds(1000000);
+//        }
+//        
+//        return 1;
+//}
+
 
 //#define TCP_SOCKET  0
 //#define MAX_LEN     10

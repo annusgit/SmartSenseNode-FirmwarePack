@@ -206,6 +206,9 @@ uint8_t construct_status_update_message(uint8_t* message_array, uint8_t* node_id
     /* Send abnormal activity status */
     message_array[count++] = abnormal_activity;
     
+    /* Send temperature sensor fault count */
+    message_array[count++] = fault_count;
+            
     // return how many bytes the message is
     return count;
 }
