@@ -31,6 +31,7 @@ int main() {
     // Clear the watchdog
     ServiceWatchdog();
     //InterruptEnabled = true;
+	printf("(LOG) Waiting for Messages...\n");
     while(SSN_IS_ALIVE) {
         // Make sure Ethernet is working fine (blocking if no physical link available)
         SSN_CHECK_ETHERNET_CONNECTION();
@@ -39,7 +40,7 @@ int main() {
         // Clear the watchdog
         ServiceWatchdog();
         // sleep for 100 milliseconds
-        sleep_for_microseconds(100000);
+        sleep_for_microseconds(1e5);
     }
     // we should never reach this point
     return 0;

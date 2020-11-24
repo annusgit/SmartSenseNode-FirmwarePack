@@ -72,7 +72,7 @@ void Receive_MAC(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER
     while (Received_Message_Bytes_in_Buffer) {
 
         // read the message from buffer
-        received_message_status = Recv_Message_Over_UDP(SSN_Socket, message_to_recv, max_recv_message_size, SSN_SERVER_IP, SSN_SERVER_PORT);
+        received_message_status = Recv_Message_Over_UDP(SSN_Socket, message_to_recv, max_recv_message_size, SSN_SERVER_IP, &SSN_SERVER_PORT);
 
         // Parse and make sense of the message
         // 'params' array stores and organizes whatever data we have received in the message
@@ -140,7 +140,7 @@ uint8_t Receive_CONFIG(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_
     // if there are more than one messages in buffer, we want to receive all of them
     while (Received_Message_Bytes_in_Buffer) {
         // read the message from buffer
-        received_message_status = Recv_Message_Over_UDP(SSN_Socket, message_to_recv, max_recv_message_size, SSN_SERVER_IP, SSN_SERVER_PORT);
+        received_message_status = Recv_Message_Over_UDP(SSN_Socket, message_to_recv, max_recv_message_size, SSN_SERVER_IP, &SSN_SERVER_PORT);
 
         // Parse and make sense of the message
         // 'params' array stores and organizes whatever data we have received in the message
@@ -234,7 +234,7 @@ uint8_t Receive_TimeOfDay(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t S
     while (Received_Message_Bytes_in_Buffer) {
 
         // read the message from buffer
-        received_message_status = Recv_Message_Over_UDP(SSN_Socket, message_to_recv, max_recv_message_size, SSN_SERVER_IP, SSN_SERVER_PORT);
+        received_message_status = Recv_Message_Over_UDP(SSN_Socket, message_to_recv, max_recv_message_size, SSN_SERVER_IP, &SSN_SERVER_PORT);
 
         // Parse and make sense of the message
         // 'params' array stores and organizes whatever data we have received in the message

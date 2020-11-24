@@ -15,6 +15,7 @@
 #define SYSTEM_CLK                  60000000
 #define PERIPH_CLK                  30000000
 #define SSN_DEFAULT_PORT            8888
+#define SSN_DATA_NODE_DEFAULT_PORT  9999
 
 /** Red led pin on SSN */
 #define RED_LED                     BIT_3

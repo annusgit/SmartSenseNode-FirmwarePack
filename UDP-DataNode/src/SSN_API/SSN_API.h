@@ -167,10 +167,23 @@ extern uint8_t SSN_STATIC_IP[4];
 extern uint8_t SSN_SUBNET_MASK[4];
 extern uint8_t SSN_GATWAY_ADDRESS[4];
 
-extern uint8_t SSN_1_STATIC_IP[4];
-extern uint8_t SSN_2_STATIC_IP[4];
-extern uint8_t SSN_1_MAC_ADDRESS[6];
-extern uint8_t SSN_2_MAC_ADDRESS[6];
+/** Data Node Specific Variables */
+extern uint8_t SENDER_IP[4];
+extern uint16_t SENDER_PORT;
+extern uint8_t CHILD_NODE_COUNT;
+extern uint8_t CHILD_NODES_MAC_ADDRESS[60];
+extern uint8_t CHILD_NODES_STATIC_IP[40];
+/** This dictionary maps MAC addresses to IP addresses */
+#define IP_LEN          4
+#define MAC_LEN         6
+#define DICT_LEN        10
+#define No_Match_Found  -1
+typedef struct MAC_IP_Dictionary {
+    uint8_t count;
+    uint8_t mac_addresses[DICT_LEN*MAC_LEN];
+    uint8_t ip_addresses[DICT_LEN*IP_LEN];
+} MAC_IP_Dictionary;
+extern MAC_IP_Dictionary routing_dictionary;
 
 /** A counter to maintain how many messages have been sent from SSN to Server since wakeup */
 extern uint32_t SSN_SENT_MESSAGES_COUNTER;
@@ -246,6 +259,7 @@ void SSN_GET_AMBIENT_CONDITION();
 void SSN_RESET_AFTER_N_SECONDS(uint32_t seconds);
 void SSN_RESET_AFTER_N_SECONDS_IF_NO_MACHINE_ON(uint32_t seconds);
 void SSN_RESET_IF_SOCKET_CORRUPTED();
+int8_t find_in_dictionary(MAC_IP_Dictionary* dictionary, uint8_t* mac_address);
 uint8_t Route_Messages(uint8_t SSN_Socket, uint8_t* Sender_IP, uint16_t Sender_PORT);
 /**
  * Peripheral testing and debugging functions

@@ -9,7 +9,7 @@ uint8_t SetupConnectionWithDHCP(uint8_t* SSN_MAC_ADDRESS, uint8_t UDP_SOCKET) {
     Ethernet_get_IP_from_DHCP();
     
     // Our main UDP socket is defined now
-    return socket(UDP_SOCKET, Sn_MR_UDP, SSN_DEFAULT_PORT, 0x00);
+    return socket(UDP_SOCKET, Sn_MR_UDP, SSN_DATA_NODE_DEFAULT_PORT, 0x00);
 }
 
 uint8_t SetupConnectionWithStaticIP(uint8_t UDP_SOCKET, uint8_t* SSN_MAC_ADDRESS, uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway) {
@@ -18,7 +18,7 @@ uint8_t SetupConnectionWithStaticIP(uint8_t UDP_SOCKET, uint8_t* SSN_MAC_ADDRESS
     // Setup static ip for the SSN
     Ethernet_set_Static_IP(static_IP, subnet_mask, gateway);
     // Our main UDP socket is defined now
-    return socket(UDP_SOCKET, Sn_MR_UDP, SSN_DEFAULT_PORT, 0x00);
+    return socket(UDP_SOCKET, Sn_MR_UDP, SSN_DATA_NODE_DEFAULT_PORT, 0x00);
 }
 
 uint8_t ResetConnection(uint8_t* SSN_MAC_ADDRESS, uint8_t UDP_SOCKET) {
@@ -34,5 +34,5 @@ uint8_t ResetConnection(uint8_t* SSN_MAC_ADDRESS, uint8_t UDP_SOCKET) {
     WIZ5500_network_initiate();
     
     // return a new socket from the W5500
-    return socket(UDP_SOCKET, Sn_MR_UDP, SSN_DEFAULT_PORT, 0x00);
+    return socket(UDP_SOCKET, Sn_MR_UDP, SSN_DATA_NODE_DEFAULT_PORT, 0x00);
 }

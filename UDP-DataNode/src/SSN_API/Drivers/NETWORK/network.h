@@ -198,7 +198,7 @@ uint16_t is_Message_to_be_transmitted(uint8_t socket_number);
  * @param destination_port Port of destination server
  * @return Number of bytes in received message
  */
-uint8_t Recv_Message_Over_UDP(uint8_t socket_number, char* message, uint8_t message_byte_length, char* destination_ip, uint16_t destination_port);
+uint8_t Recv_Message_Over_UDP(uint8_t socket_number, char* message, uint8_t message_byte_length, char* destination_ip, uint16_t* destination_port);
 
 
 #endif

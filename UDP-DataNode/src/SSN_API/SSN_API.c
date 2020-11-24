@@ -6,21 +6,22 @@
 /** Our SSN UDP communication socket */
 SOCKET SSN_UDP_SOCKET;
 /** SSN Server Address */
-uint8_t SSN_SERVER_IP[] = {192, 168, 0, 120};
+uint8_t SSN_SERVER_IP[] = {192, 168, 0, 160};
+//uint8_t SSN_SERVER_IP[] = {172, 16, 2, 39};
 /** SSN Server PORT */
 uint16_t SSN_SERVER_PORT = 9999;
 
 /** Static IP Assignment */
-uint8_t SSN_STATIC_IP[4]        = {192, 168, 0, 121};
+uint8_t SSN_STATIC_IP[4]        = {192, 168, 0, 176};
 uint8_t SSN_SUBNET_MASK[4]      = {255, 255, 255, 0};
 uint8_t SSN_GATWAY_ADDRESS[4]   = {192, 168, 0, 1};
 
 /** Data Node Specific Variables */
-uint8_t SENDER_IP[] = {192, 168, 0, 120};
-uint16_t SENDER_PORT = 1000;
-uint8_t CHILD_NODE_COUNT = 2;
-uint8_t CHILD_NODES_MAC_ADDRESS[60]   = {0x70, 0xB3, 0xD5, 0xFE, 0x4C, 0xE0, 0x70, 0xB3, 0xD5, 0xFE, 0x4C, 0xE1};
-uint8_t CHILD_NODES_STATIC_IP[40]     = {192, 168, 0, 122, 192, 168, 0, 123};
+uint8_t SENDER_IP[4];
+uint16_t SENDER_PORT;
+
+MAC_IP_Dictionary routing_dictionary = {.count = 2, .mac_addresses = {0x70, 0xB3, 0xD5, 0xFE, 0x4D, 0x7A, 0x70, 0xB3, 0xD5, 0xFE, 0x4F, 0xC6}, 
+										.ip_addresses = {192, 168, 0, 167, 192, 168, 0, 168}};
 
 /** A counter to maintain how many messages have been sent from SSN to Server since wakeup */
 uint32_t SSN_SENT_MESSAGES_COUNTER = 0;
@@ -266,44 +267,70 @@ void SSN_RECEIVE_ASYNC_MESSAGE() {
     Receive_TimeOfDay(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
 }
 
+int8_t find_in_dictionary(MAC_IP_Dictionary* dictionary, uint8_t* mac_address) {
+	bool match_found;
+	/** Loop through each dictionary key */
+	uint8_t i; for (i=0;i<dictionary->count;i++) {
+		match_found = true;
+		/** Loop through each byte of MAC address */
+		uint8_t j; for (j=0;j<MAC_LEN;j++) {
+			/** if a single byte mismatch is found, break */
+			if (dictionary->mac_addresses[MAC_LEN*i+j]!=mac_address[j]) {
+				match_found = false;
+				break;
+			}
+		}
+		if (match_found) {
+			/** match found, return index */
+			return i;
+		}
+	}
+	/** no match found, return sentinel */
+	return No_Match_Found;
+}
 
 uint8_t Route_Messages(uint8_t SSN_Socket, uint8_t* Sender_IP, uint16_t Sender_PORT) {
     uint32_t Received_Message_Bytes_in_Buffer;
     uint8_t received_message_id, received_message_size;
-    
+	int8_t this_index;
     // check how many bytes in RX buffer of Ethernet, if it is not empty (non-zero number returned), we should read it
     Received_Message_Bytes_in_Buffer = is_Message_Received_Over_UDP(SSN_Socket);
-    
     // if there are more than one messages in buffer, we want to receive all of them
     while (Received_Message_Bytes_in_Buffer) {
+		//printf("message received\n");
         /* Clear the message array */
         clear_array(message_to_recv, max_recv_message_size);
-        
         // read the message from buffer
-        received_message_size = Recv_Message_Over_UDP(SSN_Socket, message_to_recv, max_recv_message_size, Sender_IP, Sender_PORT);
-        
-        // Parse and make sense of the message
-        // 'params' array stores and organizes whatever data we have received in the message
-        // this might be a new MAC address, or new Sensor Configurations, or Time of Day, etc.
-        received_message_id = decipher_received_message(message_to_recv, params);
-        
+        received_message_size = Recv_Message_Over_UDP(SSN_Socket, message_to_recv, max_recv_message_size, Sender_IP, &Sender_PORT);
+        // first six bytes are MAC address of destination, 7th byte contains message id
+        received_message_id = message_to_recv[6];  
         // based on which message was received (received_message_id), we extract and save the data
         switch (received_message_id) {
             /** Server to Node Messages */
             case SET_MAC_MESSAGE_ID:
             case SET_CONFIG_MESSAGE_ID:
             case SET_TIMEOFDAY_MESSAGE_ID:
-
+				/** Search for the destination MAC address in routing dictionary */
+				this_index = find_in_dictionary(&routing_dictionary, &message_to_recv[0]);
+				if (this_index == No_Match_Found) {
+					printf("(LOG) Can't Find %02X:%02X:%02X:%02X:%02X:%02X\n", message_to_recv[0], message_to_recv[1], message_to_recv[2], message_to_recv[3], message_to_recv[4], message_to_recv[5]);
+				} else {
+					printf("(LOG) Found %02X:%02X:%02X:%02X:%02X:%02X at IP Address: %d.%d.%d.%d\n", message_to_recv[0], message_to_recv[1], message_to_recv[2], message_to_recv[3], 
+																	message_to_recv[4], message_to_recv[5],
+																	routing_dictionary.ip_addresses[IP_LEN*this_index+0], routing_dictionary.ip_addresses[IP_LEN*this_index+1], 
+																	routing_dictionary.ip_addresses[IP_LEN*this_index+2], routing_dictionary.ip_addresses[IP_LEN*this_index+3]);
+				}
+				SendMessage(SSN_Socket, &routing_dictionary.ip_addresses[IP_LEN*this_index], SSN_DEFAULT_PORT, message_to_recv, received_message_size);
                 break;
-            
             /** Node to Server Messages */
             case GET_MAC_MESSAGE_ID:
             case GET_CONFIG_MESSAGE_ID:
             case GET_TIMEOFDAY_MESSAGE_ID:
             case STATUS_UPDATE_MESSAGE_ID:
+				printf("(LOG) Sending Message from %d.%d.%d.%d to %d.%d.%d.%d\n", Sender_IP[0], Sender_IP[1], Sender_IP[2], Sender_IP[3], 
+																					SSN_SERVER_IP[0], SSN_SERVER_IP[1], SSN_SERVER_IP[2], SSN_SERVER_IP[3]);
                 SendMessage(SSN_Socket, SSN_SERVER_IP, SSN_SERVER_PORT, message_to_recv, received_message_size);                
                 break;
-            
             default:
                 break;
         }
@@ -476,4 +503,68 @@ void watchdog_test() {
     return;
 }
 
+int routing_test() {
+    // Setup Smart Sense Node
+    SSN_Setup();
+    // Check the EEPROM, temperature sensor and network connection before proceeding
+    RunSystemTests();
+    // We need a watchdog to make sure we don't get stuck forever
+    EnableWatchdog();
+    // Assign default hard-coded MAC address
+    for (i = 0; i < 6; i++) {
+        SSN_MAC_ADDRESS[i] = SSN_DEFAULT_MAC[i];    
+    }
+    // We can chose two ways to operate over UDP; static or dynamic IP
+    //SSN_UDP_SOCKET = SetupConnectionWithDHCP(SSN_MAC_ADDRESS, SSN_UDP_SOCKET_NUM);
+    SSN_UDP_SOCKET = SetupConnectionWithStaticIP(SSN_UDP_SOCKET_NUM, SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS);
+    // Clear the watchdog
+    ServiceWatchdog();
+    //InterruptEnabled = true;
+	int8_t check;
+	uint8_t wrong[6] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+    while(SSN_IS_ALIVE) {
+//        // Make sure Ethernet is working fine (blocking if no physical link available)
+//        SSN_CHECK_ETHERNET_CONNECTION();
+//        // Receive time of day or new configurations if they are sent from the server
+//        Route_Messages(SSN_UDP_SOCKET, SENDER_IP, SENDER_PORT);
+//        // Clear the watchdog
+//        ServiceWatchdog();
+		check = find_in_dictionary(&routing_dictionary, &routing_dictionary.mac_addresses[0]);
+		if (check == No_Match_Found) {
+			printf("(LOG) Can't Find %02X:%02X:%02X:%02X:%02X:%02X\n", routing_dictionary.mac_addresses[0], routing_dictionary.mac_addresses[1], routing_dictionary.mac_addresses[2],
+															routing_dictionary.mac_addresses[3], routing_dictionary.mac_addresses[4], routing_dictionary.mac_addresses[5]);
+		} else {
+			printf("(LOG) Found %02X:%02X:%02X:%02X:%02X:%02X at key: %d: IP Address: %d.%d.%d.%d\n", routing_dictionary.mac_addresses[0], routing_dictionary.mac_addresses[1], 
+															routing_dictionary.mac_addresses[2], routing_dictionary.mac_addresses[3], routing_dictionary.mac_addresses[4], 
+															routing_dictionary.mac_addresses[5], check, 
+															routing_dictionary.ip_addresses[IP_LEN*check+0], routing_dictionary.ip_addresses[IP_LEN*check+1], 
+															routing_dictionary.ip_addresses[IP_LEN*check+2], routing_dictionary.ip_addresses[IP_LEN*check+3]);
+		}
+		check = find_in_dictionary(&routing_dictionary, &routing_dictionary.mac_addresses[6]);
+		if (check == No_Match_Found) {
+			printf("(LOG) Can't Find %02X:%02X:%02X:%02X:%02X:%02X\n", routing_dictionary.mac_addresses[6], routing_dictionary.mac_addresses[7], routing_dictionary.mac_addresses[8],
+															routing_dictionary.mac_addresses[9], routing_dictionary.mac_addresses[10], routing_dictionary.mac_addresses[11]);
+		} else {
+			printf("(LOG) Found %02X:%02X:%02X:%02X:%02X:%02X at key: %d: IP Address: %d.%d.%d.%d\n", routing_dictionary.mac_addresses[6], routing_dictionary.mac_addresses[7], 
+															routing_dictionary.mac_addresses[8], routing_dictionary.mac_addresses[9], routing_dictionary.mac_addresses[10], 
+															routing_dictionary.mac_addresses[11], check, 
+															routing_dictionary.ip_addresses[IP_LEN*check+0], routing_dictionary.ip_addresses[IP_LEN*check+1], 
+															routing_dictionary.ip_addresses[IP_LEN*check+2], routing_dictionary.ip_addresses[IP_LEN*check+3]);
+		}
+		check = find_in_dictionary(&routing_dictionary, wrong);
+		if (check == No_Match_Found) {
+			printf("(LOG) Can't Find %02X:%02X:%02X:%02X:%02X:%02X\n", wrong[0], wrong[1], wrong[2], wrong[3], wrong[4], wrong[5]);
+		} else {
+			printf("(LOG) Found %02X:%02X:%02X:%02X:%02X:%02X at key: %d: IP Address: %d.%d.%d.%d\n", wrong[0], wrong[1], wrong[2], wrong[3], wrong[4], wrong[5], check, 
+																			routing_dictionary.ip_addresses[IP_LEN*check+0], routing_dictionary.ip_addresses[IP_LEN*check+1], 
+																			routing_dictionary.ip_addresses[IP_LEN*check+2], routing_dictionary.ip_addresses[IP_LEN*check+3]);
+		}
+		// Clear the watchdog
+		ServiceWatchdog();
+        // sleep for 100 milliseconds
+        sleep_for_microseconds(1e6);
+    }
+    // we should never reach this point
+    return 0;
+}
 

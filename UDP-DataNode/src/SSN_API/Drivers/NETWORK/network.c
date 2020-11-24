@@ -388,14 +388,14 @@ uint16_t is_Message_to_be_transmitted(uint8_t socket_number) {
     return getSn_TX_FSR(socket_number);
 }
 
-uint8_t Recv_Message_Over_UDP(uint8_t socket_number, char* message, uint8_t message_byte_length, char* destination_ip, uint16_t destination_port) {
+uint8_t Recv_Message_Over_UDP(uint8_t socket_number, char* message, uint8_t message_byte_length, char* destination_ip, uint16_t* destination_port) {
     // Check the Sn_IR(RECV) Interrupt bit. 
     // This is issued whenever data is received from a peer.
     // This function returns zero if there was no data in recv buffer or 0 data size received
 //    printf("Received Buffer Size: %d %d\r\n", getSn_IR(socket_number), getSn_IMR(socket_number));
         // equal to zero means set
         // Clear the recv interrupt bit
-        int32_t data_size = recvfrom(socket_number, message, message_byte_length, destination_ip, &destination_port);
+        int32_t data_size = recvfrom(socket_number, message, message_byte_length, destination_ip, destination_port);
 //        setSn_IR(socket_number, new_recv_buffer_val);
 //        printf("Received Message\r\n");
     return data_size;
