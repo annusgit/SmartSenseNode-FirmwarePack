@@ -152,7 +152,7 @@ void Calculate_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, uint16_t num
     }
 }
 
-void Calculate_True_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, uint16_t num_samples, float* RMS_CURRENTS) {
+void Calculate_True_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, float* SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, uint16_t num_samples, float* RMS_CURRENTS) {
     // sensor_relative_voltage means we are looking at the max output voltage of our sensors
     // e.g voltage-output 30Amp sensor would give 1Vrms -> 30Arms
     // and current-output 100Amp sensor would give max 1.65Vrms -> 100Arms
@@ -161,11 +161,12 @@ void Calculate_True_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, uint16_
     uint32_t i, count = 0;
     while(count < num_samples) {
         for (i = 0; i < NO_OF_MACHINES; i++) {
-            if(SENSOR_RATINGS[i]==100) {
-                sensor_relative_scalar = 1.0; //0.333; // max voltage of 1.65Vrms
-            } else {
-                sensor_relative_scalar = 1.0; //0.333; // max voltage of 1.00Vrms
-            }
+//            if(SENSOR_RATINGS[i]==100) {
+//                sensor_relative_scalar = 1.0; //0.333; // max voltage of 1.65Vrms
+//            } else {
+//                sensor_relative_scalar = 1.0; //0.333; // max voltage of 1.00Vrms
+//            }
+            sensor_relative_scalar = SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i];
             // Sample one value from i-th channel
             uint16_t adc_raw_sample = sample_Current_Sensor_channel(i);
             sensor_relative_voltage[i] = (3.3 * (float)adc_raw_sample / 1024) / sensor_relative_scalar;
@@ -245,7 +246,7 @@ float Current_CSensor_Read_RMS(uint8_t channel, uint16_t* adc_samples_array, uin
     return single_byte_raw_RMS_value;
 }
 
-bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, uint8_t* SSN_CURRENT_SENSOR_THRESHOLDS, uint8_t* SSN_CURRENT_SENSOR_MAXLOADS, float* Machine_load_currents, 
+bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, uint8_t* SSN_CURRENT_SENSOR_THRESHOLDS, uint8_t* SSN_CURRENT_SENSOR_MAXLOADS, float* Machine_load_currents, 
         uint8_t* Machine_load_percentages, uint8_t* Machine_status, uint8_t* Machine_status_flag, uint32_t* Machine_status_duration, uint32_t* Machine_status_timestamp) {
     
     // This function will calculate the load currents, load percentages and machine on/off status for all four machines
@@ -258,7 +259,7 @@ bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, uint8_t* SS
     bool status_change_flag = false;
     
     /* Sample all channels and record their respective RMS currents before proceeding */
-    Calculate_True_RMS_Current_On_All_Channels(SSN_CURRENT_SENSOR_RATINGS, 150, Machine_load_currents);
+    Calculate_True_RMS_Current_On_All_Channels(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, 150, Machine_load_currents);
     
 //    // Round-off machine currents to 2-decimal places
 //    uint8_t i; for(i=0; i<NO_OF_MACHINES; i++) {

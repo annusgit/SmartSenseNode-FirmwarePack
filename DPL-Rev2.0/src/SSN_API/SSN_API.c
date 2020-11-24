@@ -6,12 +6,12 @@
 /** Our SSN UDP communication socket */
 SOCKET SSN_UDP_SOCKET;
 /** SSN Server Address */
-uint8_t SSN_SERVER_IP[] = {192, 168, 0, 130};
+uint8_t SSN_SERVER_IP[] = {192, 168, 0, 121};
 /** SSN Server PORT */
 uint16_t SSN_SERVER_PORT = 9999;
 
 /** Static IP Assignment */
-uint8_t SSN_STATIC_IP[4] = {192, 168, 0, 164};
+uint8_t SSN_STATIC_IP[4]        = {192, 168, 0, 122};
 uint8_t SSN_SUBNET_MASK[4]      = {255, 255, 255, 0};
 uint8_t SSN_GATWAY_ADDRESS[4]   = {192, 168, 0, 1};
 
@@ -28,15 +28,17 @@ uint8_t report_counter = 0;
 /** Current State of the SSN. There is no state machine of the SSN but we still use this variable to keep track at some instances */
 uint8_t SSN_CURRENT_STATE = NO_MAC_STATE, SSN_PREV_STATE;
 /** Report Interval of SSN set according to the configurations passed to the SSN */
-uint8_t SSN_REPORT_INTERVAL = 1;
+uint8_t SSN_REPORT_INTERVAL = 5;
 /** SSN current sensor configurations */
 uint8_t SSN_CONFIG[EEPROM_CONFIG_SIZE];
+/** SSN current sensor relative scalar for voltage output */
+float SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[NO_OF_MACHINES];
 /** SSN current sensor ratings */
-uint8_t SSN_CURRENT_SENSOR_RATINGS[4];
-/** SSN machine thresholds for deciding IDLE state */
-uint8_t SSN_CURRENT_SENSOR_THRESHOLDS[4];
+uint8_t SSN_CURRENT_SENSOR_RATINGS[NO_OF_MACHINES];
 /** SSN machine maximum loads for calculating percentage loads on machines */
-uint8_t SSN_CURRENT_SENSOR_MAXLOADS[4];
+uint8_t SSN_CURRENT_SENSOR_MAXLOADS[NO_OF_MACHINES];
+/** SSN machine thresholds for deciding IDLE state */
+uint8_t SSN_CURRENT_SENSOR_THRESHOLDS[NO_OF_MACHINES];
 /** SSN machine load currents array */
 float Machine_load_currents[NO_OF_MACHINES] = {0};
 /** SSN machine load percentages array */
@@ -124,7 +126,7 @@ void SSN_GET_CONFIG() {
     // Find configurations in EEPROM
     SSN_PREV_STATE = SSN_CURRENT_STATE;
     SSN_CURRENT_STATE = FindSensorConfigurationsInFlashMemory(SSN_CONFIG, &SSN_REPORT_INTERVAL, SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_THRESHOLDS, SSN_CURRENT_SENSOR_MAXLOADS);
-    uint16_t SendAfter = 0; 
+    uint16_t SendAfter = 0;
     while (SSN_CURRENT_STATE == NO_CONFIG_STATE) {
         SSN_CHECK_ETHERNET_CONNECTION();
         SSN_PREV_STATE = SSN_CURRENT_STATE;

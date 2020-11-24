@@ -126,7 +126,7 @@ void Receive_MAC(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER
 }
 
 uint8_t Receive_CONFIG(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT, uint8_t* SSN_CONFIG, uint8_t* SSN_REPORT_INTERVAL, uint8_t* SSN_CURRENT_SENSOR_RATINGS, 
-        uint8_t* SSN_CURRENT_SENSOR_THRESHOLDS, uint8_t* SSN_CURRENT_SENSOR_MAXLOADS, uint8_t* Machine_status) {
+        uint8_t* SSN_CURRENT_SENSOR_THRESHOLDS, uint8_t* SSN_CURRENT_SENSOR_MAXLOADS, float* SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, uint8_t* Machine_status) {
     
     /* Clear the message array */
     clear_array(message_to_recv, max_recv_message_size);
@@ -159,9 +159,14 @@ uint8_t Receive_CONFIG(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_
                 // Copy from the configurations, the sensor ratings, thresholds and maximum load values to our variables
                 for (i = 0; i < NO_OF_MACHINES; i++) {
                     /* Get the parameters from the Configurations */
-                    SSN_CURRENT_SENSOR_RATINGS[i]    = SSN_CONFIG[3*i+0];
-                    SSN_CURRENT_SENSOR_THRESHOLDS[i] = SSN_CONFIG[3*i+1];
-                    SSN_CURRENT_SENSOR_MAXLOADS[i]   = SSN_CONFIG[3*i+2];
+                    SSN_CURRENT_SENSOR_RATINGS[i]       = SSN_CONFIG[4*i+0];
+                    SSN_CURRENT_SENSOR_THRESHOLDS[i]    = SSN_CONFIG[4*i+1];
+                    SSN_CURRENT_SENSOR_MAXLOADS[i]      = SSN_CONFIG[4*i+2];
+                    if (SSN_CONFIG[4*i+3] == 0) {
+                        SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.0;
+                    } else {
+                        SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 0.333;
+                    }
                 }
                 // save new reporting interval
                 *SSN_REPORT_INTERVAL = SSN_CONFIG[EEPROM_CONFIG_SIZE-1];

@@ -183,12 +183,14 @@ extern uint8_t SSN_CURRENT_STATE, SSN_PREV_STATE;
 extern uint8_t SSN_REPORT_INTERVAL;
 /** SSN current sensor configurations */
 extern uint8_t SSN_CONFIG[EEPROM_CONFIG_SIZE];
+/** SSN current sensor relative scalar for voltage output */
+extern float SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[NO_OF_MACHINES];
 /** SSN current sensor ratings */
-extern uint8_t SSN_CURRENT_SENSOR_RATINGS[4];
-/** SSN machine thresholds for deciding IDLE state */
-extern uint8_t SSN_CURRENT_SENSOR_THRESHOLDS[4];
+extern uint8_t SSN_CURRENT_SENSOR_RATINGS[NO_OF_MACHINES];
 /** SSN machine maximum loads for calculating percentage loads on machines */
-extern uint8_t SSN_CURRENT_SENSOR_MAXLOADS[4];
+extern uint8_t SSN_CURRENT_SENSOR_MAXLOADS[NO_OF_MACHINES];
+/** SSN machine thresholds for deciding IDLE state */
+extern uint8_t SSN_CURRENT_SENSOR_THRESHOLDS[NO_OF_MACHINES];
 /** SSN machine load currents array */
 extern float Machine_load_currents[NO_OF_MACHINES];
 /** SSN machine load percentages array */
