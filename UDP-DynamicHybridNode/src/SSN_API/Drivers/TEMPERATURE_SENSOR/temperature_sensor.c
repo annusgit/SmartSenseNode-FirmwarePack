@@ -7,7 +7,6 @@ void open_I2C2() {
 	I2C2BRG = 0x091; // 100KHz operation
 	I2C2CONbits.ON = 1; // turn on the I2C2 module
 	// setup the required pins for this peripheral
-	PORTSetPinsDigitalOut(IOPORT_A, BIT_2);
 	PORTSetPinsDigitalOut(IOPORT_B, BIT_2);
 	PORTSetPinsDigitalOut(IOPORT_B, BIT_3);
 	PORTSetBits(IOPORT_B, BIT_2);
@@ -268,8 +267,9 @@ unsigned short crc16(unsigned char *ptr, unsigned char len) {
 uint8_t CRC_check() {
 	unsigned short CRC_calculated = crc16(recv_data, 6);
 	unsigned short CRC_received = ((recv_data[7] & 0xFF) << 8) | (recv_data[6] & 0xFF);
-	if (CRC_calculated == CRC_received)
+	if (CRC_calculated == CRC_received) {
 		return 1;
+	}
 	return 0;
 }
 
@@ -290,16 +290,18 @@ uint8_t sample_Temperature_Humidity(uint16_t *temperature, uint16_t* relative_hu
 int8_t sample_Temperature_Humidity_bytes(uint8_t* temperature_bytes, uint8_t* relative_humidity_bytes) {
 	bool read_ok = AM2320_I2C2_Read_Temp_and_Humidity();
 	if (!read_ok) {
+		printf("Temperature Sensor READ_ERROR. Reseting...\n");
 		// reset sensor's power source
 		PORTClearBits(IOPORT_A, BIT_4);
-		sleep_for_microseconds(1000);
+		sleep_for_microseconds(10000);
 		PORTSetBits(IOPORT_A, BIT_4);
 		return SENSOR_READ_ERROR;
 	}
 	if (!CRC_check()) {
+		printf("Temperature Sensor CRC_ERROR. Reseting...\n");
 		// reset sensor's power source
 		PORTClearBits(IOPORT_A, BIT_4);
-		sleep_for_microseconds(1000);
+		sleep_for_microseconds(500000);
 		PORTSetBits(IOPORT_A, BIT_4);
 		return SENSOR_READ_CRC_ERROR;
 	}
@@ -307,13 +309,14 @@ int8_t sample_Temperature_Humidity_bytes(uint8_t* temperature_bytes, uint8_t* re
 	temperature_bytes[1] = recv_data[5];
 	relative_humidity_bytes[0] = recv_data[2];
 	relative_humidity_bytes[1] = recv_data[3];
+//	printf("%d %d %d %d\n", temperature_bytes[0], temperature_bytes[1], relative_humidity_bytes[0], relative_humidity_bytes[1]);
 	return SENSOR_READ_SUCCESSFUL;
 }
 
 uint8_t ambient_condition_status(uint8_t temp_min, uint8_t temp_max, uint8_t rh_min, uint8_t rh_max) {
 	float temperature = (float) ((recv_data[4] << 8) | recv_data[5]) / 10.0f;
 	float relative_humidity = (float) ((recv_data[2] << 8) | recv_data[3]) / 10.0f;
-	// printf("Temperature: %.2f, Humidity: %.2f", temperature, relative_humidity);
+	//printf("Temperature: %.2f, Humidity: %.2f\n", temperature, relative_humidity);
 	// Normal condition, return 0
 	if (temperature < (float)temp_max && temperature > (float)temp_min) {
 		if (relative_humidity < (float)rh_max && relative_humidity > (float)rh_min) {

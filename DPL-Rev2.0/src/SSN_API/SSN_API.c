@@ -80,7 +80,7 @@ uint8_t i;
 
 void SSN_Setup() {
 	// Setup calls for all our peripherals/devices
-	setup_printf(19200);
+	setup_printf(115200);
 	setup_EEPROM();
 	setup_Ethernet(5000000);
 	setup_Current_Sensors();
