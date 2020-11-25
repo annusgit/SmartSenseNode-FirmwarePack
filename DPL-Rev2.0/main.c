@@ -84,7 +84,6 @@ int main() {
     SSN_GET_MAC();
     // Get SSN configurations for SSN or pick from EEPROM if already assigned
     SSN_GET_CONFIG();
-	SSN_REPORT_INTERVAL = 5;
     // Receive time of day from the server for accurate timestamps
     SSN_GET_TIMEOFDAY();
     // Clear the watchdog

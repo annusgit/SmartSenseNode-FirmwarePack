@@ -6,7 +6,7 @@
 /** Our SSN UDP communication socket */
 SOCKET SSN_UDP_SOCKET;
 /** SSN Server Address */
-uint8_t SSN_SERVER_IP[] = {192, 168, 0, 160};
+uint8_t SSN_SERVER_IP[] = {192, 168, 0, 120};
 /** SSN Server PORT */
 uint16_t SSN_SERVER_PORT = 9999;
 

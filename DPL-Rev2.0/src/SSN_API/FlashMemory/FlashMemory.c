@@ -48,12 +48,12 @@ uint8_t FindSensorConfigurationsInFlashMemory(uint8_t* SSN_CONFIG, uint8_t* SSN_
 				SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 0.333;
 			}
 		}
-		*TEMPERATURE_MIN_THRESHOLD	= SSN_CONFIG[23];
-		*TEMPERATURE_MAX_THRESHOLD	= SSN_CONFIG[24];
-		*HUMIDITY_MIN_THRESHOLD		= SSN_CONFIG[25];
-		*HUMIDITY_MAX_THRESHOLD		= SSN_CONFIG[26];
+		*TEMPERATURE_MIN_THRESHOLD	= SSN_CONFIG[16];
+		*TEMPERATURE_MAX_THRESHOLD	= SSN_CONFIG[17];
+		*HUMIDITY_MIN_THRESHOLD		= SSN_CONFIG[18];
+		*HUMIDITY_MAX_THRESHOLD		= SSN_CONFIG[19];
 		// save new reporting interval
-		*SSN_REPORT_INTERVAL = SSN_CONFIG[27];
+		*SSN_REPORT_INTERVAL = SSN_CONFIG[20];
 		printf("LOG: Received New Current Sensor Configuration from SSN Server: \n"
 			"     >> S1-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M1-Threshold: %03d Arms | M1-Maxload: %03d Arms |\n"
 			"     >> S2-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M2-Threshold: %03d Arms | M2-Maxload: %03d Arms |\n"
