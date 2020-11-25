@@ -9,9 +9,25 @@
 #include "../Drivers/CURRENT_SENSOR/current_sensor.h"
 #include "../Drivers/Messages/messages.h"
 
-static uint8_t message_to_send[max_send_message_size];
-static uint8_t message_to_recv[max_recv_message_size];
-static uint8_t params[max_recv_message_size];
+extern uint8_t message_to_send[max_send_message_size];
+extern uint8_t message_to_recv[max_recv_message_size];
+extern uint8_t params[max_recv_message_size];
+
+/** Data Node Specific Variables */
+extern uint8_t SENDER_IP[4];
+extern uint16_t SENDER_PORT;
+
+/** This dictionary maps MAC addresses to IP addresses */
+#define IP_LEN          4
+#define MAC_LEN         6
+#define DICT_LEN        10
+#define No_Match_Found  -1
+typedef struct MAC_IP_Dictionary {
+    uint8_t count;
+    uint8_t mac_addresses[DICT_LEN*MAC_LEN];
+    uint8_t ip_addresses[DICT_LEN*IP_LEN];
+} MAC_IP_Dictionary;
+extern MAC_IP_Dictionary routing_dictionary;
 
 /**
  * Sends a message over UDP
@@ -76,8 +92,16 @@ void Send_GETTimeOfDay_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN
  * @param abnormal_activity A single byte indicating NORMAL or ABNORMAL ambient condition based on temperature and humidity readings
  */
 bool Send_STATUSUPDATE_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT, uint8_t* temperature_bytes, uint8_t* relative_humidity_bytes, 
-        float* Machine_load_currents, uint8_t* Machine_load_percentages, uint8_t* Machine_status, uint8_t Machine_status_flag, uint32_t* Machine_status_duration, 
-        uint32_t* Machine_status_timestamp, uint32_t ssn_uptime_in_seconds, uint8_t abnormal_activity);
+    float* Machine_load_currents, uint8_t* Machine_load_percentages, uint8_t* Machine_status, uint8_t Machine_status_flag, uint32_t* Machine_status_duration, 
+    uint32_t* Machine_status_timestamp, uint32_t ssn_uptime_in_seconds, uint8_t abnormal_activity);
+
+/**
+ * Receives a destination MAC for incoming message and decides whether it is meant for itself or not
+ */
+bool SSN_I_AM_DESTINATION(uint8_t* SSN_Mac_Address, uint8_t* destination_of_message);
+
+/** This function will look for a MAC address in our routing table */
+int8_t find_in_dictionary(MAC_IP_Dictionary* dictionary, uint8_t* mac_address);
 
 /**
  * Receives a response for MAC requested from SSN Server
@@ -100,9 +124,9 @@ void Receive_MAC(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER
  * @param Machine_status Byte array of current machine status (ON/OFF/IDLE) 
  * @return 1 if received, else 0
  */
-uint8_t Receive_CONFIG(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT, uint8_t* SSN_CONFIG, uint8_t* SSN_REPORT_INTERVAL, uint8_t* TEMPERATURE_MIN_THRESHOLD, 
-        uint8_t* TEMPERATURE_MAX_THRESHOLD, uint8_t* HUMIDITY_MIN_THRESHOLD, uint8_t* HUMIDITY_MAX_THRESHOLD, uint8_t* SSN_CURRENT_SENSOR_RATINGS,  uint8_t* SSN_CURRENT_SENSOR_THRESHOLDS, 
-        uint8_t* SSN_CURRENT_SENSOR_MAXLOADS, float* SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, uint8_t* Machine_status);
+uint8_t Receive_CONFIG(uint8_t SSN_Socket, uint8_t* SSN_MAC_ADDRESS, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT, uint8_t* SSN_CONFIG, uint8_t* SSN_REPORT_INTERVAL, uint8_t* TEMPERATURE_MIN_THRESHOLD, 
+    uint8_t* TEMPERATURE_MAX_THRESHOLD, uint8_t* HUMIDITY_MIN_THRESHOLD, uint8_t* HUMIDITY_MAX_THRESHOLD, uint8_t* SSN_CURRENT_SENSOR_RATINGS,  uint8_t* SSN_CURRENT_SENSOR_THRESHOLDS, 
+    uint8_t* SSN_CURRENT_SENSOR_MAXLOADS, float* SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, uint8_t* Machine_status);
 
 /**
  * Receives a response for Time of Day requested from SSN Server
@@ -111,6 +135,6 @@ uint8_t Receive_CONFIG(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_
  * @param SSN_SERVER_PORT Port of the destination Server
  * @return 1 if received, else 0
  */
-uint8_t Receive_TimeOfDay(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT);
+uint8_t Receive_TimeOfDay(uint8_t SSN_Socket, uint8_t* SSN_MAC_ADDRESS, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT);
 
 #endif

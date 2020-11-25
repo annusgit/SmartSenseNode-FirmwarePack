@@ -230,32 +230,32 @@ uint8_t decipher_received_message(uint8_t* message, uint8_t* params) {
 	// first byte will always be the message ID
 	uint8_t message_id = message[6], i;
 	switch (message_id) {
-			// Set MAC received?
+		// Set MAC received?
 		case SET_MAC_MESSAGE_ID:
 			for (i = 0; i < EEPROM_MAC_SIZE; i++)
 				params[i] = message[i + 7];
 			break;
 
-			// Set CONFIG received?
+		// Set CONFIG received?
 		case SET_CONFIG_MESSAGE_ID:
 			for (i = 0; i < EEPROM_CONFIG_SIZE; i++)
 				params[i] = message[i + 7];
 			break;
 
-			// Set Time of Day received?
+		// Set Time of Day received?
 		case SET_TIMEOFDAY_MESSAGE_ID:
 			for (i = 0; i < TIME_Of_DAY_SIZE; i++)
 				params[i] = message[i + 7];
 			break;
 
-			/* Only for debugging, will be removed */
-			// Clear EEPROM received?
+		/* Only for debugging, will be removed */
+		// Clear EEPROM received?
 		case DEBUG_EEPROM_CLEAR_MESSAGE_ID:
 			// Do nothing, message ID will do
 			break;
 
-			/* Only for debugging, will be removed */
-			// Reset Controller received?
+		/* Only for debugging, will be removed */
+		// Reset Controller received?
 		case DEBUG_RESET_SSN_MESSAGE_ID:
 			// Do nothing, message ID will do
 			break;

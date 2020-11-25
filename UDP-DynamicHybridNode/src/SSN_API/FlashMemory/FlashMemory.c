@@ -54,13 +54,13 @@ uint8_t FindSensorConfigurationsInFlashMemory(uint8_t* SSN_CONFIG, uint8_t* SSN_
 		*HUMIDITY_MAX_THRESHOLD		= SSN_CONFIG[26];
 		// save new reporting interval
 		*SSN_REPORT_INTERVAL = SSN_CONFIG[27];
-		printf("LOG: Received New Current Sensor Configuration from SSN Server: \n"
+		printf("LOG: Retrieved Current Sensor Configuration from EEPROM: \n"
 			"     >> S1-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M1-Threshold: %03d Arms | M1-Maxload: %03d Arms |\n"
 			"     >> S2-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M2-Threshold: %03d Arms | M2-Maxload: %03d Arms |\n"
 			"     >> S3-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M3-Threshold: %03d Arms | M3-Maxload: %03d Arms |\n"
 			"     >> S4-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M4-Threshold: %03d Arms | M4-Maxload: %03d Arms |\n"
-			"     >> MIN TEMP : %03d C | MAX TEMP : %03d C    |\n"
-			"     >> MIN RH   : %03d % | MIN RH   : %03d %    |\n"
+			"     >> MIN TEMP : %03d C    | MAX TEMP : %03d C    |\n"
+			"     >> MIN RH   : %03d %    | MAX RH   : %03d %    |\n"
 			"     >> Report   : %d seconds\n", 
 			SSN_CURRENT_SENSOR_RATINGS[0], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[0], SSN_CURRENT_SENSOR_THRESHOLDS[0], SSN_CURRENT_SENSOR_MAXLOADS[0],
 			SSN_CURRENT_SENSOR_RATINGS[1], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[1], SSN_CURRENT_SENSOR_THRESHOLDS[1], SSN_CURRENT_SENSOR_MAXLOADS[1],

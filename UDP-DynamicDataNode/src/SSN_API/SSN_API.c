@@ -20,8 +20,9 @@ uint8_t SSN_GATWAY_ADDRESS[4]   = {192, 168, 0, 1};
 uint8_t SENDER_IP[4];
 uint16_t SENDER_PORT;
 
-MAC_IP_Dictionary routing_dictionary = {.count = 2, .mac_addresses = {0x70, 0xB3, 0xD5, 0xFE, 0x4D, 0x7A, 0x70, 0xB3, 0xD5, 0xFE, 0x4F, 0xC6}, 
-										.ip_addresses = {192, 168, 0, 167, 192, 168, 0, 168}};
+//MAC_IP_Dictionary routing_dictionary = {.count = 2, .mac_addresses = {0x70, 0xB3, 0xD5, 0xFE, 0x4D, 0x7A, 0x70, 0xB3, 0xD5, 0xFE, 0x4F, 0xC6}, 
+//										.ip_addresses = {192, 168, 0, 167, 192, 168, 0, 168}};
+MAC_IP_Dictionary routing_dictionary = { .count = 0 };
 
 /** A counter to maintain how many messages have been sent from SSN to Server since wakeup */
 uint32_t SSN_SENT_MESSAGES_COUNTER = 0;
@@ -303,7 +304,7 @@ uint8_t Route_Messages(uint8_t SSN_Socket, uint8_t* Sender_IP, uint16_t Sender_P
         // read the message from buffer
         received_message_size = Recv_Message_Over_UDP(SSN_Socket, message_to_recv, max_recv_message_size, Sender_IP, &Sender_PORT);
         // first six bytes are MAC address of destination, 7th byte contains message id
-        received_message_id = message_to_recv[6];  
+        received_message_id = message_to_recv[6];
         // based on which message was received (received_message_id), we extract and save the data
         switch (received_message_id) {
             /** Server to Node Messages */
@@ -327,6 +328,24 @@ uint8_t Route_Messages(uint8_t SSN_Socket, uint8_t* Sender_IP, uint16_t Sender_P
             case GET_CONFIG_MESSAGE_ID:
             case GET_TIMEOFDAY_MESSAGE_ID:
             case STATUS_UPDATE_MESSAGE_ID:
+				/** Search for the destination MAC address in routing dictionary */
+				this_index = find_in_dictionary(&routing_dictionary, &message_to_recv[0]);
+				if (this_index == No_Match_Found) {
+					printf("(DISCOVERY) New Node %02X:%02X:%02X:%02X:%02X:%02X Detected @ %d.%d.%d.%d\n", message_to_recv[0], message_to_recv[1], message_to_recv[2], message_to_recv[3], message_to_recv[4], 
+																											message_to_recv[5], Sender_IP[0], Sender_IP[1], Sender_IP[2], Sender_IP[3]);
+					/** Add a new MAC address against its IP in routing table */
+					uint8_t current_count = routing_dictionary.count;
+					// add MAC address as key
+					uint8_t j; for (j=0;j<MAC_LEN;j++) {
+						routing_dictionary.mac_addresses[current_count*MAC_LEN+j] = message_to_recv[j];
+					}
+					// add IP address as value
+					uint8_t k; for (k=0;k<IP_LEN;k++) {
+						routing_dictionary.ip_addresses[current_count*IP_LEN+k] = Sender_IP[k];
+					}
+					// increment table entry count
+					routing_dictionary.count += 1;
+				}
 				printf("(LOG) Sending Message from %d.%d.%d.%d to %d.%d.%d.%d\n", Sender_IP[0], Sender_IP[1], Sender_IP[2], Sender_IP[3], 
 																					SSN_SERVER_IP[0], SSN_SERVER_IP[1], SSN_SERVER_IP[2], SSN_SERVER_IP[3]);
                 SendMessage(SSN_Socket, SSN_SERVER_IP, SSN_SERVER_PORT, message_to_recv, received_message_size);                

@@ -125,8 +125,9 @@ void Receive_MAC(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER
     }
 }
 
-uint8_t Receive_CONFIG(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT, uint8_t* SSN_CONFIG, uint8_t* SSN_REPORT_INTERVAL, uint8_t* SSN_CURRENT_SENSOR_RATINGS, 
-        uint8_t* SSN_CURRENT_SENSOR_THRESHOLDS, uint8_t* SSN_CURRENT_SENSOR_MAXLOADS, float* SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, uint8_t* Machine_status) {
+uint8_t Receive_CONFIG(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT, uint8_t* SSN_CONFIG, uint8_t* SSN_REPORT_INTERVAL, uint8_t* TEMPERATURE_MIN_THRESHOLD, 
+	uint8_t* TEMPERATURE_MAX_THRESHOLD, uint8_t* HUMIDITY_MIN_THRESHOLD, uint8_t* HUMIDITY_MAX_THRESHOLD, uint8_t* SSN_CURRENT_SENSOR_RATINGS,  uint8_t* SSN_CURRENT_SENSOR_THRESHOLDS, 
+	uint8_t* SSN_CURRENT_SENSOR_MAXLOADS, float* SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, uint8_t* Machine_status) {
     
     /* Clear the message array */
     clear_array(message_to_recv, max_recv_message_size);
@@ -168,18 +169,27 @@ uint8_t Receive_CONFIG(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_
                         SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 0.333;
                     }
                 }
+				*TEMPERATURE_MIN_THRESHOLD	= SSN_CONFIG[23];
+				*TEMPERATURE_MAX_THRESHOLD	= SSN_CONFIG[24];
+				*HUMIDITY_MIN_THRESHOLD		= SSN_CONFIG[25];
+				*HUMIDITY_MAX_THRESHOLD		= SSN_CONFIG[26];
                 // save new reporting interval
-                *SSN_REPORT_INTERVAL = SSN_CONFIG[EEPROM_CONFIG_SIZE-1];
+                *SSN_REPORT_INTERVAL = SSN_CONFIG[27];
                 printf("LOG: Received New Current Sensor Configuration from SSN Server: \n"
-                    "     >> S1-Rating: %03d A | M1-Threshold: %03d A | M1-Maxload: %03d A |\n"
-                    "     >> S2-Rating: %03d A | M2-Threshold: %03d A | M2-Maxload: %03d A |\n"
-                    "     >> S3-Rating: %03d A | M3-Threshold: %03d A | M3-Maxload: %03d A |\n"
-                    "     >> S4-Rating: %03d A | M4-Threshold: %03d A | M4-Maxload: %03d A |\n"
-                    "     >> Reporting Interval: %d sec\n", 
-                    SSN_CURRENT_SENSOR_RATINGS[0], SSN_CURRENT_SENSOR_THRESHOLDS[0], SSN_CURRENT_SENSOR_MAXLOADS[0],
-                    SSN_CURRENT_SENSOR_RATINGS[1], SSN_CURRENT_SENSOR_THRESHOLDS[1], SSN_CURRENT_SENSOR_MAXLOADS[1],
-                    SSN_CURRENT_SENSOR_RATINGS[2], SSN_CURRENT_SENSOR_THRESHOLDS[2], SSN_CURRENT_SENSOR_MAXLOADS[2],
-                    SSN_CURRENT_SENSOR_RATINGS[3], SSN_CURRENT_SENSOR_THRESHOLDS[3], SSN_CURRENT_SENSOR_MAXLOADS[3], *SSN_REPORT_INTERVAL);
+					"     >> S1-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M1-Threshold: %03d Arms | M1-Maxload: %03d Arms |\n"
+					"     >> S2-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M2-Threshold: %03d Arms | M2-Maxload: %03d Arms |\n"
+					"     >> S3-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M3-Threshold: %03d Arms | M3-Maxload: %03d Arms |\n"
+					"     >> S4-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M4-Threshold: %03d Arms | M4-Maxload: %03d Arms |\n"
+					"     >> MIN TEMP : %03d C | MAX TEMP : %03d C    |\n"
+					"     >> MIN RH   : %03d % | MIN RH   : %03d %    |\n"
+					"     >> Report   : %d seconds\n", 
+					SSN_CURRENT_SENSOR_RATINGS[0], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[0], SSN_CURRENT_SENSOR_THRESHOLDS[0], SSN_CURRENT_SENSOR_MAXLOADS[0],
+					SSN_CURRENT_SENSOR_RATINGS[1], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[1], SSN_CURRENT_SENSOR_THRESHOLDS[1], SSN_CURRENT_SENSOR_MAXLOADS[1],
+					SSN_CURRENT_SENSOR_RATINGS[2], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[2], SSN_CURRENT_SENSOR_THRESHOLDS[2], SSN_CURRENT_SENSOR_MAXLOADS[2],
+					SSN_CURRENT_SENSOR_RATINGS[3], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[3], SSN_CURRENT_SENSOR_THRESHOLDS[3], SSN_CURRENT_SENSOR_MAXLOADS[3], 
+					*TEMPERATURE_MIN_THRESHOLD, *TEMPERATURE_MAX_THRESHOLD, 
+					*HUMIDITY_MIN_THRESHOLD, *HUMIDITY_MAX_THRESHOLD,
+					*SSN_REPORT_INTERVAL);
                 // Reset Machine States 
                 for (i = 0; i < NO_OF_MACHINES; i++) {
                     Machine_status[i] = SENSOR_NOT_CONNECTED;

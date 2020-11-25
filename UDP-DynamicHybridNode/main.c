@@ -97,10 +97,11 @@ int main() {
         SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
         // Network critical section begins here. Disable all interrupts
         DisableGlobalInterrupt();
-        // Receive time of day or new configurations if they are sent from the server
-        SSN_RECEIVE_ASYNC_MESSAGE();
         // Make sure Ethernet is working fine (blocking if no physical link available)
         SSN_CHECK_ETHERNET_CONNECTION();
+		// This hybrid node can receive messages from other nodes. See if that is the case and route accordingly
+        // If the message is meant for this node itself, then receive time of day or new configurations
+        SSN_RECEIVE_ASYNC_MESSAGE_AND_ROUTE_OR_CONSUME();
         //Reset node if we have been running for more than 8 hours
         SSN_RESET_AFTER_N_SECONDS(8*3600);
         // Get load currents and status of machines

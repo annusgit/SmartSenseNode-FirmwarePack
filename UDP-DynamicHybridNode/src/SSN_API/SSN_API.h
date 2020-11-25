@@ -240,7 +240,7 @@ void SSN_GET_MAC();
 void SSN_GET_CONFIG();
 void SSN_GET_CONFIG_WITH_5_SECONDS_HALT();
 void SSN_GET_TIMEOFDAY();
-void SSN_RECEIVE_ASYNC_MESSAGE();
+void SSN_RECEIVE_ASYNC_MESSAGE_AND_ROUTE_OR_CONSUME();
 void SSN_CHECK_ETHERNET_CONNECTION();
 void SSN_GET_AMBIENT_CONDITION(uint8_t temp_min, uint8_t temp_max, uint8_t rh_min, uint8_t rh_max);
 void SSN_RESET_AFTER_N_SECONDS(uint32_t seconds);
