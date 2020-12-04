@@ -6,14 +6,14 @@
 /** Our SSN UDP communication socket */
 SOCKET SSN_UDP_SOCKET;
 /** SSN Server Address */
-uint8_t SSN_SERVER_IP[] = {192, 168, 0, 167};
+uint8_t SSN_SERVER_IP[] = {172, 16, 0, 56};
 /** SSN Server PORT */
 uint16_t SSN_SERVER_PORT = 9999;
 
 /** Static IP Assignment */
-uint8_t SSN_STATIC_IP[4]		= {192, 168, 0, 168};
-uint8_t SSN_SUBNET_MASK[4]		= {255, 255, 255, 0};
-uint8_t SSN_GATWAY_ADDRESS[4]	= {192, 168, 0, 1};
+uint8_t SSN_STATIC_IP[4]		= {172, 16, 0, 58};
+uint8_t SSN_SUBNET_MASK[4]		= {255, 255, 255, 192};
+uint8_t SSN_GATWAY_ADDRESS[4]	= {172, 16, 0, 62};
 
 /** A counter to maintain how many messages have been sent from SSN to Server since wakeup */
 uint32_t SSN_SENT_MESSAGES_COUNTER = 0;
@@ -152,7 +152,10 @@ void SSN_GET_CONFIG() {
 			SSN_LED_INDICATE(SSN_CURRENT_STATE);
 		}
 		SendAfter++;
+		// service watchdog
 		ServiceWatchdog();
+		// reset node after a few minutes
+		SSN_RESET_AFTER_N_SECONDS(8*3600);
 		// 100 milliseconds
 		sleep_for_microseconds(100000);
 	}
@@ -326,7 +329,7 @@ void SSN_RESET_AFTER_N_SECONDS(uint32_t seconds) {
 	if (ssn_uptime_in_seconds > seconds) {
 		printf("Time to have some rest... I'll wake up in about 5 seconds...\n");
 		SoftReset();
-		while (1);
+		while(1);
 	}
 	return;
 }

@@ -290,7 +290,7 @@ uint8_t sample_Temperature_Humidity(uint16_t *temperature, uint16_t* relative_hu
 int8_t sample_Temperature_Humidity_bytes(uint8_t* temperature_bytes, uint8_t* relative_humidity_bytes) {
 	bool read_ok = AM2320_I2C2_Read_Temp_and_Humidity();
 	if (!read_ok) {
-		printf("Temperature Sensor READ_ERROR. Reseting...\n");
+		//printf("Temperature Sensor READ_ERROR. Reseting...\n");
 		// reset sensor's power source
 		PORTClearBits(IOPORT_A, BIT_4);
 		sleep_for_microseconds(10000);
@@ -298,7 +298,7 @@ int8_t sample_Temperature_Humidity_bytes(uint8_t* temperature_bytes, uint8_t* re
 		return SENSOR_READ_ERROR;
 	}
 	if (!CRC_check()) {
-		printf("Temperature Sensor CRC_ERROR. Reseting...\n");
+		//printf("Temperature Sensor CRC_ERROR. Reseting...\n");
 		// reset sensor's power source
 		PORTClearBits(IOPORT_A, BIT_4);
 		sleep_for_microseconds(500000);
