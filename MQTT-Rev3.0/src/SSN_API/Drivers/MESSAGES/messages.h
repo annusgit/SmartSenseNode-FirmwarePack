@@ -1,4 +1,3 @@
-
 #ifndef __messages_h__
 #define __messages_h__
 
@@ -14,9 +13,9 @@
 #include "../../global.h"
 
 /** Maximum Message size in bytes to send over the network */
-#define max_send_message_size   62
+#define max_send_message_size   65
 /** Maximum Message size in bytes to receive over the network */
-#define max_recv_message_size   14
+#define max_recv_message_size   65
 
 /** Message id for requesting MAC address from Server */
 #define GET_MAC_MESSAGE_ID              1
@@ -42,15 +41,15 @@
 /** Message id for requesting SSN Reset received from Server */
 #define DEBUG_RESET_SSN_MESSAGE_ID      11
 
-#define GET_MAC_MESSAGE_Size                                  3
-#define SET_MAC_MESSAGE_Size                                  7
-#define GET_TIMEOFDAY_MESSAGE_Size                    3
-#define SET_TIMEOFDAY_MESSAGE_Size                     7
-#define GET_CONFIG_MESSAGE_Size                            3
-#define SET_CONFIG_MESSAGE_Size                            14
-#define ACK_CONFIG_MESSAGE_Size                           16
-#define STATUS_UPDATE_MESSAGE_Size                    62
-#define RESET_MACHINE_TIME_MESSAGE_Size         4
+#define GET_MAC_MESSAGE_Size            7
+#define SET_MAC_MESSAGE_Size            13
+#define GET_TIMEOFDAY_MESSAGE_Size      7
+#define SET_TIMEOFDAY_MESSAGE_Size      11
+#define GET_CONFIG_MESSAGE_Size         7
+#define SET_CONFIG_MESSAGE_Size         28
+#define ACK_CONFIG_MESSAGE_Size         16
+#define STATUS_UPDATE_MESSAGE_Size      65
+#define RESET_MACHINE_TIME_MESSAGE_Size 4
 
 
 /**

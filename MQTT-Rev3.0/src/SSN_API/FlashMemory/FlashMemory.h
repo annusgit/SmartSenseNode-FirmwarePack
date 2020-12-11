@@ -23,8 +23,9 @@ uint8_t FindMACInFlashMemory(uint8_t* SSN_MAC_ADDRESS, uint8_t* SSN_DEFAULT_MAC)
  * @param SSN_CURRENT_SENSOR_MAXLOADS Byte array in which machine maximum load currents will be written to calculate load percentages
  * @return <b>NO_TIMEOFDAY_STATE</b> if sensor configurations are found in EEPROM; else <b>NO_CONFIG_STATE</b>
  */
-uint8_t FindSensorConfigurationsInFlashMemory(uint8_t* SSN_CONFIG, uint8_t* SSN_REPORT_INTERVAL, uint8_t* SSN_CURRENT_SENSOR_RATINGS, uint8_t* SSN_CURRENT_SENSOR_THRESHOLDS, 
-        uint8_t* SSN_CURRENT_SENSOR_MAXLOADS);
+uint8_t FindSensorConfigurationsInFlashMemory(uint8_t* SSN_CONFIG, uint8_t* SSN_REPORT_INTERVAL, uint8_t* TEMPERATURE_MIN_THRESHOLD,  uint8_t* TEMPERATURE_MAX_THRESHOLD, 
+    uint8_t* HUMIDITY_MIN_THRESHOLD, uint8_t* HUMIDITY_MAX_THRESHOLD, uint8_t* SSN_CURRENT_SENSOR_RATINGS, uint8_t* SSN_CURRENT_SENSOR_THRESHOLDS,  uint8_t* SSN_CURRENT_SENSOR_MAXLOADS, 
+    float* SSN_CURRENT_SENSOR_VOLTAGE_SCALARS);
 
 #endif
 

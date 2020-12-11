@@ -1,6 +1,9 @@
-
-
 #include "network.h"
+
+char* StatusUpdatesChannel   = "StatusUpdates";
+char* GettersChannel         = "Getters";
+char NodeExclusiveChannel[17];
+
 
 void WIZ5500_Reset() {
     /* Reset WIZ5500 for ~460ms */
@@ -155,8 +158,7 @@ void WIZ5500_network_initiate(void) {
 	if(netinfo.dhcp == NETINFO_DHCP) printf("\r\n=== %s NET CONF : DHCP ===\r\n",(char*)tmpstr);
 	else printf("\r\n=== %s NET CONF : Static ===\r\n",(char*)tmpstr);
 
-	printf("MAC: %02X:%02X:%02X:%02X:%02X:%02X\r\n",netinfo.mac[0],netinfo.mac[1],netinfo.mac[2],
-			netinfo.mac[3],netinfo.mac[4],netinfo.mac[5]);
+	printf("MAC: %02X:%02X:%02X:%02X:%02X:%02X\r\n",netinfo.mac[0],netinfo.mac[1],netinfo.mac[2], netinfo.mac[3],netinfo.mac[4],netinfo.mac[5]);
 	printf("SIP: %d.%d.%d.%d\r\n", netinfo.ip[0],netinfo.ip[1],netinfo.ip[2],netinfo.ip[3]);
 	printf("GAR: %d.%d.%d.%d\r\n", netinfo.gw[0],netinfo.gw[1],netinfo.gw[2],netinfo.gw[3]);
 	printf("SUB: %d.%d.%d.%d\r\n", netinfo.sn[0],netinfo.sn[1],netinfo.sn[2],netinfo.sn[3]);
@@ -203,6 +205,8 @@ void Ethernet_Register_MAC(uint8_t* this_mac) {
     WIZ5500_network_information.mac[3] = this_mac[3];
     WIZ5500_network_information.mac[4] = this_mac[4];
     WIZ5500_network_information.mac[5] = this_mac[5];
+	// also create the exclusive MQTT channel here
+	sprintf(NodeExclusiveChannel, "%02X:%02X:%02X:%02X:%02X:%02X", this_mac[0], this_mac[1], this_mac[2], this_mac[3], this_mac[4], this_mac[5]);
 }
 
 void Ethernet_Save_Static_IP(uint8_t* this_IP) {

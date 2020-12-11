@@ -1,4 +1,3 @@
-
 #ifndef __global_h__
 #define __global_h__
 
@@ -43,7 +42,7 @@
 /* EEPROM MAC address size */
 #define EEPROM_MAC_SIZE             6
 /* EEPROM current sensor configurations size */
-#define EEPROM_CONFIG_SIZE          13
+#define EEPROM_CONFIG_SIZE          21
 /* EEPROM time of day size */
 #define TIME_Of_DAY_SIZE            4
 /* Max number of machines that SSN can monitor */
@@ -53,14 +52,13 @@
 #define MQTT_TCP_SOCKET             0
 #define MQTT_MAX_LEN                100
 #define MQTT_BUFFER_SIZE            2048
-#define MQTT_Port                   1883
+#define MQTT_Port                   36000
 
 //#define __UDP_COMMUNICATION
 #define __MQTT_COMMUNICATION
 
 /** SSN Fault Count Variable */
 uint32_t fault_count;
-
 
 // Debugging macros for each module. Enable them for printing status
 //#define _SMARTSENSE_DEBUG_

@@ -1,4 +1,3 @@
-
 #ifndef __network_h__
 #define __network_h__
 
@@ -6,10 +5,10 @@
 #define _SUPPRESS_PLIB_WARNING
 #define _DISABLE_OPENADC10_CONFIGPORT_WARNING
 
-#include "../../global.h"
 #include <plib.h>
 #include <stdio.h>
 #include <string.h>
+#include "../../global.h"
 #include "Ethernet/socket.h"
 #include "Internet/DHCP/dhcp.h"
 #include "Internet/MQTT/MQTTClient.h"
@@ -50,9 +49,11 @@ Network MQTT_Network;
 MQTTClient Client_MQTT;    
 MQTTMessage Message_MQTT;
 MQTTPacket_connectData MQTT_DataPacket;
-static char* TopicToSubscribeTo="/SSN/CONFIG";
-static char* TopicToPublishTo="/SSN/";
+extern char* StatusUpdatesChannel;
+extern char* GettersChannel;
+extern char NodeExclusiveChannel[17];
 unsigned char MQTT_buf[100];
+
 //const char* cliendId = "4C:E5";
 typedef struct opts_struct {
 	char clientid[MQTT_MAX_LEN];
@@ -67,7 +68,7 @@ typedef struct opts_struct {
 } opts_struct;
 opts_struct MQTTOptions;
 
-/**************************************************************************//**
+/*****************************************************************************
  * @brief Default Network Inforamtion
  *****************************************************************************/
 

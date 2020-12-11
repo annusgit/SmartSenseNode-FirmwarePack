@@ -183,14 +183,19 @@ extern uint8_t SSN_CURRENT_STATE, SSN_PREV_STATE;
 extern uint8_t SSN_REPORT_INTERVAL;
 /** SSN current sensor configurations */
 extern uint8_t SSN_CONFIG[EEPROM_CONFIG_SIZE];
-/** */
+/** Flags used to indicate if we have received configurations */
 extern bool CONFIG_received, TimeOfDay_received;
+/** SSN current sensor relative scalar for voltage output */
+extern float SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[NO_OF_MACHINES];
 /** SSN current sensor ratings */
 extern uint8_t SSN_CURRENT_SENSOR_RATINGS[4];
-/** SSN machine thresholds for deciding IDLE state */
-extern uint8_t SSN_CURRENT_SENSOR_THRESHOLDS[4];
 /** SSN machine maximum loads for calculating percentage loads on machines */
 extern uint8_t SSN_CURRENT_SENSOR_MAXLOADS[4];
+/** SSN machine thresholds for deciding IDLE state */
+extern uint8_t SSN_CURRENT_SENSOR_THRESHOLDS[4];
+/** SSN Temperature and Humidity Sensor Thresholds */
+extern uint8_t TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD;
+extern uint8_t RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD;
 /** SSN machine load currents array */
 extern float Machine_load_currents[NO_OF_MACHINES];
 /** SSN machine load percentages array */

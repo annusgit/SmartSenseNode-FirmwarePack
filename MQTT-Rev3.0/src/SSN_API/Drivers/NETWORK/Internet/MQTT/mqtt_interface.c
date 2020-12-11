@@ -51,7 +51,7 @@ unsigned long MilliTimer;
  * @note MUST BE register to your system 1m Tick timer handler.
  */
 void MilliTimer_Handler(void) {
-        MilliTimer++;
+	MilliTimer++;
 }
 
 /*
@@ -60,7 +60,7 @@ void MilliTimer_Handler(void) {
  *         that contains the configuration information for the Timer.
  */
 void TimerInit(Timer* timer) {
-        timer->end_time = 0;
+	timer->end_time = 0;
 }
 
 /*
@@ -69,8 +69,8 @@ void TimerInit(Timer* timer) {
  *         that contains the configuration information for the Timer.
  */
 char TimerIsExpired(Timer* timer) {
-        long left = timer->end_time - MilliTimer;
-        return (left < 0);
+	long left = timer->end_time - MilliTimer;
+	return (left < 0);
 }
 
 /*
@@ -80,7 +80,7 @@ char TimerIsExpired(Timer* timer) {
  *         timeout : setting timeout millisecond.
  */
 void TimerCountdownMS(Timer* timer, unsigned int timeout) {
-        timer->end_time = MilliTimer + timeout;
+	timer->end_time = MilliTimer + timeout;
 }
 
 /*
@@ -90,7 +90,7 @@ void TimerCountdownMS(Timer* timer, unsigned int timeout) {
  *         timeout : setting timeout millisecond.
  */
 void TimerCountdown(Timer* timer, unsigned int timeout) {
-        timer->end_time = MilliTimer + (timeout * 1000);
+	timer->end_time = MilliTimer + (timeout * 1000);
 }
 
 /*
@@ -99,8 +99,8 @@ void TimerCountdown(Timer* timer, unsigned int timeout) {
  *         that contains the configuration information for the Timer.
  */
 int TimerLeftMS(Timer* timer) {
-        long left = timer->end_time - MilliTimer;
-        return (left < 0) ? 0 : left;
+	long left = timer->end_time - MilliTimer;
+	return (left < 0) ? 0 : left;
 }
 
 /*
@@ -111,10 +111,10 @@ int TimerLeftMS(Timer* timer) {
  * @retval None
  */
 void NewNetwork(Network* n, int sn) {
-        n->my_socket = sn;
-        n->mqttread = w5x00_read;
-        n->mqttwrite = w5x00_write;
-        n->disconnect = w5x00_disconnect;
+	n->my_socket = sn;
+	n->mqttread = w5x00_read;
+	n->mqttwrite = w5x00_write;
+	n->disconnect = w5x00_disconnect;
 }
 
 /*
@@ -127,10 +127,10 @@ void NewNetwork(Network* n, int sn) {
  */
 int w5x00_read(Network* n, unsigned char* buffer, int len, long time) {
 
-        if ((getSn_SR(n->my_socket) == SOCK_ESTABLISHED) && (getSn_RX_RSR(n->my_socket) > 0))
-                return recv(n->my_socket, buffer, len);
+	if ((getSn_SR(n->my_socket) == SOCK_ESTABLISHED) && (getSn_RX_RSR(n->my_socket) > 0))
+		return recv(n->my_socket, buffer, len);
 
-        return SOCK_ERROR;
+	return SOCK_ERROR;
 }
 
 /*
@@ -142,10 +142,10 @@ int w5x00_read(Network* n, unsigned char* buffer, int len, long time) {
  * @retval length of data sent or SOCKERR code
  */
 int w5x00_write(Network* n, unsigned char* buffer, int len, long time) {
-        if (getSn_SR(n->my_socket) == SOCK_ESTABLISHED)
-                return send(n->my_socket, buffer, len);
+	if (getSn_SR(n->my_socket) == SOCK_ESTABLISHED)
+		return send(n->my_socket, buffer, len);
 
-        return SOCK_ERROR;
+	return SOCK_ERROR;
 }
 
 /*
@@ -154,7 +154,7 @@ int w5x00_write(Network* n, unsigned char* buffer, int len, long time) {
  *         that contains the configuration information for the Network.
  */
 void w5x00_disconnect(Network* n) {
-        disconnect(n->my_socket);
+	disconnect(n->my_socket);
 }
 
 /*
@@ -165,8 +165,7 @@ void w5x00_disconnect(Network* n) {
  *         port : server port.
  */
 void ConnectNetwork(Network* n, uint8_t* ip, uint16_t port) {
-        uint16_t myport = 12345;
-
-        socket(n->my_socket, Sn_MR_TCP, myport, 0);
-        connect(n->my_socket, ip, port);
+	uint16_t myport = 12345;
+	socket(n->my_socket, Sn_MR_TCP, myport, 0);
+	connect(n->my_socket, ip, port);
 }
