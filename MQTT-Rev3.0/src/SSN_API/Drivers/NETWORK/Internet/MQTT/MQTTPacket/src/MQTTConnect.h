@@ -84,7 +84,6 @@ typedef struct
 
 #define MQTTPacket_willOptions_initializer { {'M', 'Q', 'T', 'W'}, 0, {NULL, {0, NULL}}, {NULL, {0, NULL}}, 0, 0 }
 
-
 typedef struct
 {
 	/** The eyecatcher for this structure.  must be MQTC. */

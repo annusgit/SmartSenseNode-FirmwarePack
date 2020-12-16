@@ -47,6 +47,7 @@ void RunSystemTests() {
     // 3. Check Ethernet Physical Link to SSN, i.e., is the Ethernet cable plugged into RJ45 of our SSN
     if (Ethernet_get_physical_link_status() != PHY_LINK_ON) {
         printf("LOG: Ethernet Physical Link BAD. Waiting for link...\n");
+		Clear_LED_INDICATOR();
         while (Ethernet_get_physical_link_status() != PHY_LINK_ON) {
             // Indicate the status of SSN i.e. NO_ETHERNET_STATE from the SSN LED as long as we don't get a stable physical link
             SSN_LED_INDICATE(NO_ETHERNET_STATE);

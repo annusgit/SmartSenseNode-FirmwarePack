@@ -375,17 +375,17 @@ int8_t sample_Temperature_Humidity_bytes_using_AM2320(uint8_t* temperature_bytes
 	bool read_ok = AM2320_I2C2_Read_Temp_and_Humidity();
 	if (!read_ok) {
 		// reset sensor's power source
-		PORTClearBits(IOPORT_A, BIT_4);
-		sleep_for_microseconds(1000);
-		PORTSetBits(IOPORT_A, BIT_4);
+//		PORTClearBits(IOPORT_A, BIT_4);
+//		sleep_for_microseconds(1000);
+//		PORTSetBits(IOPORT_A, BIT_4);
 		fault_count++; // remember 
 		return SENSOR_READ_ERROR;
 	}
 	if (!CRC_check()) {
 		// reset sensor's power source
-		PORTClearBits(IOPORT_A, BIT_4);
-		sleep_for_microseconds(1000);
-		PORTSetBits(IOPORT_A, BIT_4);
+//		PORTClearBits(IOPORT_A, BIT_4);
+//		sleep_for_microseconds(1000);
+//		PORTSetBits(IOPORT_A, BIT_4);
 		fault_count++; // remember 
 		return SENSOR_CRC_ERROR;
 	}
@@ -417,7 +417,7 @@ uint8_t ambient_condition_status() {
 	temperature = (float) (((recv_data[2] & 0x7F) << 8) | recv_data[3]) / 10.0f;
 	relative_humidity = (float) ((recv_data[0] << 8) | recv_data[1]) / 10.0f;
 #endif
-	printf("Temperature: %.2f, Humidity: %.2f\n", temperature, relative_humidity);
+	//printf("Temperature: %.2f, Humidity: %.2f\n", temperature, relative_humidity);
 	// Normal condition, return 0
 	if (temperature < MAX_NORMAL_TEMPERATURE && temperature > MIN_NORMAL_TEMPERATURE)
 		if (relative_humidity < MAX_NORMAL_RELATIVE_HUMIDITY && relative_humidity > MIN_NORMAL_RELATIVE_HUMIDITY)

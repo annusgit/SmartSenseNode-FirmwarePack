@@ -7,7 +7,7 @@ void SetupMQTTData(MQTTPacket_connectData* MQTT_DataPacket) {
 	MQTT_DataPacket->username.cstring = MQTTOptions.username;
 	MQTT_DataPacket->password.cstring = MQTTOptions.password;
 	MQTT_DataPacket->keepAliveInterval = 60;
-	MQTT_DataPacket->cleansession = 1;
+	MQTT_DataPacket->cleansession = 0;
 }
 
 void SetupMQTTOptions(opts_struct* MQTTOptions, char* cliendId, enum QoS x, int showtopics, char* MQTT_IP) {

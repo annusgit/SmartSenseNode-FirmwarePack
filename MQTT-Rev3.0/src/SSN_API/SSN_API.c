@@ -6,9 +6,9 @@
 /** Our SSN UDP communication socket */
 SOCKET SSN_UDP_SOCKET;
 /** SSN Server Address */
-uint8_t SSN_SERVER_IP[]			= {115, 186, 183, 129};
+uint8_t SSN_SERVER_IP[] = {115, 186, 183, 129};
 /** SSN Server PORT */
-uint16_t SSN_SERVER_PORT		= 36000;
+uint16_t SSN_SERVER_PORT = 36000;
 
 /** Static IP Assignment */
 uint8_t SSN_STATIC_IP[4]		= {192, 168, 0, 60};
@@ -179,19 +179,15 @@ void SSN_GET_TIMEOFDAY() {
 			Send_GETTimeOfDay_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
 		}
 		if (TimeOfDay_received) {
+			// initialize SSN's uptime
+			ssn_uptime_in_seconds = 0;
+			SSN_PREV_STATE = SSN_CURRENT_STATE;
+			SSN_CURRENT_STATE = NORMAL_ACTIVITY_STATE;
+			if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
+				Clear_LED_INDICATOR();
+			}
 			break;
 		}
-		// Try to receive a message every 100 milliseconds
-		//                    if (Receive_TimeOfDay(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT)) {
-		//                              // initialize SSN's uptime
-		//                              ssn_uptime_in_seconds = 0;
-		//                              SSN_PREV_STATE = SSN_CURRENT_STATE;
-		//                              SSN_CURRENT_STATE = NORMAL_ACTIVITY_STATE;
-		//                              if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
-		//                                        Clear_LED_INDICATOR();
-		//                              }
-		//                              break;
-		//                    }
 		// Give LED indication every second
 		if (SendAfter % 10 == 0) {
 			SSN_LED_INDICATE(SSN_CURRENT_STATE);
@@ -247,46 +243,47 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 
 			case SET_CONFIG_MESSAGE_ID:
 				// write the new config to designated location in EEPROM
-                EEPROM_Write_Array(EEPROM_BLOCK_0, EEPROM_CONFIG_LOC, params, EEPROM_CONFIG_SIZE);
-                // Copy received configurations to the SSN_CONFIG array
-                int i; for (i = 0; i < EEPROM_CONFIG_SIZE; i++) {
-                    SSN_CONFIG[i] = params[i];
-                }
-                // Copy from the configurations, the sensor ratings, thresholds and maximum load values to our variables
-                for (i = 0; i < NO_OF_MACHINES; i++) {
-                    /* Get the parameters from the Configurations */
-                    SSN_CURRENT_SENSOR_RATINGS[i]       = SSN_CONFIG[4*i+0];
-                    SSN_CURRENT_SENSOR_THRESHOLDS[i]    = SSN_CONFIG[4*i+1];
-                    SSN_CURRENT_SENSOR_MAXLOADS[i]      = SSN_CONFIG[4*i+2];
-                    if (SSN_CONFIG[4*i+3] == 0) {
-                        SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.0;
-                    } else {
-                        SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 0.333;
-                    }
-                }
-				TEMPERATURE_MIN_THRESHOLD			= SSN_CONFIG[16];
-				TEMPERATURE_MAX_THRESHOLD			= SSN_CONFIG[17];
-				RELATIVE_HUMIDITY_MIN_THRESHOLD		= SSN_CONFIG[18];
-				RELATIVE_HUMIDITY_MAX_THRESHOLD		= SSN_CONFIG[19];
+				EEPROM_Write_Array(EEPROM_BLOCK_0, EEPROM_CONFIG_LOC, params, EEPROM_CONFIG_SIZE);
+				// Copy received configurations to the SSN_CONFIG array
+				int i;
+				for (i = 0; i < EEPROM_CONFIG_SIZE; i++) {
+					SSN_CONFIG[i] = params[i];
+				}
+				// Copy from the configurations, the sensor ratings, thresholds and maximum load values to our variables
+				for (i = 0; i < NO_OF_MACHINES; i++) {
+					/* Get the parameters from the Configurations */
+					SSN_CURRENT_SENSOR_RATINGS[i] = SSN_CONFIG[4 * i + 0];
+					SSN_CURRENT_SENSOR_THRESHOLDS[i] = SSN_CONFIG[4 * i + 1];
+					SSN_CURRENT_SENSOR_MAXLOADS[i] = SSN_CONFIG[4 * i + 2];
+					if (SSN_CONFIG[4 * i + 3] == 0) {
+						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.0;
+					} else {
+						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 0.333;
+					}
+				}
+				TEMPERATURE_MIN_THRESHOLD = SSN_CONFIG[16];
+				TEMPERATURE_MAX_THRESHOLD = SSN_CONFIG[17];
+				RELATIVE_HUMIDITY_MIN_THRESHOLD = SSN_CONFIG[18];
+				RELATIVE_HUMIDITY_MAX_THRESHOLD = SSN_CONFIG[19];
 				// save new reporting interval
 				SSN_REPORT_INTERVAL = SSN_CONFIG[20];
-                printf("LOG: Received New Current Sensor Configuration from SSN Server: \n"
+				printf("LOG: Received New Current Sensor Configuration from SSN Server: \n"
 					"     >> S1-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M1-Threshold: %03d Arms | M1-Maxload: %03d Arms |\n"
 					"     >> S2-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M2-Threshold: %03d Arms | M2-Maxload: %03d Arms |\n"
 					"     >> S3-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M3-Threshold: %03d Arms | M3-Maxload: %03d Arms |\n"
 					"     >> S4-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M4-Threshold: %03d Arms | M4-Maxload: %03d Arms |\n"
 					"     >> MIN TEMP : %03d C | MAX TEMP : %03d C    |\n"
 					"     >> MIN RH   : %03d % | MIN RH   : %03d %    |\n"
-					"     >> Report   : %d seconds\n", 
+					"     >> Report   : %d seconds\n",
 					SSN_CURRENT_SENSOR_RATINGS[0], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[0], SSN_CURRENT_SENSOR_THRESHOLDS[0], SSN_CURRENT_SENSOR_MAXLOADS[0],
 					SSN_CURRENT_SENSOR_RATINGS[1], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[1], SSN_CURRENT_SENSOR_THRESHOLDS[1], SSN_CURRENT_SENSOR_MAXLOADS[1],
 					SSN_CURRENT_SENSOR_RATINGS[2], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[2], SSN_CURRENT_SENSOR_THRESHOLDS[2], SSN_CURRENT_SENSOR_MAXLOADS[2],
-					SSN_CURRENT_SENSOR_RATINGS[3], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[3], SSN_CURRENT_SENSOR_THRESHOLDS[3], SSN_CURRENT_SENSOR_MAXLOADS[3], 
+					SSN_CURRENT_SENSOR_RATINGS[3], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[3], SSN_CURRENT_SENSOR_THRESHOLDS[3], SSN_CURRENT_SENSOR_MAXLOADS[3],
 					TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD, SSN_REPORT_INTERVAL);
-                // Reset Machine States 
-                for (i = 0; i < NO_OF_MACHINES; i++) {
-                    Machine_status[i] = SENSOR_NOT_CONNECTED;
-                }
+				// Reset Machine States 
+				for (i = 0; i < NO_OF_MACHINES; i++) {
+					Machine_status[i] = SENSOR_NOT_CONNECTED;
+				}
 				CONFIG_received = true;
 				break;
 
@@ -348,8 +345,8 @@ void SSN_CHECK_ETHERNET_CONNECTION() {
 		}
 		printf("LOG: Ethernet Physical Link Recovered :)\n");
 		// reconnect to MQTT broker after breaking previous socket connection
-		close(TCP_SOCKET);
-		SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
+		// close(TCP_SOCKET);
+		// SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
 	}
 	return;
 }
@@ -396,7 +393,9 @@ void SSN_GET_AMBIENT_CONDITION() {
 void SSN_RESET_AFTER_N_SECONDS(uint32_t seconds) {
 	/* Check if we should reset (after given minutes when machines are not ON) */
 	if (ssn_uptime_in_seconds > seconds) {
-		printf("Time to have some rest... I'll wake up in about 5 seconds...\n");
+		printf("(LOG): Closing MQTT TCP Socket\n");
+		close(TCP_SOCKET);
+		printf("(LOG): Time to have some rest... I'll wake up in about 5 seconds...\n");
 		SoftReset();
 		while (1);
 	}
