@@ -6,14 +6,17 @@
 /** Our SSN UDP communication socket */
 SOCKET SSN_UDP_SOCKET;
 /** SSN Server Address */
-uint8_t SSN_SERVER_IP[] = {115, 186, 183, 129};
+uint8_t SSN_SERVER_IP[] = {34, 87, 92, 5};
 /** SSN Server PORT */
 uint16_t SSN_SERVER_PORT = 36000;
+//uint8_t SSN_SERVER_IP[] = {192, 168, 0, 120};
+///** SSN Server PORT */
+//uint16_t SSN_SERVER_PORT = 36000;
 
 /** Static IP Assignment */
-uint8_t SSN_STATIC_IP[4]		= {192, 168, 0, 60};
-uint8_t SSN_SUBNET_MASK[4]		= {255, 255, 255, 0};
-uint8_t SSN_GATWAY_ADDRESS[4]	= {192, 168, 0, 1};
+uint8_t SSN_STATIC_IP[4]		= {172, 16, 0, 58};
+uint8_t SSN_SUBNET_MASK[4]		= {255, 255, 255, 192};
+uint8_t SSN_GATWAY_ADDRESS[4]	= {172, 16, 0, 62};
 
 /** A counter to maintain how many messages have been sent from SSN to Server since wakeup */
 uint32_t SSN_SENT_MESSAGES_COUNTER = 0;

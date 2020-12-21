@@ -371,6 +371,10 @@ void Ethernet_set_Static_IP(uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* g
     Ethernet_Save_Static_IP(static_IP);
     Ethernet_Save_Subnet_Mask(subnet_mask);
     Ethernet_Save_Gateway_Address(gateway);
+	WIZ5500_network_information.dns[0] = 172;
+	WIZ5500_network_information.dns[1] = 16;
+	WIZ5500_network_information.dns[2] = 0;
+	WIZ5500_network_information.dns[3] = 1;
     WIZ5500_network_initiate(); // Static netinfo setting
 }
 

@@ -2,7 +2,7 @@
 #define _DISABLE_OPENADC10_CONFIGPORT_WARNING
 
 #pragma config FWDTEN		= OFF			// Turn off watchdog timer
-#pragma config WDTPS		= PS4096		// Watchdog timer period
+#pragma config WDTPS		= PS16384		// Watchdog timer period
 #pragma config FSOSCEN		= OFF			// Secondary Oscillator Enable (Disabled)
 #pragma config FNOSC        = FRCPLL		// Select 8MHz internal Fast RC (FRC) oscillator with PLL
 #pragma config FPLLIDIV     = DIV_2         // Divide PLL input (FRC) -> 4MHz
@@ -78,9 +78,9 @@ int main() {
 	// First find MAC in flash memory or assign default MAC address
 	SSN_COPY_MAC_FROM_MEMORY();
 	// We can chose two ways to operate over UDP; static or dynamic IP
-	SSN_UDP_SOCKET = SetupConnectionWithDHCP(SSN_MAC_ADDRESS, SSN_UDP_SOCKET_NUM);
+	// SSN_UDP_SOCKET = SetupConnectionWithDHCP(SSN_MAC_ADDRESS, SSN_UDP_SOCKET_NUM);
 	// Setup Static IP
-	// SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS);
+	SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS);
 	// MQTT connection
 	SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
 	// Get MAC address for SSN if we didn't have one already
@@ -123,6 +123,8 @@ int main() {
 		ServiceWatchdog();
 		// Network critical section ends here. Enable all interrupts
 		EnableGlobalInterrupt();
+		// keep MQTT alive
+    	MQTTYield(&Client_MQTT, 60);
 		// sleep for 100 milliseconds
 		sleep_for_microseconds(100000);
 		ms_100_counter++;

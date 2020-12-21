@@ -108,8 +108,8 @@ int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag) {
 		{
 			//M20150601 : Fixed the warning - taddr will never be NULL
 			/*
-	uint8_t taddr[4];
-	getSIPR(taddr);
+				uint8_t taddr[4];
+				getSIPR(taddr);
 			 */
 			uint32_t taddr;
 			getSIPR((uint8_t*) & taddr);
@@ -255,7 +255,6 @@ int8_t connect(uint8_t sn, uint8_t * addr, uint16_t port) {
 		if (taddr == 0xFFFFFFFF || taddr == 0) return SOCKERR_IPINVALID;
 	}
 	//
-
 	if (port == 0) return SOCKERR_PORTZERO;
 	setSn_DIPR(sn, addr);
 	setSn_DPORT(sn, port);
@@ -267,12 +266,10 @@ int8_t connect(uint8_t sn, uint8_t * addr, uint16_t port) {
 			setSn_IR(sn, Sn_IR_TIMEOUT);
 			return SOCKERR_TIMEOUT;
 		}
-
 		if (getSn_SR(sn) == SOCK_CLOSED) {
 			return SOCKERR_SOCKCLOSED;
 		}
 	}
-
 	return SOCK_OK;
 }
 

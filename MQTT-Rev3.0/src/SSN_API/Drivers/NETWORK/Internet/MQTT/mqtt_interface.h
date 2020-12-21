@@ -134,24 +134,21 @@ void SysTick_Handler(void)
 	MilliTimer_Handler();
 }
 
-int main(void)
-{
+int main(void) {
 	led_ctrl led1,led2;
-	int i;
-	int rc = 0;
+	int i, rc = 0;
 	unsigned char buf[100];
 	//Usart initialization for Debug.
 	USART1Initialze();
-		printf("USART initialized.\n\r");
+    printf("USART initialized.\n\r");
 
 	I2C1Initialize();
-		printf("I2C initialized.\n\r");
+    printf("I2C initialized.\n\r");
 
 	MACEEP_Read(mac_address,0xfa,6);
 
 	printf("Mac address\n\r");
-	for(i = 0 ; i < 6 ; i++)
-	{
+	for(i = 0 ; i < 6 ; i++) {
 		printf("%02x ",mac_address[i]);
 	}
 	printf("\n\r");
@@ -165,10 +162,10 @@ int main(void)
 
 	//W5500 initialization.
 	W5500HardwareInitilize();
-		printf("W5500 hardware interface initialized.\n\r");
+    printf("W5500 hardware interface initialized.\n\r");
 
 	W5500Initialze();
-		printf("W5500 IC initialized.\n\r");
+    printf("W5500 IC initialized.\n\r");
 
 	//Set network informations
 	wizchip_setnetinfo(&gWIZNETINFO);
@@ -202,8 +199,7 @@ int main(void)
 	rc = MQTTSubscribe(&c, "hello/wiznet", opts.qos, messageArrived);
 	printf("Subscribed %d\r\n", rc);
 
-    while(1)
-    {
+    while(1) {
     	MQTTYield(&c, data.keepAliveInterval);
     }
 }
@@ -217,7 +213,6 @@ int main(void)
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /*
  * @brief MQTT MilliTimer handler

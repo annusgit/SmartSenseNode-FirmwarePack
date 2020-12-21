@@ -34,7 +34,7 @@ struct MQTTClient SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_clien
 	MQTTClientInit(mqtt_client, net, 1000, MQTT_buf, 100, tempBuffer, 2048);
 	//printf("%d\n",Client_MQTT.command_timeout_ms);
 	printf("Waiting for connection 4...\n");
-	SetupMQTTOptions(MQTTOptions, cliendId, QOS0, 1, MQTT_IP);
+	SetupMQTTOptions(MQTTOptions, cliendId, QOS1, 1, MQTT_IP);
 	printf("Waiting for connection 5...\n");
 	SetupMQTTData(&MQTT_DataPacket);
 	printf("Waiting for connection 6...\n");

@@ -52,7 +52,7 @@
 #define MQTT_TCP_SOCKET             0
 #define MQTT_MAX_LEN                100
 #define MQTT_BUFFER_SIZE            2048
-#define MQTT_Port                   36000
+#define MQTT_Port                   1883
 
 //#define __UDP_COMMUNICATION
 #define __MQTT_COMMUNICATION

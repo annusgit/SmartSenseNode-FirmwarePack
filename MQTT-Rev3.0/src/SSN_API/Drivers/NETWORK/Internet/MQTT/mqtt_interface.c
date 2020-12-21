@@ -126,10 +126,8 @@ void NewNetwork(Network* n, int sn) {
  * @retval received data length or SOCKERR code
  */
 int w5x00_read(Network* n, unsigned char* buffer, int len, long time) {
-
 	if ((getSn_SR(n->my_socket) == SOCK_ESTABLISHED) && (getSn_RX_RSR(n->my_socket) > 0))
 		return recv(n->my_socket, buffer, len);
-
 	return SOCK_ERROR;
 }
 
@@ -144,7 +142,6 @@ int w5x00_read(Network* n, unsigned char* buffer, int len, long time) {
 int w5x00_write(Network* n, unsigned char* buffer, int len, long time) {
 	if (getSn_SR(n->my_socket) == SOCK_ESTABLISHED)
 		return send(n->my_socket, buffer, len);
-
 	return SOCK_ERROR;
 }
 
@@ -165,10 +162,11 @@ void w5x00_disconnect(Network* n) {
  *         port : server port.
  */
 void ConnectNetwork(Network* n, uint8_t* ip, uint16_t port) {
-	uint16_t myport = 12345;
+	uint16_t myport = 1883;
 	/** Annus Zulfiqar Added This */
 	// close(n->my_socket);
 	/** Annus Zulfiqar Added This */
+	printf("(MQTT): Connecting to %d.%d.%d.%d from port: %d to port: %d\n", ip[0], ip[1], ip[2], ip[3], myport, port);
 	socket(n->my_socket, Sn_MR_TCP, myport, 0);
 	connect(n->my_socket, ip, port);
 }

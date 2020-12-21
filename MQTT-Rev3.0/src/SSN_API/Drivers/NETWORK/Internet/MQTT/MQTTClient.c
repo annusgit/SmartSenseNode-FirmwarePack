@@ -44,8 +44,9 @@ static int sendPacket(MQTTClient* c, int length, Timer* timer) {
 
 void MQTTClientInit(MQTTClient* c, Network* network, unsigned int command_timeout_ms, unsigned char* sendbuf, size_t sendbuf_size, unsigned char* readbuf, size_t readbuf_size) {
 	c->ipstack = network;
-	int i; for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i) {
-		c->messageHandlers[i].topicFilter = 0;	
+	int i;
+	for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i) {
+		c->messageHandlers[i].topicFilter = 0;
 	}
 	c->command_timeout_ms = command_timeout_ms;
 	c->buf = sendbuf;
@@ -91,26 +92,23 @@ static int readPacket(MQTTClient* c, Timer* timer) {
 	MQTTHeader header = {0};
 	int len = 0;
 	int rem_len = 0;
-
 	/* 1. read the header byte.  This has the packet type in it */
-	if (c->ipstack->mqttread(c->ipstack, c->readbuf, 1, TimerLeftMS(timer)) != 1)
-		goto exit;
-
+	if (c->ipstack->mqttread(c->ipstack, c->readbuf, 1, TimerLeftMS(timer)) != 1) {
+		goto exit;	
+	}
 	len = 1;
 	/* 2. read the remaining length.  This is variable in itself */
 	decodePacket(c, &rem_len, TimerLeftMS(timer));
 	len += MQTTPacket_encode(c->readbuf + 1, rem_len); /* put the original remaining length back into the buffer */
-
 	/* 3. read the rest of the buffer using a callback to supply the rest of the data */
-	if (rem_len > 0 && (c->ipstack->mqttread(c->ipstack, c->readbuf + len, rem_len, TimerLeftMS(timer)) != rem_len))
-		goto exit;
-
+	if (rem_len > 0 && (c->ipstack->mqttread(c->ipstack, c->readbuf + len, rem_len, TimerLeftMS(timer)) != rem_len)) {
+		goto exit;	
+	}
 	header.byte = c->readbuf[0];
 	rc = header.bits.type;
 exit:
 	return rc;
 }
-
 
 // assume topic filter and name is in correct format
 // # can only be at end
@@ -168,12 +166,10 @@ int deliverMessage(MQTTClient* c, MQTTString* topicName, MQTTMessage* message) {
 
 int keepalive(MQTTClient* c) {
 	int rc = FAILURE;
-
 	if (c->keepAliveInterval == 0) {
 		rc = SUCCESSS;
 		goto exit;
 	}
-
 	if (TimerIsExpired(&c->ping_timer)) {
 		if (!c->ping_outstanding) {
 			Timer timer;
@@ -184,7 +180,6 @@ int keepalive(MQTTClient* c) {
 				c->ping_outstanding = 1;
 		}
 	}
-
 exit:
 	return rc;
 }
@@ -192,10 +187,7 @@ exit:
 int cycle(MQTTClient* c, Timer* timer) {
 	// read the socket, see what work is due
 	unsigned short packet_type = readPacket(c, timer);
-
-	int len = 0,
-		rc = SUCCESSS;
-
+	int len = 0, rc = SUCCESSS;
 	switch (packet_type) {
 		case CONNACK:
 		case PUBACK:
@@ -255,23 +247,18 @@ exit:
 int MQTTYield(MQTTClient* c, int timeout_ms) {
 	int rc = SUCCESSS;
 	Timer timer;
-
 	TimerInit(&timer);
 	TimerCountdownMS(&timer, timeout_ms);
-
 	if (cycle(c, &timer) == FAILURE) {
 		rc = FAILURE;
 	}
-
 	return rc;
 }
 
 void MQTTRun(void* parm) {
 	Timer timer;
 	MQTTClient* c = (MQTTClient*) parm;
-
 	TimerInit(&timer);
-
 	while (1) {
 #if defined(MQTT_TASK)
 		MutexLock(&c->mutex);
@@ -284,7 +271,6 @@ void MQTTRun(void* parm) {
 	}
 }
 
-
 #if defined(MQTT_TASK)
 
 int MQTTStartTask(MQTTClient* client) {
@@ -294,12 +280,10 @@ int MQTTStartTask(MQTTClient* client) {
 
 int waitfor(MQTTClient* c, int packet_type, Timer* timer) {
 	int rc = FAILURE;
-
 	do {
 		if (TimerIsExpired(timer))
 			break; // we timed out
 	} while ((rc = cycle(c, timer)) != packet_type);
-
 	return rc;
 }
 
