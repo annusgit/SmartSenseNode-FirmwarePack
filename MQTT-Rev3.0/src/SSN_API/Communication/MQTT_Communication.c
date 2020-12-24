@@ -1,5 +1,16 @@
 #include "MQTT_Communication.h"
 
+void setup_MQTT_Millisecond_Interrupt(uint32_t PERIPH_CLOCK) {
+    // enable timer-5 interrupt
+    IEC0bits.T5IE = 0x00;			// disable timer 1 interrupt, IEC0<4>
+    IFS0CLR = 0x0010;				// clear timer 1 int flag, IFS0<4>
+    IPC1CLR = 0x001f;				// clear timer 1 priority/subpriority fields 
+    IPC1SET = 0x0010;				// set timer 1 int priority = 4, IPC1<4:2>
+    IEC0bits.T5IE = 0x01;			// enable timer 1 int, IEC0<4>
+    T5CON = 0x8030;					// this prescaler reduces the input clock frequency by 256
+    PR5 = (0.001*PERIPH_CLOCK/256);	// millsecond timer interrupt period
+}
+
 void SetupMQTTData(MQTTPacket_connectData* MQTT_DataPacket) {
 	MQTT_DataPacket->willFlag = 0;
 	MQTT_DataPacket->MQTTVersion = 3;
@@ -25,37 +36,37 @@ void SetupMQTTOptions(opts_struct* MQTTOptions, char* cliendId, enum QoS x, int 
 struct MQTTClient SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct* MQTTOptions, uint8_t *MQTT_IP, char* cliendId, void* messageArrivedoverMQTT) {
 	int rc = 0;
 	unsigned char tempBuffer[MQTT_BUFFER_SIZE] = {};
-	printf("Waiting for connection 1...\n");
+	printf("(MQTT): Creating MQTT Network Variables\n");
 	NewNetwork(net, MQTT_TCP_SOCKET);
-	printf("Waiting for connection 2...\n");
+	printf("(MQTT): Connecting to MQTT Broker\n");
 	ConnectNetwork(net, MQTT_IP, MQTT_Port);
 	//printf("%d\n",Client_MQTT.command_timeout_ms);
-	printf("Waiting for connection 3...\n");
+	printf("(MQTT): Initiating MQTT Client\n");
 	MQTTClientInit(mqtt_client, net, 1000, MQTT_buf, 100, tempBuffer, 2048);
 	//printf("%d\n",Client_MQTT.command_timeout_ms);
-	printf("Waiting for connection 4...\n");
+	printf("(MQTT): Setting Up MQTT Communication Options\n");
 	SetupMQTTOptions(MQTTOptions, cliendId, QOS1, 1, MQTT_IP);
-	printf("Waiting for connection 5...\n");
+	printf("(MQTT): Setting Up MQTT Data Variables\n");
 	SetupMQTTData(&MQTT_DataPacket);
-	printf("Waiting for connection 6...\n");
+	printf("(MQTT): Finalizing MQTT Connection\n");
 	rc = MQTTConnect(mqtt_client, &MQTT_DataPacket);
-	printf(">>I feel Connected!!!\r\n");
+	printf("(MQTT): Successfully Connected to Broker at %d:%d:%d:%d as MQTT Client\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
 	// Now do some subscriptions
-	printf("Subscribing to %s\r\n", NodeExclusiveChannel);
+	printf("(MQTT): Subscribing to Node Exclusive Channel: %s\n", NodeExclusiveChannel);
 	rc = MQTTSubscribe(mqtt_client, NodeExclusiveChannel, MQTTOptions->qos, messageArrivedoverMQTT);
-	printf("Subscribed %d\r\n", rc);
+	printf("(MQTT): Subscription Status: %d\n", rc);
 }
 
 void SetupMQTTMessage(MQTTMessage* Message_MQTT, uint8_t* payload, uint8_t payload_len, enum QoS x) {
-	//    printf("%d\n",Message_MQTT->payloadlen);
+	// printf("%d\n",Message_MQTT->payloadlen);
 	Message_MQTT->qos = x;
 	Message_MQTT->retained = 0;
 	Message_MQTT->dup = 0;
 	Message_MQTT->id = 1;
 	Message_MQTT->payload = payload;
-	//    printf("In SetupMQTTMessage=%d \n",payload);
+	// printf("In SetupMQTTMessage=%d \n",payload);
 	Message_MQTT->payloadlen = payload_len;
-	//    printf("SetupMQTTMessage %d\n",Message_MQTT->payloadlen);
+	// printf("SetupMQTTMessage %d\n",Message_MQTT->payloadlen);
 }
 
 void Send_Message_Over_MQTT(char* topic, uint8_t* messagetosend, uint8_t len) {

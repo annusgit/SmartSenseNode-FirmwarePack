@@ -1,4 +1,3 @@
-
 #include "Connection.h"
 
 uint8_t SetupConnectionWithDHCP(uint8_t* SSN_MAC_ADDRESS, uint8_t UDP_SOCKET) {
@@ -10,15 +9,15 @@ uint8_t SetupConnectionWithDHCP(uint8_t* SSN_MAC_ADDRESS, uint8_t UDP_SOCKET) {
 	// return socket(UDP_SOCKET, Sn_MR_UDP, SSN_DEFAULT_PORT, 0x00);
 }
 
-uint8_t SetupConnectionWithStaticIP(uint8_t* SSN_MAC_ADDRESS, uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway) {
+uint8_t SetupConnectionWithStaticIP(uint8_t* SSN_MAC_ADDRESS, uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway, uint8_t* dns) {
 	// Start Ethernet Now with a MAC address (either default MAC or custom SSN MAC)
 	Ethernet_Register_MAC(SSN_MAC_ADDRESS);
 	// Setup static ip for the SSN
-	Ethernet_set_Static_IP(static_IP, subnet_mask, gateway);
+	Ethernet_set_Static_IP(static_IP, subnet_mask, gateway, dns);
 }
 
-uint8_t SetupConnectionWithStaticIPAndReturnSocket(uint8_t UDP_SOCKET, uint8_t* SSN_MAC_ADDRESS, uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway) {
-	SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, static_IP, subnet_mask, gateway);
+uint8_t SetupConnectionWithStaticIPAndReturnSocket(uint8_t UDP_SOCKET, uint8_t* SSN_MAC_ADDRESS, uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway, uint8_t* dns) {
+	SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, static_IP, subnet_mask, gateway, dns);
 	// Our main UDP socket is defined now
 	return socket(UDP_SOCKET, Sn_MR_UDP, SSN_DEFAULT_PORT, 0x00);
 }

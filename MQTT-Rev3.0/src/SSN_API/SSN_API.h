@@ -166,6 +166,7 @@ extern uint16_t SSN_SERVER_PORT;
 extern uint8_t SSN_STATIC_IP[4];
 extern uint8_t SSN_SUBNET_MASK[4];
 extern uint8_t SSN_GATWAY_ADDRESS[4];
+extern uint8_t SSN_DNS_ADDRESS[4];
 
 /** A counter to maintain how many messages have been sent from SSN to Server since wakeup */
 extern uint32_t SSN_SENT_MESSAGES_COUNTER;

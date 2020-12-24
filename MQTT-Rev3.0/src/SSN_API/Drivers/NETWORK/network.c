@@ -227,92 +227,51 @@ void Ethernet_Save_Gateway_Address(uint8_t* this_gateway) {
     }    
 }
 
-void setup_TIMER2_with_interrupt(float delay_time) {
-    IEC0CLR = 0x0200;       // disable timer 2 interrupt, IEC0<9>
-    IFS0CLR = 0x0200;       // clear timer 2 int flag, IFS0<9>
-    IPC2CLR = 0x001f;       // clear timer 2 priority/subpriority fields 
-    IPC2SET = 0x0010;       // set timer 2 int priority = 4, IPC2<4:2>
-    IEC0SET = 0x0200;       // enable timer 2 int, IEC0<9>
-    // Turn on 16-bit Timer2, set prescaler to 1:256 (frequency is Pbclk / 256)
-    T2CON   = 0x8060;       // this prescaler reduces the input clock frequency by 64    
-    
-    PR2 = setPR2(delay_time);  // 1ms timer interrupt
-}
-
-void stop_TIMER2_with_interrupt() {
-    IEC0CLR = 0x0200;       // disable timer 2 interrupt, IEC0<9>
-    IFS0CLR = 0x0200;       // clear timer 2 int flag, IFS0<9>
-    IEC0SET = 0x0000;       // disable timer 2 int, IEC0<9>
-}
-
-void __ISR(_TIMER_2_VECTOR, IPL4SOFT) Timer2IntHandler(void){
-    // Do stuff...
-    msTicks++; /* increment counter necessary in Delay()*/
-	////////////////////////////////////////////////////////
-	// SHOULD BE Added DHCP Timer Handler your 1s tick timer
-	if(msTicks % 1000 == 0)	{
-        DHCP_time_handler();
-        /* Give the Ethernet Indication */
-        No_Ethernet_LED_INDICATE();
-        // printf("LOG: DHCP Timer Interrupt\n");
-    }
-	//////////////////////////////////////////////////////
-    // Clear interrupt flag 
-    IFS0CLR = 0x0200;       // clear timer 2 interrupt flag, IFS0<9>
+void Ethernet_Save_DNS(uint8_t* this_dns) {
+	uint8_t i; for(i=0; i<4; i++) {
+        WIZ5500_network_information.dns[i] = this_dns[i];
+    }    
 }
 
 void Ethernet_get_IP_from_DHCP() {
-    uint8_t tmp, memsize[2][8] = { {2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};
+    uint8_t tmp, memsize[2][8] = {{2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};
     uint16_t my_dhcp_retry = 0;
-
-    setup_TIMER2_with_interrupt(0.001);
-    
+    setup_millisecond_timer_with_interrupt();
     /* wizchip initialize*/
     if(ctlwizchip(CW_INIT_WIZCHIP,(void*)memsize) == -1) {
        printf("LOG: -> WIZCHIP Initialized fail.\r\n");
        while(1);
     }
     printf("LOG: -> Wizchip initialized successfully\n");
-
     /* PHY link status check */
     do {
        if(ctlwizchip(CW_GET_PHYLINK, (void*)&tmp) == -1)
           printf("LOG: -> Unknown PHY Link status.\r\n");
     } while(tmp == PHY_LINK_OFF);
     printf("LOG: -> Physical Link OK\n");
-    
     /* Network initialization */
     WIZ5500_network_initiate(); // Static netinfo setting
-    
     // Set MAC address before initiating DHCP
 	setSHAR(WIZ5500_network_information.mac);
-    
     // Step-1: initiate dhcp
     DHCP_init(SOCK_DHCP, gDATABUF);
     reg_dhcp_cbfunc(WIZ5500_IP_assigned_callback, WIZ5500_IP_assigned_callback, WIZ5500_IP_conflict_callback);
-    
     // printf("LOG: -> DHCP Requesting IP\n");
-    
     /* DHCP Request IP Loop */
     int dhcp_status, request_started = 0;
     while(1) {
         dhcp_status = DHCP_run();
-		
         switch(dhcp_status) {
-            
 			case DHCP_IP_ASSIGN:
                 printf("LOG: -> DHCP IP Assigned\n");
                 break;
-                
 			case DHCP_IP_CHANGED:
 				printf("LOG: -> DHCP IP Changed\n");
 				break;
-                
 			case DHCP_IP_LEASED:
 				// TO DO YOUR NETWORK APPs.
                 printf("LOG: -> DHCP Standby\n");
 				break;
-                
 			case DHCP_FAILED:
 				my_dhcp_retry++;
 				if(my_dhcp_retry > MY_MAX_DHCP_RETRY) {
@@ -324,57 +283,49 @@ void Ethernet_get_IP_from_DHCP() {
 					WIZ5500_network_initiate();   // apply the default static network and print out netinfo to serial
 				}
 				break;
-                
 			default:
                 // printf("LOG: -> Default Case. Return code: %d\n", dhcp_status);
                 if (request_started > 0) {
-                    if (request_started % 500 == 0)
-                        printf(".");
+                    if (request_started % 500 == 0) {
+						printf(".");	
+					}
                 }
                 else
-                    printf("LOG: -> DHCP Requesting IP");
+                    printf("LOG: -> DHCP Requesting IP\n");
                 request_started++;
 				break;
 		}
-        
         if (dhcp_status == DHCP_IP_LEASED) {
             printf("\n");
-            stop_TIMER2_with_interrupt();
+            stop_ms_timer_with_interrupt();
             break;
         }
     }
 }
 
-void Ethernet_set_Static_IP(uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway) {
+void Ethernet_set_Static_IP(uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway, uint8_t* dns) {
     WIZ5500_network_information.dhcp = NETINFO_STATIC;
     uint8_t tmp, memsize[2][8] = { {2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};
     uint16_t my_dhcp_retry = 0;
-    
     /* wizchip initialize*/
     if(ctlwizchip(CW_INIT_WIZCHIP,(void*)memsize) == -1) {
        printf("LOG: -> WIZCHIP Initialized fail.\r\n");
        while(1);
     }
     printf("LOG: -> Wizchip initialized successfully\n");
-
     /* PHY link status check */
     do {
        if(ctlwizchip(CW_GET_PHYLINK, (void*)&tmp) == -1)
           printf("LOG: -> Unknown PHY Link status.\r\n");
     } while(tmp == PHY_LINK_OFF);
     printf("LOG: -> Physical Link OK\n");
-    
     /* Network initialization */
     WIZ5500_network_initiate(); // Static netinfo setting
-    
     // Set network credentials, MAC address, IP, subnet mask and gateway
     Ethernet_Save_Static_IP(static_IP);
     Ethernet_Save_Subnet_Mask(subnet_mask);
     Ethernet_Save_Gateway_Address(gateway);
-	WIZ5500_network_information.dns[0] = 172;
-	WIZ5500_network_information.dns[1] = 16;
-	WIZ5500_network_information.dns[2] = 0;
-	WIZ5500_network_information.dns[3] = 1;
+	Ethernet_Save_DNS(dns);
     WIZ5500_network_initiate(); // Static netinfo setting
 }
 

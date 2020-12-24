@@ -17,7 +17,6 @@
 #define WIZ5500_W_COMMON_RTR    0x001A05F1 // Write Value: 0xF1
 #define WIZ5500_R_COMMON_RCR    0x001B0100 // Reset Value: 0x08
 #define WIZ5500_W_COMMON_RCR    0x001B05F1 // Write Value: 0xF1
-#define setPR2(seconds)         (seconds * PERIPH_CLK / 64)
 
 #define TCP_SOCKET  0
 #define MAX_LEN     100
@@ -159,16 +158,21 @@ void WIZ5500_IP_assigned_callback(void);
  */
 void WIZ5500_IP_conflict_callback(void);
 
-/**
- * Sets up a timer interrupt required to make DHCP requests
- * @param delay_time Period of interrupt in seconds
- */
-void setup_TIMER2_with_interrupt(float delay_time);
-
-/**
- * Stops the timer interrupt 
- */
-void stop_TIMER2_with_interrupt();
+///**
+// * Sets up a timer interrupt required to make DHCP requests
+// * @param delay_time Period of interrupt in seconds
+// */
+//void setup_millisecond_timer_with_interrupt(float delay_time);
+//
+///**
+// * Starts the timer interrupt 
+// */
+//void start_ms_timer_with_interrupt();
+//
+///**
+// * Stops the timer interrupt 
+// */
+//void stop_ms_timer_with_interrupt();
 
 // API level function
 /**
@@ -189,6 +193,8 @@ void Ethernet_Save_Subnet_Mask(uint8_t* this_subnet);
 
 void Ethernet_Save_Gateway_Address(uint8_t* this_gateway);
 
+void Ethernet_Save_DNS(uint8_t* this_dns);
+
 /**
  * Gets an IP from DHCP; does not return until an IP is successfully retrieved
  */
@@ -198,7 +204,7 @@ void Ethernet_get_IP_from_DHCP();
  * Setup a Static IP
  */
 
-void Ethernet_set_Static_IP(uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway);
+void Ethernet_set_Static_IP(uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway, uint8_t* dns);
 
 /**
  * Sends a message over UDP

@@ -1,28 +1,6 @@
-
 #include "pseudo_rtcc.h"
 
 uint8_t Days_in_a_Month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-void EnableGlobalInterrupt() {
-    IEC0bits.T1IE = 0x01;   // enable timer 1 int, IEC0<4>
-}
-
-void DisableGlobalInterrupt() {
-    IEC0bits.T1IE = 0x00;   // disable timer 1 interrupt, IEC0<4>
-}
-
-void setup_Global_Clock_And_Half_Second_Interrupt(uint32_t PERIPH_CLOCK) {
-    // initialize the SSN global clock 
-    ssn_uptime_in_seconds = 0;
-    // enable timer-1 interrupt
-    IEC0bits.T1IE = 0x00;			// disable timer 1 interrupt, IEC0<4>
-    IFS0CLR = 0x0010;				// clear timer 1 int flag, IFS0<4>
-    IPC1CLR = 0x001f;				// clear timer 1 priority/subpriority fields 
-    IPC1SET = 0x0010;				// set timer 1 int priority = 4, IPC1<4:2>
-    IEC0bits.T1IE = 0x01;			// enable timer 1 int, IEC0<4>
-    T1CON = 0x8030;					// this prescaler reduces the input clock frequency by 256
-    PR1 = (0.5*PERIPH_CLOCK/256);	// half second timer interrupt
-}
 
 void set_ssn_time(uint32_t this_time) {
     // assign both clocks the same time

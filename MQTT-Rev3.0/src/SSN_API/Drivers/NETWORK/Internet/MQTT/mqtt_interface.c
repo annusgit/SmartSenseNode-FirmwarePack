@@ -81,6 +81,7 @@ char TimerIsExpired(Timer* timer) {
  */
 void TimerCountdownMS(Timer* timer, unsigned int timeout) {
 	timer->end_time = MilliTimer + timeout;
+	// printf("(Timer): Starting at %d; Will end at %d\n", MilliTimer, timer->end_time);
 }
 
 /*

@@ -191,7 +191,7 @@ uint8_t Receive_CONFIG(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_
 			case DEBUG_EEPROM_CLEAR_MESSAGE_ID:
 				// stop the global timer
 				//stop_Global_Clock();
-				DisableGlobalInterrupt();
+				DisableGlobalHalfSecondInterrupt();
 				printf("(DEBUG): Clearing EEPROM Now...\n");
 				// Clear EEPROM and reset node
 				EEPROM_Clear();
@@ -206,7 +206,7 @@ uint8_t Receive_CONFIG(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_
 			case DEBUG_RESET_SSN_MESSAGE_ID:
 				// stop the global timer
 				//stop_Global_Clock();
-				DisableGlobalInterrupt();
+				DisableGlobalHalfSecondInterrupt();
 				// reset the SSN
 				printf("(DEBUG): Reseting Controller Now...\n");
 				sleep_for_microseconds(1000000);

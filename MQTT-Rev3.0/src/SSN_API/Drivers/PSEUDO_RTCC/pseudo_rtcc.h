@@ -29,21 +29,21 @@ uint32_t ssn_static_clock, ssn_dynamic_clock;
 /** This is our global SSN clock in number of seconds, for how many seconds has the SSN been awake? */
 uint32_t ssn_uptime_in_seconds;
 
-/**
- * Sets up the global clock and half-second interrupt for SSN
- * @param PERIPH_CLOCK Peripheral clock of SSN
- */
-void setup_Global_Clock_And_Half_Second_Interrupt(uint32_t PERIPH_CLOCK);
-
-/**
- * Starts half-second interrupt from Timer-1
- */
-void EnableGlobalInterrupt();
-
-/**
- * Stops half-second interrupt from Timer-1
- */
-void DisableGlobalInterrupt();
+///**
+// * Sets up the global clock and half-second interrupt for SSN
+// * @param PERIPH_CLOCK Peripheral clock of SSN
+// */
+//void setup_Global_Clock_And_Half_Second_Interrupt(uint32_t PERIPH_CLOCK);
+//
+///**
+// * Starts half-second interrupt from Timer-1
+// */
+//void EnableGlobalHalfSecondInterrupt();
+//
+///**
+// * Stops half-second interrupt from Timer-1
+// */
+//void DisableGlobalHalfSecondInterrupt();
 
 /**
  * Stops the global SSN clock

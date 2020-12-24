@@ -209,6 +209,7 @@ int main(void) {
 #define __MQTT_INTERFACE_H_
 
 #include <stdint.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {

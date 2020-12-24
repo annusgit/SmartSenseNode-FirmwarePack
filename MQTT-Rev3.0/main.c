@@ -2,7 +2,7 @@
 #define _DISABLE_OPENADC10_CONFIGPORT_WARNING
 
 #pragma config FWDTEN		= OFF			// Turn off watchdog timer
-#pragma config WDTPS		= PS16384		// Watchdog timer period
+#pragma config WDTPS		= PS32768		// Watchdog timer period
 #pragma config FSOSCEN		= OFF			// Secondary Oscillator Enable (Disabled)
 #pragma config FNOSC        = FRCPLL		// Select 8MHz internal Fast RC (FRC) oscillator with PLL
 #pragma config FPLLIDIV     = DIV_2         // Divide PLL input (FRC) -> 4MHz
@@ -13,6 +13,25 @@
 #pragma config JTAGEN		= OFF           // JTAG Enable (Disabled)
 
 #include "SSN_API/SSN_API.h"
+
+/** A millisecond timer interrupt required for DHCP and MQTT Yielding functions */
+void __ISR(_TIMER_2_VECTOR, IPL4SOFT) Timer2IntHandler(void){
+	// clear timer 2 interrupt flag
+	IFS0bits.T2IF = 0x00;
+    // millisecond ticks for DHCP
+    msTicks++; /* increment counter necessary in Delay()*/
+	// millisecond ticks for MQTT 
+	MilliTimer_Handler();
+	////////////////////////////////////////////////////////
+	// SHOULD BE Added DHCP Timer Handler your 1s tick timer
+	if(msTicks % 1000 == 0)	{
+        DHCP_time_handler();
+        /* Give the Ethernet Indication */
+        // No_Ethernet_LED_INDICATE();
+		printf("\n(LOG): One Second Passed in Millisecond Interrupt Handler\n");
+    }
+	//////////////////////////////////////////////////////
+}
 
 /** Half-Second interrupt that controls our send message routine of the SSN. Half-second and not one second is because we can not set an interrupt of up to 1 second with the current clock of the SSN. 
  * We only start this interrupt service once we have Ethernet configured and all self-tests are successful. The message to be sent is constructed every half a second in the main function and only reported 
@@ -80,7 +99,7 @@ int main() {
 	// We can chose two ways to operate over UDP; static or dynamic IP
 	// SSN_UDP_SOCKET = SetupConnectionWithDHCP(SSN_MAC_ADDRESS, SSN_UDP_SOCKET_NUM);
 	// Setup Static IP
-	SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS);
+	SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
 	// MQTT connection
 	SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
 	// Get MAC address for SSN if we didn't have one already
@@ -96,8 +115,8 @@ int main() {
 	//InterruptEnabled = true;
 	uint8_t ms_100_counter = 0;
 	while (SSN_IS_ALIVE) {
-		// Network critical section begins here. Disable all interrupts
-		DisableGlobalInterrupt();
+		// Network critical section begins here. Disable global half second interrupt
+		DisableGlobalHalfSecondInterrupt();
 		if (ms_100_counter >= 20) {
 			// Read temperature and humidity sensor
 			SSN_GET_AMBIENT_CONDITION();
@@ -113,7 +132,7 @@ int main() {
 		// we will report our status update out of sync with reporting interval if a state changes, this will allow us for accurate timing measurements
 		if (machine_status_change_flag == true) {
 			message_count++;
-			printf("Connection Status: %d\n", Client_MQTT.isconnected);
+			// printf("Connection Status: %d\n", Client_MQTT.isconnected);
 			socket_ok = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, temperature_bytes, relative_humidity_bytes, Machine_load_currents,
 				Machine_load_percentages, Machine_prev_status, Machine_status_flag, MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE, Machine_status_timestamp, ssn_static_clock,
 				abnormal_activity);
@@ -121,10 +140,12 @@ int main() {
 		}
 		// Clear the watchdog
 		ServiceWatchdog();
-		// Network critical section ends here. Enable all interrupts
-		EnableGlobalInterrupt();
-		// keep MQTT alive
-    	MQTTYield(&Client_MQTT, 60);
+		// MQTT process handler
+		start_ms_timer_with_interrupt();
+    	MQTTYield(&Client_MQTT, 50);
+		stop_ms_timer_with_interrupt();
+		// Network critical section ends here. Enable global half second interrupt
+		EnableGlobalHalfSecondInterrupt();
 		// sleep for 100 milliseconds
 		sleep_for_microseconds(100000);
 		ms_100_counter++;
