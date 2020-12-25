@@ -168,6 +168,15 @@ void ConnectNetwork(Network* n, uint8_t* ip, uint16_t port) {
 	// close(n->my_socket);
 	/** Annus Zulfiqar Added This */
 	printf("(MQTT): Connecting to %d.%d.%d.%d from port: %d to port: %d\n", ip[0], ip[1], ip[2], ip[3], myport, port);
-	socket(n->my_socket, Sn_MR_TCP, myport, 0);
-	connect(n->my_socket, ip, port);
+	if(socket(n->my_socket, Sn_MR_TCP, myport, 0) == n->my_socket) {
+        printf("(MQTT): TCP Socket Created Successfully\n");
+    } else {
+        printf("(MQTT): TCP Socket Creation Failed\n");
+    }
+	uint8_t connection_status = connect(n->my_socket, ip, port);
+    if (connection_status == SOCK_OK) {
+        printf("(MQTT): TCP Socket Connected with Broker Successfully\n");
+    } else {
+        printf("(MQTT): TCP Socket Connection with Broker Failed\n");
+    }
 }
