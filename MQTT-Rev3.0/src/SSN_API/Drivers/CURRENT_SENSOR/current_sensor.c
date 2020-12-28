@@ -162,9 +162,9 @@ void Calculate_True_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, uint16_
     while(count < num_samples) {
         for (i = 0; i < NO_OF_MACHINES; i++) {
             if(SENSOR_RATINGS[i]==100) {
-                sensor_relative_scalar = 1.0; //0.333; // max voltage of 1.65Vrms
+                sensor_relative_scalar = 1.00; // max voltage of 1.65Vrms
             } else {
-                sensor_relative_scalar = 1.0; //0.333; // max voltage of 1.00Vrms
+                sensor_relative_scalar = 1.00; // max voltage of 1.00Vrms
             }
             // Sample one value from i-th channel
             uint16_t adc_raw_sample = sample_Current_Sensor_channel(i);
