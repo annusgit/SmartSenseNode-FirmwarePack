@@ -45,7 +45,7 @@ uint8_t SSN_CURRENT_SENSOR_RATINGS[4];
 /** SSN machine maximum loads for calculating percentage loads on machines */
 uint8_t SSN_CURRENT_SENSOR_MAXLOADS[4];
 /** SSN machine thresholds for deciding IDLE state */
-uint8_t SSN_CURRENT_SENSOR_THRESHOLDS[4];
+float SSN_CURRENT_SENSOR_THRESHOLDS[4];
 /** SSN Temperature and Humidity Sensor Thresholds */
 uint8_t TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD;
 uint8_t RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD;
@@ -119,14 +119,16 @@ void SSN_GET_MAC() {
 		if (SendAfter % 50 == 0) {
 			Send_GETMAC_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
 		}
-		// Try to receive a message every 100 milliseconds
-		//Receive_MAC(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
 		// Give LED indication every second
 		if (SendAfter % 10 == 0) {
 			SSN_LED_INDICATE(SSN_CURRENT_STATE);
 		}
 		SendAfter++;
 		ServiceWatchdog();
+		// MQTT process handler
+		start_ms_timer_with_interrupt();
+		MQTTYield(&Client_MQTT, 50);
+		stop_ms_timer_with_interrupt();
 		// 100 milliseconds
 		sleep_for_microseconds(100000);
 	}
@@ -146,24 +148,23 @@ void SSN_GET_CONFIG() {
 		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
 			Clear_LED_INDICATOR();
 		}
+		if (CONFIG_received) {
+			break;
+		}
 		// request a Configuration after every 5 seconds
 		if (SendAfter % 50 == 0) {
 			Send_GETCONFIG_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
 		}
-		if (CONFIG_received) {
-			break;
-		}
-		// Try to receive a message every 100 milliseconds
-		// if (Receive_CONFIG(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, SSN_CONFIG, &SSN_REPORT_INTERVAL, SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_THRESHOLDS,
-		// SSN_CURRENT_SENSOR_MAXLOADS, Machine_status)) {
-		//      break;
-		// }
 		// Give LED indication every second
 		if (SendAfter % 10 == 0) {
 			SSN_LED_INDICATE(SSN_CURRENT_STATE);
 		}
 		SendAfter++;
 		ServiceWatchdog();
+		// MQTT process handler
+		start_ms_timer_with_interrupt();
+		MQTTYield(&Client_MQTT, 50);
+		stop_ms_timer_with_interrupt();
 		// 100 milliseconds
 		sleep_for_microseconds(100000);
 	}
@@ -179,10 +180,6 @@ void SSN_GET_TIMEOFDAY() {
 		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
 			Clear_LED_INDICATOR();
 		}
-		// request a MAC address after every 5 seconds
-		if (SendAfter % 50 == 0) {
-			Send_GETTimeOfDay_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
-		}
 		if (TimeOfDay_received) {
 			// initialize SSN's uptime
 			ssn_uptime_in_seconds = 0;
@@ -191,7 +188,11 @@ void SSN_GET_TIMEOFDAY() {
 			if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
 				Clear_LED_INDICATOR();
 			}
-			break;
+			return;
+		}
+		// request time of day after every 5 seconds
+		if (SendAfter % 50 == 0 && !TimeOfDay_received) {
+			Send_GETTimeOfDay_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
 		}
 		// Give LED indication every second
 		if (SendAfter % 10 == 0) {
@@ -199,6 +200,10 @@ void SSN_GET_TIMEOFDAY() {
 		}
 		SendAfter++;
 		ServiceWatchdog();
+		// MQTT process handler
+		start_ms_timer_with_interrupt();
+		MQTTYield(&Client_MQTT, 50);
+		stop_ms_timer_with_interrupt();
 		// 100 milliseconds
 		sleep_for_microseconds(100000);
 	}
@@ -238,12 +243,14 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 				break;
 
 			case SET_TIMEOFDAY_MESSAGE_ID:
-				TimeOFDayTick = get_uint32_from_bytes(params);
-				printf("<- SET_TIMEOFDAY MESSAGE RECEIVED: %d\n", TimeOFDayTick);
-				// assign incoming clock time to SSN Global Clock (Pseudo Clock because we don't have an RTCC)
-				set_ssn_time(TimeOFDayTick);
-				ssn_uptime_in_seconds = 0;
-				TimeOfDay_received = true;
+				if(!TimeOfDay_received) {
+					TimeOFDayTick = get_uint32_from_bytes(params);
+					printf("<- SET_TIMEOFDAY MESSAGE RECEIVED: %d\n", TimeOFDayTick);
+					// assign incoming clock time to SSN Global Clock (Pseudo Clock because we don't have an RTCC)
+					set_ssn_time(TimeOFDayTick);
+					ssn_uptime_in_seconds = 0;
+					TimeOfDay_received = true;					
+				}
 				break;
 
 			case SET_CONFIG_MESSAGE_ID:
@@ -258,11 +265,11 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 				for (i = 0; i < NO_OF_MACHINES; i++) {
 					/* Get the parameters from the Configurations */
 					SSN_CURRENT_SENSOR_RATINGS[i] = SSN_CONFIG[4 * i + 0];
-					SSN_CURRENT_SENSOR_THRESHOLDS[i] = SSN_CONFIG[4 * i + 1];
+					SSN_CURRENT_SENSOR_THRESHOLDS[i] = SSN_CONFIG[4 * i + 1] / 10.0f;
 					SSN_CURRENT_SENSOR_MAXLOADS[i] = SSN_CONFIG[4 * i + 2];
 					if (SSN_CONFIG[4 * i + 3] == 0) {
 						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.0;
-					} else {
+					} else if (SSN_CONFIG[4 * i + 3] == 1) {
 						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 0.333;
 					}
 				}
@@ -273,17 +280,17 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 				// save new reporting interval
 				SSN_REPORT_INTERVAL = SSN_CONFIG[20];
 				printf("LOG: Received New Current Sensor Configuration from SSN Server: \n"
-					"     >> S1-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M1-Threshold: %03d Arms | M1-Maxload: %03d Arms |\n"
-					"     >> S2-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M2-Threshold: %03d Arms | M2-Maxload: %03d Arms |\n"
-					"     >> S3-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M3-Threshold: %03d Arms | M3-Maxload: %03d Arms |\n"
-					"     >> S4-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M4-Threshold: %03d Arms | M4-Maxload: %03d Arms |\n"
-					"     >> MIN TEMP : %03d C | MAX TEMP : %03d C    |\n"
-					"     >> MIN RH   : %03d % | MIN RH   : %03d %    |\n"
+					"     >> S1-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M1-Threshold: %.3f Arms | M1-Maxload: %03d Arms |\n"
+					"     >> S2-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M2-Threshold: %.3f Arms | M2-Maxload: %03d Arms |\n"
+					"     >> S3-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M3-Threshold: %.3f Arms | M3-Maxload: %03d Arms |\n"
+					"     >> S4-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M4-Threshold: %.3f Arms | M4-Maxload: %03d Arms |\n"
+					"     >> MIN TEMP : %03d C    | MAX TEMP : %03d C    |\n"
+					"     >> MIN RH   : %03d %    | MIN RH   : %03d %    |\n"
 					"     >> Report   : %d seconds\n",
-					SSN_CURRENT_SENSOR_RATINGS[0], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[0], SSN_CURRENT_SENSOR_THRESHOLDS[0]/10, SSN_CURRENT_SENSOR_MAXLOADS[0],
-					SSN_CURRENT_SENSOR_RATINGS[1], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[1], SSN_CURRENT_SENSOR_THRESHOLDS[1]/10, SSN_CURRENT_SENSOR_MAXLOADS[1],
-					SSN_CURRENT_SENSOR_RATINGS[2], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[2], SSN_CURRENT_SENSOR_THRESHOLDS[2]/10, SSN_CURRENT_SENSOR_MAXLOADS[2],
-					SSN_CURRENT_SENSOR_RATINGS[3], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[3], SSN_CURRENT_SENSOR_THRESHOLDS[3]/10, SSN_CURRENT_SENSOR_MAXLOADS[3],
+					SSN_CURRENT_SENSOR_RATINGS[0], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[0], SSN_CURRENT_SENSOR_THRESHOLDS[0], SSN_CURRENT_SENSOR_MAXLOADS[0],
+					SSN_CURRENT_SENSOR_RATINGS[1], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[1], SSN_CURRENT_SENSOR_THRESHOLDS[1], SSN_CURRENT_SENSOR_MAXLOADS[1],
+					SSN_CURRENT_SENSOR_RATINGS[2], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[2], SSN_CURRENT_SENSOR_THRESHOLDS[2], SSN_CURRENT_SENSOR_MAXLOADS[2],
+					SSN_CURRENT_SENSOR_RATINGS[3], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[3], SSN_CURRENT_SENSOR_THRESHOLDS[3], SSN_CURRENT_SENSOR_MAXLOADS[3],
 					TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD, SSN_REPORT_INTERVAL);
 				// Reset Machine States 
 				for (i = 0; i < NO_OF_MACHINES; i++) {

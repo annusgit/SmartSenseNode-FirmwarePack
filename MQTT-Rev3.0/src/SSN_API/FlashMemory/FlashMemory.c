@@ -23,7 +23,7 @@ uint8_t FindMACInFlashMemory(uint8_t* SSN_MAC_ADDRESS, uint8_t* SSN_DEFAULT_MAC)
 
 
 uint8_t FindSensorConfigurationsInFlashMemory(uint8_t* SSN_CONFIG, uint8_t* SSN_REPORT_INTERVAL, uint8_t* TEMPERATURE_MIN_THRESHOLD, uint8_t* TEMPERATURE_MAX_THRESHOLD, 
-	uint8_t* HUMIDITY_MIN_THRESHOLD, uint8_t* HUMIDITY_MAX_THRESHOLD, uint8_t* SSN_CURRENT_SENSOR_RATINGS, uint8_t* SSN_CURRENT_SENSOR_THRESHOLDS,  uint8_t* SSN_CURRENT_SENSOR_MAXLOADS, 
+	uint8_t* HUMIDITY_MIN_THRESHOLD, uint8_t* HUMIDITY_MAX_THRESHOLD, uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_CURRENT_SENSOR_THRESHOLDS,  uint8_t* SSN_CURRENT_SENSOR_MAXLOADS, 
 	float* SSN_CURRENT_SENSOR_VOLTAGE_SCALARS) {
     
     // 2. Check CONFIG in EEPROM only if MAC was valid
@@ -40,7 +40,7 @@ uint8_t FindSensorConfigurationsInFlashMemory(uint8_t* SSN_CONFIG, uint8_t* SSN_
 		for (i = 0; i < NO_OF_MACHINES; i++) {
 			/* Get the parameters from the Configurations */
 			SSN_CURRENT_SENSOR_RATINGS[i]       = SSN_CONFIG[4*i+0];
-			SSN_CURRENT_SENSOR_THRESHOLDS[i]    = SSN_CONFIG[4*i+1];
+			SSN_CURRENT_SENSOR_THRESHOLDS[i]    = SSN_CONFIG[4*i+1] / 10.0f;
 			SSN_CURRENT_SENSOR_MAXLOADS[i]      = SSN_CONFIG[4*i+2];
 			if (SSN_CONFIG[4*i+3] == 0) {
 				SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.0;
@@ -54,18 +54,18 @@ uint8_t FindSensorConfigurationsInFlashMemory(uint8_t* SSN_CONFIG, uint8_t* SSN_
 		*HUMIDITY_MAX_THRESHOLD		= SSN_CONFIG[19];
 		// save new reporting interval
 		*SSN_REPORT_INTERVAL = SSN_CONFIG[20];
-		printf("LOG: Received New Current Sensor Configuration from SSN Server: \n"
-			"     >> S1-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M1-Threshold: %03d Arms | M1-Maxload: %03d Arms |\n"
-			"     >> S2-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M2-Threshold: %03d Arms | M2-Maxload: %03d Arms |\n"
-			"     >> S3-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M3-Threshold: %03d Arms | M3-Maxload: %03d Arms |\n"
-			"     >> S4-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M4-Threshold: %03d Arms | M4-Maxload: %03d Arms |\n"
-			"     >> MIN TEMP : %03d C | MAX TEMP : %03d C    |\n"
-			"     >> MIN RH   : %03d % | MIN RH   : %03d %    |\n"
+		printf("LOG: Found Saved Current Sensor Configuration in EEPROM: \n"
+			"     >> S1-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M1-Threshold: %.3f Arms | M1-Maxload: %03d Arms |\n"
+			"     >> S2-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M2-Threshold: %.3f Arms | M2-Maxload: %03d Arms |\n"
+			"     >> S3-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M3-Threshold: %.3f Arms | M3-Maxload: %03d Arms |\n"
+			"     >> S4-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M4-Threshold: %.3f Arms | M4-Maxload: %03d Arms |\n"
+			"     >> MIN TEMP : %03d C    | MAX TEMP : %03d C    |\n"
+			"     >> MIN RH   : %03d %    | MIN RH   : %03d %    |\n"
 			"     >> Report   : %d seconds\n", 
-			SSN_CURRENT_SENSOR_RATINGS[0], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[0], SSN_CURRENT_SENSOR_THRESHOLDS[0]/10, SSN_CURRENT_SENSOR_MAXLOADS[0],
-			SSN_CURRENT_SENSOR_RATINGS[1], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[1], SSN_CURRENT_SENSOR_THRESHOLDS[1]/10, SSN_CURRENT_SENSOR_MAXLOADS[1],
-			SSN_CURRENT_SENSOR_RATINGS[2], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[2], SSN_CURRENT_SENSOR_THRESHOLDS[2]/10, SSN_CURRENT_SENSOR_MAXLOADS[2],
-			SSN_CURRENT_SENSOR_RATINGS[3], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[3], SSN_CURRENT_SENSOR_THRESHOLDS[3]/10, SSN_CURRENT_SENSOR_MAXLOADS[3], 
+			SSN_CURRENT_SENSOR_RATINGS[0], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[0], SSN_CURRENT_SENSOR_THRESHOLDS[0], SSN_CURRENT_SENSOR_MAXLOADS[0],
+			SSN_CURRENT_SENSOR_RATINGS[1], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[1], SSN_CURRENT_SENSOR_THRESHOLDS[1], SSN_CURRENT_SENSOR_MAXLOADS[1],
+			SSN_CURRENT_SENSOR_RATINGS[2], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[2], SSN_CURRENT_SENSOR_THRESHOLDS[2], SSN_CURRENT_SENSOR_MAXLOADS[2],
+			SSN_CURRENT_SENSOR_RATINGS[3], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[3], SSN_CURRENT_SENSOR_THRESHOLDS[3], SSN_CURRENT_SENSOR_MAXLOADS[3], 
 			*TEMPERATURE_MIN_THRESHOLD, *TEMPERATURE_MAX_THRESHOLD, 
 			*HUMIDITY_MIN_THRESHOLD, *HUMIDITY_MAX_THRESHOLD,
 			*SSN_REPORT_INTERVAL);

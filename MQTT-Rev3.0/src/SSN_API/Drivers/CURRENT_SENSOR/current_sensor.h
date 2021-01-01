@@ -75,7 +75,7 @@ void Calculate_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, uint16_t num
  * @param num_samples Number of samples to read on each channel for calculating RMS values
  * @param single_byte_RMS_CURRENTS Byte array to hold single byte integer RMS currents for each channel
  */
-void Calculate_True_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, uint16_t num_samples, float* RMS_CURRENTS);
+void Calculate_True_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, float* SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, uint16_t num_samples, float* RMS_CURRENTS);
 
 /** 
  * Calculates RMS value of current for a voltage output current sensor. Expects the ADC channel has already been sampled
@@ -109,8 +109,8 @@ float Current_CSensor_Read_RMS(uint8_t channel, uint16_t* current_samples_array,
  * @param Machine_status_timestamp An array of machine status timestamp indicating since when the machines have been in current state
  * @return Status_change_flag a flag that will indicate if the state of any machine has changed
  */
-bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, uint8_t* SSN_CURRENT_SENSOR_THRESHOLDS, uint8_t* SSN_CURRENT_SENSOR_MAXLOADS, float* Machine_load_currents, 
-        uint8_t* Machine_load_percentages, uint8_t* Machine_status, uint8_t* Machine_status_flag, uint32_t* Machine_status_duration, uint32_t* Machine_status_timestamp);
+bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, float* SSN_CURRENT_SENSOR_THRESHOLDS, uint8_t* SSN_CURRENT_SENSOR_MAXLOADS, 
+        float* Machine_load_currents, uint8_t* Machine_load_percentages, uint8_t* Machine_status, uint8_t* Machine_status_flag, uint32_t* Machine_status_duration, uint32_t* Machine_status_timestamp);
 
 int8_t Get_Machine_Status(uint8_t machine_number, float idle_threshold, uint8_t prev_state);
 

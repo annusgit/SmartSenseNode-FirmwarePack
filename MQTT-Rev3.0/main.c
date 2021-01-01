@@ -127,8 +127,8 @@ int main() {
 		// Reset node if we have been running for more than 8 hours
 		SSN_RESET_AFTER_N_SECONDS(8 * 3600);
 		// Get load currents and status of machines
-		machine_status_change_flag = Get_Machines_Status_Update(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_THRESHOLDS, SSN_CURRENT_SENSOR_MAXLOADS, Machine_load_currents,
-			Machine_load_percentages, Machine_status, &Machine_status_flag, Machine_status_duration, Machine_status_timestamp);
+		machine_status_change_flag = Get_Machines_Status_Update(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, SSN_CURRENT_SENSOR_THRESHOLDS, SSN_CURRENT_SENSOR_MAXLOADS, 
+			Machine_load_currents, Machine_load_percentages, Machine_status, &Machine_status_flag, Machine_status_duration, Machine_status_timestamp);
 		// we will report our status update out of sync with reporting interval if a state changes, this will allow us for accurate timing measurements
 		if (machine_status_change_flag == true) {
 			message_count++;
