@@ -243,14 +243,14 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 				break;
 
 			case SET_TIMEOFDAY_MESSAGE_ID:
-				if(!TimeOfDay_received) {
-					TimeOFDayTick = get_uint32_from_bytes(params);
-					printf("<- SET_TIMEOFDAY MESSAGE RECEIVED: %d\n", TimeOFDayTick);
-					// assign incoming clock time to SSN Global Clock (Pseudo Clock because we don't have an RTCC)
-					set_ssn_time(TimeOFDayTick);
-					ssn_uptime_in_seconds = 0;
-					TimeOfDay_received = true;					
-				}
+//				if(!TimeOfDay_received) {
+				TimeOFDayTick = get_uint32_from_bytes(params);
+				printf("<- SET_TIMEOFDAY MESSAGE RECEIVED: %d\n", TimeOFDayTick);
+				// assign incoming clock time to SSN Global Clock (Pseudo Clock because we don't have an RTCC)
+				set_ssn_time(TimeOFDayTick);
+				ssn_uptime_in_seconds = 0;
+				TimeOfDay_received = true;					
+//				}
 				break;
 
 			case SET_CONFIG_MESSAGE_ID:

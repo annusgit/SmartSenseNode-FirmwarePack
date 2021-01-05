@@ -60,6 +60,7 @@ void __ISR(_TIMER_1_VECTOR, IPL4SOFT) Timer1IntHandler_SSN_Hearbeat(void) {
 			socket_ok = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, temperature_bytes, relative_humidity_bytes, Machine_load_currents,
 				Machine_load_percentages, Machine_status, Machine_status_flag, Machine_status_duration, Machine_status_timestamp, ssn_static_clock, abnormal_activity);
 			Clear_Machine_Status_flag(&Machine_status_flag);
+//			printf("Machine Timestamps: %d %d %d %d\n", Machine_status_timestamp[0], Machine_status_timestamp[1], Machine_status_timestamp[2], Machine_status_timestamp[3]);
 			SSN_RESET_IF_SOCKET_CORRUPTED();
 		}
 		//SSN_RESET_AFTER_N_SECONDS(2*3600); // Testing
