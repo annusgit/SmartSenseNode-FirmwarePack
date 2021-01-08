@@ -1,4 +1,3 @@
-
 #ifndef __Communication_h__
 #define __Communication_h__
 

@@ -1,4 +1,3 @@
-
 #ifndef __Connection_h__
 #define __Connection_h__
 
@@ -24,7 +23,5 @@ uint8_t SetupConnectionWithStaticIPAndReturnSocket(uint8_t UDP_SOCKET, uint8_t* 
  * @return Will return a new socket for communication
  */
 uint8_t ResetConnection(uint8_t* SSN_CURRENT_MAC, uint8_t UDP_SOCKET);
-
-struct MQTTClient SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct* MQTTOptions, uint8_t *MQTT_IP, char* cliendId, void* messageArrivedoverMQTT);
 
 #endif

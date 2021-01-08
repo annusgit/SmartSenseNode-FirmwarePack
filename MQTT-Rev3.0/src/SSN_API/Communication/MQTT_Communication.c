@@ -33,28 +33,40 @@ void SetupMQTTOptions(opts_struct* MQTTOptions, char* cliendId, enum QoS x, int 
 	MQTTOptions->showtopics = showtopics;
 }
 
-struct MQTTClient SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct* MQTTOptions, uint8_t *MQTT_IP, char* cliendId, void* messageArrivedoverMQTT) {
-	int rc = 0;
+void SetupMQTTClientConnection(uint32_t clock_frequency, Network* net, MQTTClient* mqtt_client, opts_struct* MQTTOptions, uint8_t *MQTT_IP, char* cliendId, void* messageArrivedoverMQTT) {
+	int rc = FAILURE;
 	unsigned char tempBuffer[MQTT_BUFFER_SIZE] = {};
 	printf("(MQTT): Creating MQTT Network Variables\n");
 	NewNetwork(net, MQTT_TCP_SOCKET);
 	printf("(MQTT): Connecting to MQTT Broker\n");
-	ConnectNetwork(net, MQTT_IP, MQTT_Port);
+	ConnectNetwork(clock_frequency, net, MQTT_IP, MQTT_Port);
 	//printf("%d\n",Client_MQTT.command_timeout_ms);
 	printf("(MQTT): Initiating MQTT Client\n");
-	MQTTClientInit(mqtt_client, net, 1000, MQTT_buf, 100, tempBuffer, 2048);
+	MQTTClientInit(mqtt_client, net, 100, MQTT_buf, 100, tempBuffer, 2048);
 	//printf("%d\n",Client_MQTT.command_timeout_ms);
 	printf("(MQTT): Setting Up MQTT Communication Options\n");
 	SetupMQTTOptions(MQTTOptions, cliendId, QOS1, 1, MQTT_IP);
 	printf("(MQTT): Setting Up MQTT Data Variables\n");
 	SetupMQTTData(&MQTT_DataPacket);
 	printf("(MQTT): Finalizing MQTT Connection\n");
-	rc = MQTTConnect(mqtt_client, &MQTT_DataPacket);
-	printf("(MQTT): Successfully Connected to Broker at %d:%d:%d:%d as MQTT Client\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
-	// Now do some subscriptions
-	printf("(MQTT): Subscribing to Node Exclusive Channel: %s\n", NodeExclusiveChannel);
-	rc = MQTTSubscribe(mqtt_client, NodeExclusiveChannel, MQTTOptions->qos, messageArrivedoverMQTT);
-	printf("(MQTT): Subscription Status: %d\n", rc);
+	while (rc == FAILURE) {
+		rc = MQTTConnect(mqtt_client, &MQTT_DataPacket);
+		if (rc == SUCCESSS) {
+			printf("(MQTT): Successfully Connected to Broker at %d:%d:%d:%d as MQTT Client\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);	
+			// Now do some subscriptions
+			printf("(MQTT): Subscribing to Node Exclusive Channel: %s\n", NodeExclusiveChannel);
+			rc = MQTTSubscribe(mqtt_client, NodeExclusiveChannel, MQTTOptions->qos, messageArrivedoverMQTT);
+			if (rc == SUCCESSS) {
+				printf("(MQTT): Subscription Successful\n");
+				return;
+			} else {
+				printf("(MQTT): Subscription Attempt Failed. Retrying...\n");
+			}
+		} else {
+			printf("(MQTT): Connection to Broker Failed. Retrying...\n");	
+		}
+		sleep_for_microseconds(1000000);
+	}
 }
 
 void SetupMQTTMessage(MQTTMessage* Message_MQTT, uint8_t* payload, uint8_t payload_len, enum QoS x) {
@@ -69,17 +81,20 @@ void SetupMQTTMessage(MQTTMessage* Message_MQTT, uint8_t* payload, uint8_t paylo
 	// printf("SetupMQTTMessage %d\n",Message_MQTT->payloadlen);
 }
 
-void Send_Message_Over_MQTT(char* topic, uint8_t* messagetosend, uint8_t len) {
+int Send_Message_Over_MQTT(char* topic, uint8_t* messagetosend, uint8_t len) {
 	int rc = 0;
 	SetupMQTTMessage(&Message_MQTT, messagetosend, len, QOS1);
 	rc = MQTTPublish(&Client_MQTT, topic, &Message_MQTT);
 	// printf("Published %d\r\n", rc);
-	// return rc;
+	return rc;
 }
 
 bool SendMessageMQTT(char* topic, uint8_t* messagetosend, uint8_t ssn_message_to_send_size) {
-	//    printf("In sendmessageMQTT %d\n",ssn_message_to_send_size);
-	Send_Message_Over_MQTT(topic, messagetosend, ssn_message_to_send_size);
+	int rc = Send_Message_Over_MQTT(topic, messagetosend, ssn_message_to_send_size);
+	if (rc != SUCCESSS) {
+		printf("XXXXXXXXXXXXXXXXXXXXXXX-> Message Publication to MQTT Broker Failed\n");
+		return false;
+	}
 	printf("-> %d-Byte Message Sent to MQTT Broker\n", ssn_message_to_send_size);
 	return true;
 }

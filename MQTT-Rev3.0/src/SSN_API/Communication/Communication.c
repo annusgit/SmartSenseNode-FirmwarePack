@@ -1,4 +1,3 @@
-
 #include "Communication.h"
 
 bool SendMessage(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT, uint8_t* message_to_send, uint8_t ssn_message_to_send_size) {
@@ -54,9 +53,8 @@ bool Send_STATUSUPDATE_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN
 		Machine_status_timestamp, ssn_uptime_in_seconds, abnormal_activity);
 	if (ssn_message_to_send_size != STATUS_UPDATE_MESSAGE_Size) {
 		// This is not possible but still..
-		printf("(Message BAD) ");
+		printf("(ERROR): Message BAD due to INCORRECT BYTE SIZE\n");
 	}
-	//       return SendMessage(SSN_Socket, SSN_SERVER_IP, SSN_SERVER_PORT, message_to_send, ssn_message_to_send_size);
 	return SendMessageMQTT(StatusUpdatesChannel, message_to_send, ssn_message_to_send_size);
 }
 

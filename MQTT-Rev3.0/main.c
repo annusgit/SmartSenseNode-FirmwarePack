@@ -28,7 +28,7 @@ void __ISR(_TIMER_2_VECTOR, IPL4SOFT) Timer2IntHandler(void){
         DHCP_time_handler();
         /* Give the Ethernet Indication */
         // No_Ethernet_LED_INDICATE();
-		printf("\n(LOG): One Second Passed in Millisecond Interrupt Handler\n");
+		// printf("\n(LOG): One Second Passed in Millisecond Interrupt Handler\n");
     }
 	//////////////////////////////////////////////////////
 }
@@ -55,13 +55,7 @@ void __ISR(_TIMER_1_VECTOR, IPL4SOFT) Timer1IntHandler_SSN_Hearbeat(void) {
 		if (report_counter >= SSN_REPORT_INTERVAL) {
 			// Reset the reporting counter
 			report_counter = 0;
-			message_count++;
-			//printf("Connection Status: %d\n", Client_MQTT.isconnected);
-			socket_ok = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, temperature_bytes, relative_humidity_bytes, Machine_load_currents,
-				Machine_load_percentages, Machine_status, Machine_status_flag, Machine_status_duration, Machine_status_timestamp, ssn_static_clock, abnormal_activity);
-			Clear_Machine_Status_flag(&Machine_status_flag);
-//			printf("Machine Timestamps: %d %d %d %d\n", Machine_status_timestamp[0], Machine_status_timestamp[1], Machine_status_timestamp[2], Machine_status_timestamp[3]);
-			SSN_RESET_IF_SOCKET_CORRUPTED();
+			report_now = true;
 		}
 		//SSN_RESET_AFTER_N_SECONDS(2*3600); // Testing
 		SSN_RESET_AFTER_N_SECONDS(8 * 3600);
@@ -102,7 +96,7 @@ int main() {
 	// Setup Static IP
 	// SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
 	// MQTT connection
-	SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
+	SetupMQTTClientConnection(PERIPH_CLK, &MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
 	// Get MAC address for SSN if we didn't have one already
 	SSN_GET_MAC();
 	// Get SSN configurations for SSN or pick from EEPROM if already assigned
@@ -130,21 +124,39 @@ int main() {
 		// Get load currents and status of machines
 		machine_status_change_flag = Get_Machines_Status_Update(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, SSN_CURRENT_SENSOR_THRESHOLDS, SSN_CURRENT_SENSOR_MAXLOADS, 
 			Machine_load_currents, Machine_load_percentages, Machine_status, &Machine_status_flag, Machine_status_duration, Machine_status_timestamp);
+		// Clear the watchdog
+		ServiceWatchdog();
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// a millisecond interrupt, just for MQTT. All MQTT processes require this timer function
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		start_ms_timer_with_interrupt();
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// we will report our status update out of sync with reporting interval if a state changes, this will allow us for accurate timing measurements
 		if (machine_status_change_flag == true) {
 			message_count++;
-			// printf("Connection Status: %d\n", Client_MQTT.isconnected);
 			socket_ok = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, temperature_bytes, relative_humidity_bytes, Machine_load_currents,
-				Machine_load_percentages, Machine_prev_status, Machine_status_flag, MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE, Machine_status_timestamp, ssn_static_clock,
-				abnormal_activity);
+				Machine_load_percentages, Machine_prev_status, Machine_status_flag, MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE, Machine_status_timestamp, ssn_static_clock, abnormal_activity);
 			Clear_Machine_Status_flag(&Machine_status_flag);
+			// SSN_RESET_IF_SOCKET_CORRUPTED(socket_ok);
 		}
-		// Clear the watchdog
-		ServiceWatchdog();
-		// MQTT process handler
-		start_ms_timer_with_interrupt();
-    	MQTTYield(&Client_MQTT, 50);
+		if (report_now == true) {
+			message_count++;
+			report_now = false; // reset report flag
+			socket_ok = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, temperature_bytes, relative_humidity_bytes, Machine_load_currents,
+				Machine_load_percentages, Machine_status, Machine_status_flag, Machine_status_duration, Machine_status_timestamp, ssn_static_clock, abnormal_activity);
+			Clear_Machine_Status_flag(&Machine_status_flag);
+			// printf("Node Uptime: %d\n", ssn_static_clock);
+			// printf("Machine State Timestamps: %d %d %d %d\n", Machine_status_timestamp[0], Machine_status_timestamp[1], Machine_status_timestamp[2], Machine_status_timestamp[3]);
+			// printf("Machine State Durations: %d %d %d %d\n", Machine_status_duration[0], Machine_status_duration[1], Machine_status_duration[2], Machine_status_duration[3]);
+			// SSN_RESET_IF_SOCKET_CORRUPTED(socket_ok);
+		}
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// MQTT background handler
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    	MQTTYield(&Client_MQTT, 10);
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		stop_ms_timer_with_interrupt();
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Network critical section ends here. Enable global half second interrupt
 		EnableGlobalHalfSecondInterrupt();
 		// sleep for 100 milliseconds

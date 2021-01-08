@@ -6,7 +6,8 @@
 /** Our SSN UDP communication socket */
 SOCKET SSN_UDP_SOCKET;
 /** SSN Server Address */
-uint8_t SSN_SERVER_IP[] = {34, 87, 92, 5};
+uint8_t SSN_SERVER_IP[] = {192, 168, 0, 120};
+//uint8_t SSN_SERVER_IP[] = {34, 87, 92, 5};
 //uint8_t SSN_SERVER_IP[] = {115, 186, 183, 129};
 /** SSN Server PORT */
 uint16_t SSN_SERVER_PORT = 36000;
@@ -30,6 +31,7 @@ uint8_t interrupts_per_second = 2;
 uint8_t half_second_counter = 0, delays_per_second_counter = 0;
 /** Counter variable for counting after how many intervals to send the status update */
 uint8_t report_counter = 0;
+bool report_now = false;
 /** Current State of the SSN. There is no state machine of the SSN but we still use this variable to keep track at some instances */
 uint8_t SSN_CURRENT_STATE = NO_MAC_STATE, SSN_PREV_STATE;
 /** Report Interval of SSN set according to the configurations passed to the SSN */
@@ -243,14 +245,14 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 				break;
 
 			case SET_TIMEOFDAY_MESSAGE_ID:
-//				if(!TimeOfDay_received) {
-				TimeOFDayTick = get_uint32_from_bytes(params);
-				printf("<- SET_TIMEOFDAY MESSAGE RECEIVED: %d\n", TimeOFDayTick);
-				// assign incoming clock time to SSN Global Clock (Pseudo Clock because we don't have an RTCC)
-				set_ssn_time(TimeOFDayTick);
-				ssn_uptime_in_seconds = 0;
-				TimeOfDay_received = true;					
-//				}
+				if(!TimeOfDay_received) {
+					TimeOFDayTick = get_uint32_from_bytes(params);
+					printf("<- SET_TIMEOFDAY MESSAGE RECEIVED: %d\n", TimeOFDayTick);
+					// assign incoming clock time to SSN Global Clock (Pseudo Clock because we don't have an RTCC)
+					set_ssn_time(TimeOFDayTick);
+					ssn_uptime_in_seconds = 0;
+					TimeOfDay_received = true;					
+				}
 				break;
 
 			case SET_CONFIG_MESSAGE_ID:
@@ -424,8 +426,8 @@ void SSN_RESET_AFTER_N_SECONDS_IF_NO_MACHINE_ON(uint32_t seconds) {
 	return;
 }
 
-void SSN_RESET_IF_SOCKET_CORRUPTED() {
-	if (!socket_ok) {
+void SSN_RESET_IF_SOCKET_CORRUPTED(bool socket_is_fine) {
+	if (!socket_is_fine) {
 		SSN_PREV_STATE = SSN_CURRENT_STATE;
 		SSN_CURRENT_STATE = NO_ETHERNET_STATE;
 		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {

@@ -178,6 +178,7 @@ extern uint8_t interrupts_per_second;
 extern uint8_t half_second_counter, delays_per_second_counter; 
 /** Counter variable for counting after how many intervals to send the status update */
 extern uint8_t report_counter;
+extern bool report_now;
 /** Current State of the SSN. There is no state machine of the SSN but we still use this variable to keep track at some instances */
 extern uint8_t SSN_CURRENT_STATE, SSN_PREV_STATE;
 /** Report Interval of SSN set according to the configurations passed to the SSN */
@@ -249,7 +250,7 @@ void SSN_CHECK_ETHERNET_CONNECTION();
 void SSN_GET_AMBIENT_CONDITION();
 void SSN_RESET_AFTER_N_SECONDS(uint32_t seconds);
 void SSN_RESET_AFTER_N_SECONDS_IF_NO_MACHINE_ON(uint32_t seconds);
-void SSN_RESET_IF_SOCKET_CORRUPTED();
+void SSN_RESET_IF_SOCKET_CORRUPTED(bool socket_is_fine);
 /**
  * Peripheral testing and debugging functions
  */

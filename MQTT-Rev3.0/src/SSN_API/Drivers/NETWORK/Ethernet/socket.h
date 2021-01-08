@@ -90,6 +90,8 @@
 
 #include <stdio.h>
 #include "wizchip_conf.h"
+#include "../../../global.h"
+
 
 #define SOCKET                uint8_t  ///< SOCKET type define for legacy driver
 
@@ -211,7 +213,7 @@ int8_t  listen(uint8_t sn);
  *                @ref SOCKERR_TIMEOUT   - Timeout occurred during request connection\n
  *                @ref SOCK_BUSY         - In non-block io mode, it returned immediately\n
  */
-int8_t  connect(uint8_t sn, uint8_t * addr, uint16_t port);
+int8_t  connect(uint32_t clock_frequency, uint8_t sn, uint8_t * addr, uint16_t port);
 
 /**
  * @ingroup WIZnet_socket_APIs

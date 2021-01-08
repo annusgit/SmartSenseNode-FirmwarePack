@@ -43,6 +43,7 @@
 #include "mqtt_interface.h"
 #include "../../Ethernet/wizchip_conf.h"
 #include "../../Ethernet/socket.h"
+#include "SSN_API/global.h"
 
 unsigned long MilliTimer;
 
@@ -162,21 +163,26 @@ void w5x00_disconnect(Network* n) {
  *         ip : server iP.
  *         port : server port.
  */
-void ConnectNetwork(Network* n, uint8_t* ip, uint16_t port) {
+void ConnectNetwork(uint32_t clock_frequency, Network* n, uint8_t* ip, uint16_t port) {
 	uint16_t myport = 1883;
 	/** Annus Zulfiqar Added This */
 	// close(n->my_socket);
 	/** Annus Zulfiqar Added This */
-	printf("(MQTT): Connecting to %d.%d.%d.%d from port: %d to port: %d\n", ip[0], ip[1], ip[2], ip[3], myport, port);
 	if(socket(n->my_socket, Sn_MR_TCP, myport, 0) == n->my_socket) {
         printf("(MQTT): TCP Socket Created Successfully\n");
     } else {
         printf("(MQTT): TCP Socket Creation Failed\n");
     }
-	uint8_t connection_status = connect(n->my_socket, ip, port);
-    if (connection_status == SOCK_OK) {
-        printf("(MQTT): TCP Socket Connected with Broker Successfully\n");
-    } else {
-        printf("(MQTT): TCP Socket Connection with Broker Failed\n");
-    }
+	printf("(MQTT): Connecting to %d.%d.%d.%d from port: %d to port: %d\n", ip[0], ip[1], ip[2], ip[3], myport, port);
+	uint8_t connection_status = SOCKERR_TIMEOUT;
+	while (connection_status != SOCK_OK) {
+		uint8_t connection_status = connect(clock_frequency, n->my_socket, ip, port);
+		if (connection_status == SOCK_OK) {
+			printf("(MQTT): TCP Socket Connected with Broker Successfully\n");
+			return;
+		} else {
+			printf("(MQTT): TCP Socket Connection with Broker Failed. Retrying...\n");
+		}
+		sleep_for_microseconds(1000000);
+	}
 }
