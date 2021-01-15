@@ -174,15 +174,21 @@ void ConnectNetwork(uint32_t clock_frequency, Network* n, uint8_t* ip, uint16_t 
         printf("(MQTT): TCP Socket Creation Failed\n");
     }
 	printf("(MQTT): Connecting to %d.%d.%d.%d from port: %d to port: %d\n", ip[0], ip[1], ip[2], ip[3], myport, port);
-	uint8_t connection_status = SOCKERR_TIMEOUT;
+	int connection_status = SOCKERR_TIMEOUT;
 	while (connection_status != SOCK_OK) {
-		uint8_t connection_status = connect(clock_frequency, n->my_socket, ip, port);
+		ServiceWatchdog();
+		connection_status = connect(clock_frequency, n->my_socket, ip, port);
 		if (connection_status == SOCK_OK) {
 			printf("(MQTT): TCP Socket Connected with Broker Successfully\n");
 			return;
 		} else {
-			printf("(MQTT): TCP Socket Connection with Broker Failed. Retrying...\n");
+			printf("(MQTT): TCP Socket Connection with Broker Failed (Error Code: %d). Retrying in 2 seconds...\n", connection_status);
+			if(socket(n->my_socket, Sn_MR_TCP, myport, 0) == n->my_socket) {
+				printf("(MQTT): TCP Socket Reinitialized Successfully\n");
+			} else {
+				printf("(MQTT): TCP Socket Reinitialization Failed\n");
+			}
 		}
-		sleep_for_microseconds(1000000);
+		sleep_for_microseconds(2000000);
 	}
 }

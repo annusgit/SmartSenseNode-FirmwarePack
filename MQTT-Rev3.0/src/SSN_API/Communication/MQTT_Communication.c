@@ -38,8 +38,6 @@ void SetupMQTTClientConnection(uint32_t clock_frequency, Network* net, MQTTClien
 	unsigned char tempBuffer[MQTT_BUFFER_SIZE] = {};
 	printf("(MQTT): Creating MQTT Network Variables\n");
 	NewNetwork(net, MQTT_TCP_SOCKET);
-	printf("(MQTT): Connecting to MQTT Broker\n");
-	ConnectNetwork(clock_frequency, net, MQTT_IP, MQTT_Port);
 	//printf("%d\n",Client_MQTT.command_timeout_ms);
 	printf("(MQTT): Initiating MQTT Client\n");
 	MQTTClientInit(mqtt_client, net, 100, MQTT_buf, 100, tempBuffer, 2048);
@@ -48,8 +46,11 @@ void SetupMQTTClientConnection(uint32_t clock_frequency, Network* net, MQTTClien
 	SetupMQTTOptions(MQTTOptions, cliendId, QOS1, 1, MQTT_IP);
 	printf("(MQTT): Setting Up MQTT Data Variables\n");
 	SetupMQTTData(&MQTT_DataPacket);
-	printf("(MQTT): Finalizing MQTT Connection\n");
 	while (rc == FAILURE) {
+		ServiceWatchdog();
+		printf("(MQTT): Connecting to MQTT Broker\n");
+		ConnectNetwork(clock_frequency, net, MQTT_IP, MQTT_Port);
+		printf("(MQTT): Finalizing MQTT Connection\n");
 		rc = MQTTConnect(mqtt_client, &MQTT_DataPacket);
 		if (rc == SUCCESSS) {
 			printf("(MQTT): Successfully Connected to Broker at %d:%d:%d:%d as MQTT Client\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);	
@@ -63,9 +64,9 @@ void SetupMQTTClientConnection(uint32_t clock_frequency, Network* net, MQTTClien
 				printf("(MQTT): Subscription Attempt Failed. Retrying...\n");
 			}
 		} else {
-			printf("(MQTT): Connection to Broker Failed. Retrying...\n");	
+			printf("(MQTT): Connection to Broker Failed. Retrying in 2 seconds...\n");	
 		}
-		sleep_for_microseconds(1000000);
+		sleep_for_microseconds(2000000);
 	}
 }
 
@@ -89,12 +90,10 @@ int Send_Message_Over_MQTT(char* topic, uint8_t* messagetosend, uint8_t len) {
 	return rc;
 }
 
-bool SendMessageMQTT(char* topic, uint8_t* messagetosend, uint8_t ssn_message_to_send_size) {
+int SendMessageMQTT(char* topic, uint8_t* messagetosend, uint8_t ssn_message_to_send_size) {
 	int rc = Send_Message_Over_MQTT(topic, messagetosend, ssn_message_to_send_size);
-	if (rc != SUCCESSS) {
-		printf("XXXXXXXXXXXXXXXXXXXXXXX-> Message Publication to MQTT Broker Failed\n");
-		return false;
+	if (rc == SUCCESSS) {
+		printf("(LOG): %d-Byte Message Sent to MQTT Broker\n", ssn_message_to_send_size);
 	}
-	printf("-> %d-Byte Message Sent to MQTT Broker\n", ssn_message_to_send_size);
-	return true;
+	return rc;
 }

@@ -83,7 +83,9 @@ int8_t temp_humidity_recv_status;
 uint8_t abnormal_activity;
 /** A variable to maintain a count of how many messages we have sent */
 uint32_t message_count = 0;
-bool socket_ok = true;
+int message_publish_status = 0;
+uint8_t mqtt_failure_counts = 0;
+uint8_t mqtt_allowed_failure_counts = 3;
 /** SSN loop variable */
 uint8_t i;
 
@@ -119,7 +121,22 @@ void SSN_GET_MAC() {
 		}
 		// request a MAC address after every 5 seconds
 		if (SendAfter % 50 == 0) {
-			Send_GETMAC_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+			message_publish_status = Send_GETMAC_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+			// did we fail to publish? make this count as a fault
+			if (message_publish_status != SUCCESSS) {
+				mqtt_failure_counts++;
+				printf("(ERROR): Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failure_counts, mqtt_allowed_failure_counts);
+			} else {
+				mqtt_failure_counts = 0;
+			}
+		}
+		// check how many failure counts have we encountered and reconnect to broker if necessary
+		if (mqtt_failure_counts>=mqtt_allowed_failure_counts) {
+			// assume our connection has broken, we'll reconnect at this point
+			printf("(MQTT): SSN Reconnecting to MQTT Broker from Scratch...\n");
+			SetupMQTTClientConnection(PERIPH_CLK, &MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
+			// connection re-established, exit fault code and reset failure counts
+			mqtt_failure_counts = 0;
 		}
 		// Give LED indication every second
 		if (SendAfter % 10 == 0) {
@@ -155,7 +172,22 @@ void SSN_GET_CONFIG() {
 		}
 		// request a Configuration after every 5 seconds
 		if (SendAfter % 50 == 0) {
-			Send_GETCONFIG_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+			message_publish_status = Send_GETCONFIG_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+			// did we fail to publish? make this count as a fault
+			if (message_publish_status != SUCCESSS) {
+				mqtt_failure_counts++;
+				printf("(ERROR): Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failure_counts, mqtt_allowed_failure_counts);
+			} else {
+				mqtt_failure_counts = 0;
+			}
+		}
+		// check how many failure counts have we encountered and reconnect to broker if necessary
+		if (mqtt_failure_counts>=mqtt_allowed_failure_counts) {
+			// assume our connection has broken, we'll reconnect at this point
+			printf("(MQTT): SSN Reconnecting to MQTT Broker from Scratch...\n");
+			SetupMQTTClientConnection(PERIPH_CLK, &MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
+			// connection re-established, exit fault code and reset failure counts
+			mqtt_failure_counts = 0;
 		}
 		// Give LED indication every second
 		if (SendAfter % 10 == 0) {
@@ -174,6 +206,7 @@ void SSN_GET_CONFIG() {
 }
 
 void SSN_GET_TIMEOFDAY() {
+	TimeOfDay_received = false;
 	uint16_t SendAfter = 0;
 	while (1) {
 		SSN_CHECK_ETHERNET_CONNECTION();
@@ -194,7 +227,22 @@ void SSN_GET_TIMEOFDAY() {
 		}
 		// request time of day after every 5 seconds
 		if (SendAfter % 50 == 0 && !TimeOfDay_received) {
-			Send_GETTimeOfDay_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+			message_publish_status = Send_GETTimeOfDay_Message(SSN_MAC_ADDRESS, SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
+			// did we fail to publish? make this count as a fault
+			if (message_publish_status != SUCCESSS) {
+				mqtt_failure_counts++;
+				printf("(ERROR): Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failure_counts, mqtt_allowed_failure_counts);
+			} else {
+				mqtt_failure_counts = 0;
+			}
+		}
+		// check how many failure counts have we encountered and reconnect to broker if necessary
+		if (mqtt_failure_counts>=mqtt_allowed_failure_counts) {
+			// assume our connection has broken, we'll reconnect at this point
+			printf("(MQTT): SSN Reconnecting to MQTT Broker from Scratch...\n");
+			SetupMQTTClientConnection(PERIPH_CLK, &MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
+			// connection re-established, exit fault code and reset failure counts
+			mqtt_failure_counts = 0;
 		}
 		// Give LED indication every second
 		if (SendAfter % 10 == 0) {
@@ -344,7 +392,7 @@ void SSN_CHECK_ETHERNET_CONNECTION() {
 			LinkWasOkay = false;
 			Clear_LED_INDICATOR();
 		}
-		printf("LOG: I Am Stuck :/ Ethernet Physical Link BAD...\n");
+		printf("LOG: No Ethernet Physical Link Connection :/ \n");
 		SSN_LED_INDICATE(SSN_CURRENT_STATE);
 		// Service the watchdog timer to make sure we don't reset 
 		ServiceWatchdog();
@@ -426,6 +474,15 @@ void SSN_RESET_AFTER_N_SECONDS_IF_NO_MACHINE_ON(uint32_t seconds) {
 	return;
 }
 
+void SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(uint32_t seconds) {
+	/* Check if we should reset (after given minutes when machines are not ON) */
+	if (ssn_uptime_in_seconds > seconds) {
+		printf("(LOG): Requesting Time of Day for Routing Syncing...\n");
+		SSN_GET_TIMEOFDAY();
+	}
+	return;
+}
+
 void SSN_RESET_IF_SOCKET_CORRUPTED(bool socket_is_fine) {
 	if (!socket_is_fine) {
 		SSN_PREV_STATE = SSN_CURRENT_STATE;
@@ -473,8 +530,8 @@ void network_test() {
 	uint8_t test_message_array[100] = "I am Annus Zulfiqar and I am trying to test this network";
 	uint8_t test_message_size = 56;
 	while (true) {
-		socket_ok = SendMessage(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, test_message_array, test_message_size);
-		if (!socket_ok) {
+		message_publish_status = SendMessage(SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT, test_message_array, test_message_size);
+		if (message_publish_status != SUCCESSS) {
 			printf("Socket Corrupted. Reinitializing..\n");
 			setup_Ethernet(5000000);
 			SSN_UDP_SOCKET = SetupConnectionWithStaticIPAndReturnSocket(SSN_UDP_SOCKET_NUM, SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);

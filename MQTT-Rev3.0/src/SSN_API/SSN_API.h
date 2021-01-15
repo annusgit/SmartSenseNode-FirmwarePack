@@ -231,7 +231,10 @@ extern uint8_t abnormal_activity;
 /** A variable to maintain a count of how many messages we have sent */
 extern uint32_t message_count; 
 /** Socket health check variable */
-extern bool socket_ok;
+extern int message_publish_status;
+/** MQTT failure counts and maximum allowed failure counts */
+extern uint8_t mqtt_failure_counts;
+extern uint8_t mqtt_allowed_failure_counts;
 /** SSN loop variable */
 extern uint8_t i;
 
@@ -250,7 +253,9 @@ void SSN_CHECK_ETHERNET_CONNECTION();
 void SSN_GET_AMBIENT_CONDITION();
 void SSN_RESET_AFTER_N_SECONDS(uint32_t seconds);
 void SSN_RESET_AFTER_N_SECONDS_IF_NO_MACHINE_ON(uint32_t seconds);
+void SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(uint32_t seconds);
 void SSN_RESET_IF_SOCKET_CORRUPTED(bool socket_is_fine);
+
 /**
  * Peripheral testing and debugging functions
  */

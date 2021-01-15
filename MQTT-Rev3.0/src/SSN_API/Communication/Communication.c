@@ -11,39 +11,39 @@ bool SendMessage(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER
 	}
 }
 
-void Send_GETMAC_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT) {
+int Send_GETMAC_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT) {
 	/* Clear the message array */
 	clear_array(message_to_send, max_send_message_size);
 	uint8_t ssn_message_to_send_size = construct_get_mac_message(message_to_send, NodeID);
 	//    SendMessage(SSN_Socket, SSN_SERVER_IP, SSN_SERVER_PORT, message_to_send, ssn_message_to_send_size);
-	SendMessageMQTT(GettersChannel, message_to_send, ssn_message_to_send_size);
+	return SendMessageMQTT(GettersChannel, message_to_send, ssn_message_to_send_size);
 }
 
-void Send_GETCONFIG_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT) {
+int Send_GETCONFIG_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT) {
 	/* Clear the message array */
 	clear_array(message_to_send, max_send_message_size);
 	uint8_t ssn_message_to_send_size = construct_get_configuration_message(message_to_send, NodeID);
 	//    SendMessage(SSN_Socket, SSN_SERVER_IP, SSN_SERVER_PORT, message_to_send, ssn_message_to_send_size);
-	SendMessageMQTT(GettersChannel, message_to_send, ssn_message_to_send_size);
+	return SendMessageMQTT(GettersChannel, message_to_send, ssn_message_to_send_size);
 }
 
-void Send_ACKCONFIG_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT, uint8_t* SSN_CONFIG) {
+int Send_ACKCONFIG_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT, uint8_t* SSN_CONFIG) {
 	/* Clear the message array */
 	clear_array(message_to_send, max_send_message_size);
 	uint8_t ssn_message_to_send_size = construct_ack_configuration_message(message_to_send, NodeID, SSN_CONFIG);
 	//        SendMessage(SSN_Socket, SSN_SERVER_IP, SSN_SERVER_PORT, message_to_send, ssn_message_to_send_size);
-	SendMessageMQTT(GettersChannel, message_to_send, ssn_message_to_send_size);
+	return SendMessageMQTT(GettersChannel, message_to_send, ssn_message_to_send_size);
 }
 
-void Send_GETTimeOfDay_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT) {
+int Send_GETTimeOfDay_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT) {
 	/* Clear the message array */
 	clear_array(message_to_send, max_send_message_size);
 	uint8_t ssn_message_to_send_size = construct_get_timeofday_message(message_to_send, NodeID);
 	//        SendMessage(SSN_Socket, SSN_SERVER_IP, SSN_SERVER_PORT, message_to_send, ssn_message_to_send_size);
-	SendMessageMQTT(GettersChannel, message_to_send, ssn_message_to_send_size);
+	return SendMessageMQTT(GettersChannel, message_to_send, ssn_message_to_send_size);
 }
 
-bool Send_STATUSUPDATE_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT, uint8_t* temperature_bytes, uint8_t* relative_humidity_bytes,
+int Send_STATUSUPDATE_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT, uint8_t* temperature_bytes, uint8_t* relative_humidity_bytes,
 	float* Machine_load_currents, uint8_t* Machine_load_percentages, uint8_t* Machine_status, uint8_t Machine_status_flag, uint32_t* Machine_status_duration,
 	uint32_t* Machine_status_timestamp, uint32_t ssn_uptime_in_seconds, uint8_t abnormal_activity) {
 	/* Clear the message array but we can't because if we do, this will throw an error at the server end */

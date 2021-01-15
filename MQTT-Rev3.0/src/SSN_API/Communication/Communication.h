@@ -29,7 +29,7 @@ bool SendMessage(uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER
  * @param SSN_SERVER_IP IP of the destination Server
  * @param SSN_SERVER_PORT Port of the destination Server
  */
-void Send_GETMAC_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT);
+int Send_GETMAC_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT);
 
 /**
  * Sends a Sensor Configuration Request message to receive a configuration for SSN to compute statistics of the connected machines
@@ -38,7 +38,7 @@ void Send_GETMAC_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVE
  * @param SSN_SERVER_IP IP of the destination Server
  * @param SSN_SERVER_PORT Port of the destination Server
  */
-void Send_GETCONFIG_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT);
+int Send_GETCONFIG_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT);
 
 /**
  * Sends an Acknowledge for Sensor Configuration message received from SSN Server
@@ -48,7 +48,7 @@ void Send_GETCONFIG_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SE
  * @param SSN_SERVER_PORT Port of the destination Server
  * @param SSN_CONFIG Configurations array previously received from SSN Server 
  */
-void Send_ACKCONFIG_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT, uint8_t* SSN_CONFIG);
+int Send_ACKCONFIG_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT, uint8_t* SSN_CONFIG);
 
 /**
  * Sends a Time of Day Request message to SSN Server to receive the current time of day 
@@ -57,7 +57,7 @@ void Send_ACKCONFIG_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SE
  * @param SSN_SERVER_IP IP of the destination Server
  * @param SSN_SERVER_PORT Port of the destination Server
  */
-void Send_GETTimeOfDay_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT);
+int Send_GETTimeOfDay_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT);
 
 /**
  * Sends a Status Update message to SSN Server containing the machine status and ambient conditions
@@ -74,7 +74,7 @@ void Send_GETTimeOfDay_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN
  * @param ssn_uptime_in_seconds A four byte integer containing the number of seconds indicating for how long the SSN has been awake
  * @param abnormal_activity A single byte indicating NORMAL or ABNORMAL ambient condition based on temperature and humidity readings
  */
-bool Send_STATUSUPDATE_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT, uint8_t* temperature_bytes, uint8_t* relative_humidity_bytes, 
+int Send_STATUSUPDATE_Message(uint8_t* NodeID, uint8_t SSN_Socket, uint8_t* SSN_SERVER_IP, uint16_t SSN_SERVER_PORT, uint8_t* temperature_bytes, uint8_t* relative_humidity_bytes, 
         float* Machine_load_currents, uint8_t* Machine_load_percentages, uint8_t* Machine_status, uint8_t Machine_status_flag, uint32_t* Machine_status_duration, 
         uint32_t* Machine_status_timestamp, uint32_t ssn_uptime_in_seconds, uint8_t abnormal_activity);
 

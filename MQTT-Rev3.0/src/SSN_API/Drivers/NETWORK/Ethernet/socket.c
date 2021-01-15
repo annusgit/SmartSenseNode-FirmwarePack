@@ -262,34 +262,24 @@ int8_t connect(uint32_t clock_frequency, uint8_t sn, uint8_t * addr, uint16_t po
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Control timing to make sure we don't hang up here
-	// timer functions to return from hanged function calls
-//	T4CON = 0x0;			// Stop any 16/32-bit Timer4 operation
-//	T5CON = 0x0;			// Stop any 16-bit Timer5 operation
-//	T4CONSET = 0x0038;		// Enable 32-bit mode, prescaler 1:8, internal peripheral clock source
-//	TMR4 = 0x0;				// Clear contents of the TMR4 and TMR5
-//	T4CONSET = 0x8000;		// Start Timer4/5
+	int watchdog_counter = 100000;
 	while (getSn_CR(sn)) {
-		// timeout more than 5 seconds?
-//		if (((TMR5 << 16) | TMR4) > 5*clock_frequency) {
-//			return SOCKERR_TIMEOUT;
-//		}
+		// timer exceeded?
+		if (--watchdog_counter <= 0) {
+			printf("(LOG): Socket Connection Watchdog Counter Exceeded (Limit: 1e5) in First Loop. Exiting Process...\n");
+			return SOCKERR_TIMEOUT;
+		}
 	}
-	// turn off Timer4 so function is self-contained
-//    T4CONCLR = 0x8000;
 	if (sock_io_mode & (1 << sn)) return SOCK_BUSY;
 	////////////////////////////////////////////////////////////////////////////////
 	// Control timing to make sure we don't hang up here
-//	T4CON = 0x0;			// Stop any 16/32-bit Timer4 operation
-//	T5CON = 0x0;			// Stop any 16-bit Timer5 operation
-//	T4CONSET = 0x0038;		// Enable 32-bit mode, prescaler 1:8, internal peripheral clock source
-//	TMR4 = 0x0;				// Clear contents of the TMR4 and TMR5
-//	T4CONSET = 0x8000;		// Start Timer4/5
+	watchdog_counter = 100000;
 	while (getSn_SR(sn) != SOCK_ESTABLISHED) {
-		// timeout more than 5 seconds?
-//		if (((TMR5 << 16) | TMR4) > 5*clock_frequency) {
-//			return SOCKERR_TIMEOUT;
-//		}
-		// printf("Timer: %d\n", ((TMR5 << 16) | TMR4));
+		// timer exceeded?
+		if (--watchdog_counter <= 0) {
+			printf("(LOG): Socket Connection Watchdog Counter Exceeded (Limit: 1e5) in Second Loop. Exiting Process...\n");
+			return SOCKERR_TIMEOUT;
+		}
 		if (getSn_IR(sn) & Sn_IR_TIMEOUT) {
 			setSn_IR(sn, Sn_IR_TIMEOUT);
 			return SOCKERR_TIMEOUT;
@@ -298,9 +288,6 @@ int8_t connect(uint32_t clock_frequency, uint8_t sn, uint8_t * addr, uint16_t po
 			return SOCKERR_SOCKCLOSED;
 		}
 	}
-	printf("Done\n");
-	// turn off Timer4 so function is self-contained
-    T4CONCLR = 0x8000;
 	////////////////////////////////////////////////////////////////////////////////
 	return SOCK_OK;
 }
