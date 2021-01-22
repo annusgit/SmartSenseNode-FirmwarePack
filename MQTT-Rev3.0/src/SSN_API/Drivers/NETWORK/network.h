@@ -18,10 +18,10 @@
 #define WIZ5500_R_COMMON_RCR    0x001B0100 // Reset Value: 0x08
 #define WIZ5500_W_COMMON_RCR    0x001B05F1 // Write Value: 0xF1
 
-#define TCP_SOCKET  0
-#define MAX_LEN     100
-#define BUFFER_SIZE	2048
-#define MQTTPort  1883    // mqtt server port
+#define TCP_SOCKET      0
+#define MAX_LEN         100
+#define BUFFER_SIZE     2048
+#define MQTTPort        1883    // mqtt server port
 
 ///////////////////////////////////////
 // Debugging Message Printout enable //

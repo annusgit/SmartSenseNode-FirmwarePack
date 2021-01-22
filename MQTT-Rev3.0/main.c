@@ -191,12 +191,18 @@ int main() {
 //int main() {
 //	// Setup Smart Sense Node
 //	SSN_Setup();
-////	char test[50];
+//	uint16_t reg_value;
 //	while(1) {
-//		PORTToggleBits(IOPORT_A, GREEN_LED);
-////		SerialTransmit_UART2("Who is this?\n");
-////		SerialReceive_UART2(test, 50);
-////		printf("(SSN) Got this: %s", test);
+//		SPI2_send(0x00);
+//		SPI2_send(0x1C);
+//		SPI2_send(0x01);
+//		reg_value = ((SPI2_send(0x71) & 0x000000FF) << 8);
+////		SPI2_send(0x00);
+////		SPI2_send(0x1A);
+////		SPI2_send(0x01);
+////		reg_value |= ((SPI2_send(0x94) & 0x000000FF));
+//		printf("Got this Value: %04x\n", reg_value);
+//		reg_value = 0;
 //		sleep_for_microseconds(1000000);
 //	}
 //	return 0;
