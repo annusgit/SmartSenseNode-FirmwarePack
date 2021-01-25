@@ -40,7 +40,7 @@ void SetupMQTTClientConnection(uint32_t clock_frequency, Network* net, MQTTClien
 	NewNetwork(net, MQTT_TCP_SOCKET);
 	//printf("%d\n",Client_MQTT.command_timeout_ms);
 	printf("(MQTT): Initiating MQTT Client\n");
-	MQTTClientInit(mqtt_client, net, 100, MQTT_buf, 100, tempBuffer, 2048);
+	MQTTClientInit(mqtt_client, net, 1000, MQTT_buf, 100, tempBuffer, 2048);
 	//printf("%d\n",Client_MQTT.command_timeout_ms);
 	printf("(MQTT): Setting Up MQTT Communication Options\n");
 	SetupMQTTOptions(MQTTOptions, cliendId, QOS1, 1, MQTT_IP);
