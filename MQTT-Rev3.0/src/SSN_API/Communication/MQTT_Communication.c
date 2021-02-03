@@ -40,12 +40,14 @@ void SetupMQTTClientConnection(uint32_t clock_frequency, Network* net, MQTTClien
 	NewNetwork(net, MQTT_TCP_SOCKET);
 	//printf("%d\n",Client_MQTT.command_timeout_ms);
 	printf("(MQTT): Initiating MQTT Client\n");
+    // allow one second at most for any MQTT command to complete. This should be more than enough
 	MQTTClientInit(mqtt_client, net, 1000, MQTT_buf, 100, tempBuffer, 2048);
 	//printf("%d\n",Client_MQTT.command_timeout_ms);
 	printf("(MQTT): Setting Up MQTT Communication Options\n");
 	SetupMQTTOptions(MQTTOptions, cliendId, QOS1, 1, MQTT_IP);
 	printf("(MQTT): Setting Up MQTT Data Variables\n");
 	SetupMQTTData(&MQTT_DataPacket);
+    int8_t retries = 10;
 	while (rc == FAILURE) {
 		ServiceWatchdog();
 		printf("(MQTT): Connecting to MQTT Broker\n");
@@ -66,6 +68,10 @@ void SetupMQTTClientConnection(uint32_t clock_frequency, Network* net, MQTTClien
 		} else {
 			printf("(MQTT): Connection to Broker Failed. Retrying in 2 seconds...\n");	
 		}
+        if (retries-- <= 0) {
+            printf("(LOG) MQTT Connection Retry Count Exceeded. Restarting SSN...");
+            SoftReset();
+        }
 		sleep_for_microseconds(2000000);
 	}
 }
