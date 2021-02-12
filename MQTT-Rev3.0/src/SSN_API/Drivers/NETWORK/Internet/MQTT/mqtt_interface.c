@@ -163,32 +163,41 @@ void w5x00_disconnect(Network* n) {
  *         ip : server iP.
  *         port : server port.
  */
-void ConnectNetwork(uint32_t clock_frequency, Network* n, uint8_t* ip, uint16_t port) {
-	uint16_t myport = 1883;
-	/** Annus Zulfiqar Added This */
-	// close(n->my_socket);
-	/** Annus Zulfiqar Added This */
-	if(socket(n->my_socket, Sn_MR_TCP, myport, 0) == n->my_socket) {
-        printf("(MQTT): TCP Socket Created Successfully\n");
-    } else {
-        printf("(MQTT): TCP Socket Creation Failed\n");
-    }
-	printf("(MQTT): Connecting to %d.%d.%d.%d from port: %d to port: %d\n", ip[0], ip[1], ip[2], ip[3], myport, port);
-	int connection_status = SOCKERR_TIMEOUT;
-	while (connection_status != SOCK_OK) {
-		ServiceWatchdog();
-		connection_status = connect(clock_frequency, n->my_socket, ip, port);
-		if (connection_status == SOCK_OK) {
-			printf("(MQTT): TCP Socket Connected with Broker Successfully\n");
-			return;
-		} else {
-			printf("(MQTT): TCP Socket Connection with Broker Failed (Error Code: %d). Retrying in 2 seconds...\n", connection_status);
-			if(socket(n->my_socket, Sn_MR_TCP, myport, 0) == n->my_socket) {
-				printf("(MQTT): TCP Socket Reinitialized Successfully\n");
-			} else {
-				printf("(MQTT): TCP Socket Reinitialization Failed\n");
-			}
-		}
-		sleep_for_microseconds(2000000);
-	}
+int ConnectNetwork(Network* n, uint8_t* ip, uint16_t port) {
+    uint16_t myport = 12345;
+    socket(n->my_socket, Sn_MR_TCP, myport, 0);
+    return connect(n->my_socket, ip, port);
 }
+
+//void ConnectNetwork(Network* n, uint8_t* ip, uint16_t port) {
+//	uint16_t myport = 1883;
+//	/** Annus Zulfiqar Added This */
+//	// close(n->my_socket);
+//	/** Annus Zulfiqar Added This */
+//	if(socket(n->my_socket, Sn_MR_TCP, myport, 0) == n->my_socket) {
+//        printf("(MQTT): TCP Socket Created Successfully\n");
+//    } else {
+//        printf("(MQTT): TCP Socket Creation Failed\n");
+//    }
+//	printf("(MQTT): Connecting to %d.%d.%d.%d from port: %d to port: %d\n", ip[0], ip[1], ip[2], ip[3], myport, port);
+//	int connection_status = SOCKERR_TIMEOUT;
+//	while (connection_status != SOCK_OK) {
+//		ServiceWatchdog();
+//		connection_status = connect(n->my_socket, ip, port);
+//		if (connection_status == SOCK_OK) {
+//			printf("(MQTT): TCP Socket Connected with Broker Successfully\n");
+//			return;
+//		} else {
+//			printf("(MQTT): TCP Socket Connection with Broker Failed (Error Code: %d). Retrying in 2 seconds...\n", connection_status);
+//            disconnect(n->my_socket);
+//            close(n->my_socket);
+//			if(socket(n->my_socket, Sn_MR_TCP, myport, 0) == n->my_socket) {
+//				printf("(MQTT): TCP Socket Reinitialized Successfully\n");
+//			} else {
+//				printf("(MQTT): TCP Socket Reinitialization Failed\n");
+//			}
+//		}
+//		sleep_for_microseconds(2000000);
+//	}
+//}
+

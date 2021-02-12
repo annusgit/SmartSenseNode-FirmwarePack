@@ -238,6 +238,16 @@ extern uint8_t mqtt_allowed_failure_counts;
 /** SSN loop variable */
 extern uint8_t i;
 
+extern SOCKET SSN_UDP_DEBUG_SOCKET;
+extern uint8_t SSN_UDP_SERVER_IP[];
+extern uint16_t SSN_UDP_SERVER_PORT;
+extern unsigned char configreceivedstring[150];
+extern struct UDP_Debug_message{
+    uint8_t SSN_UDP_DEBUG_SERVER_IP;
+    uint16_t SSN_UDP_DEBUG_SERVER_PORT;
+    uint32_t ssn_curent_time;
+    SOCKET SSN_UDP_DEBUG_SOCKET;
+}UDP_Debug_message;
 /** 
  *  Includes are needed peripherals and APIs for SSN functionality
  */
@@ -245,15 +255,15 @@ void SSN_Setup();
 void SSN_COPY_MAC_FROM_MEMORY();
 void SSN_GET_MAC();
 void SSN_GET_CONFIG();
-void SSN_GET_CONFIG_WITH_5_SECONDS_HALT();
 void SSN_GET_TIMEOFDAY();
-void SSN_RECEIVE_ASYNC_MESSAGE();
+int SSN_Check_Connection_And_Reconnect(int return_code);
 void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) ;
 void SSN_CHECK_ETHERNET_CONNECTION();
 void SSN_GET_AMBIENT_CONDITION();
 void SSN_RESET_AFTER_N_SECONDS(uint32_t seconds);
 void SSN_RESET_AFTER_N_SECONDS_IF_NO_MACHINE_ON(uint32_t seconds);
 void SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(uint32_t seconds);
+void SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(uint32_t seconds);
 void SSN_RESET_IF_SOCKET_CORRUPTED(bool socket_is_fine);
 
 /**
@@ -261,7 +271,7 @@ void SSN_RESET_IF_SOCKET_CORRUPTED(bool socket_is_fine);
  */
 void led_blink_test();
 void current_test();
-void network_test();
+//void network_test();
 void watchdog_test();
 
 #endif /* _EXAMPLE_FILE_NAME_H */

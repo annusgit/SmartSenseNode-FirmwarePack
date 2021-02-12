@@ -240,7 +240,7 @@ int8_t listen(uint8_t sn) {
 	return SOCK_OK;
 }
 
-int8_t connect(uint32_t clock_frequency, uint8_t sn, uint8_t * addr, uint16_t port) {
+int8_t connect(uint8_t sn, uint8_t * addr, uint16_t port) {
 	CHECK_SOCKNUM();
 	CHECK_SOCKMODE(Sn_MR_TCP);
 	CHECK_SOCKINIT();
@@ -273,7 +273,7 @@ int8_t connect(uint32_t clock_frequency, uint8_t sn, uint8_t * addr, uint16_t po
 	if (sock_io_mode & (1 << sn)) return SOCK_BUSY;
 	////////////////////////////////////////////////////////////////////////////////
 	// Control timing to make sure we don't hang up here
-	watchdog_counter = 100000;
+	watchdog_counter = 500000;
 	while (getSn_SR(sn) != SOCK_ESTABLISHED) {
 		// timer exceeded?
 		if (--watchdog_counter <= 0) {

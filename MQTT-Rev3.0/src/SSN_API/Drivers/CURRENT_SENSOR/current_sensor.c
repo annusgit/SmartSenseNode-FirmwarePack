@@ -1,6 +1,4 @@
-
 #include "current_sensor.h"
-#include "SSN_API/SSN_API.h"
 
 void open_ADC() {
     // configure and enable the ADC
@@ -247,7 +245,7 @@ float Current_CSensor_Read_RMS(uint8_t channel, uint16_t* adc_samples_array, uin
 }
 
 bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, float* SSN_CURRENT_SENSOR_THRESHOLDS, uint8_t* SSN_CURRENT_SENSOR_MAXLOADS, 
-	float* Machine_load_currents, uint8_t* Machine_load_percentages, uint8_t* Machine_status, uint8_t* Machine_status_flag, uint32_t* Machine_status_duration, uint32_t* Machine_status_timestamp) {
+	float* Machine_load_currents, uint8_t* Machine_load_percentages, uint8_t* Machine_status, uint8_t* Machine_prev_status, uint8_t* Machine_status_flag, uint32_t* Machine_status_duration, uint32_t* Machine_status_timestamp) {
     
     // This function will calculate the load currents, load percentages and machine on/off status for all four machines
     // It will also calculate the time-in-state in SSN-Seconds and assign a timestamp to the state as well

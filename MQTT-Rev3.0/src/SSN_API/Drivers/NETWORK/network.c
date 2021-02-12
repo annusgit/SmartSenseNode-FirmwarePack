@@ -254,7 +254,7 @@ void Ethernet_get_IP_from_DHCP() {
     // Set MAC address before initiating DHCP
 	setSHAR(WIZ5500_network_information.mac);
     // Step-1: initiate dhcp
-    DHCP_init(SOCK_DHCP, gDATABUF);
+    DHCP_init(DHCP_SOCKET, gDATABUF);
     reg_dhcp_cbfunc(WIZ5500_IP_assigned_callback, WIZ5500_IP_assigned_callback, WIZ5500_IP_conflict_callback);
     // printf("LOG: -> DHCP Requesting IP\n");
     /* DHCP Request IP Loop */
@@ -301,6 +301,7 @@ void Ethernet_get_IP_from_DHCP() {
             break;
         }
     }
+    close(DHCP_SOCKET);
 }
 
 void Ethernet_set_Static_IP(uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway, uint8_t* dns) {

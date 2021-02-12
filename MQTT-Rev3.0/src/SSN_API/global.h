@@ -49,13 +49,21 @@
 #define NO_OF_MACHINES              4
 
 /* Global MACRO Definitions for MQTT */
-#define MQTT_TCP_SOCKET             0
+//#define MQTT_TCP_SOCKET             2
 #define MQTT_MAX_LEN                100
 #define MQTT_BUFFER_SIZE            2048
 #define MQTT_Port                   1883
 
 //#define __UDP_COMMUNICATION
 #define __MQTT_COMMUNICATION
+
+/** SSN DEBUG MESSAGES OVER UDP */
+#define MQTT_Publication_Failed         0
+#define TCP_Socket_Error                1
+#define No_Ethernet_Connection          2
+#define DHCP_IP_Time_Received           3
+
+#define stringtosendsize 100
 
 /** SSN Fault Count Variable */
 uint32_t fault_count;

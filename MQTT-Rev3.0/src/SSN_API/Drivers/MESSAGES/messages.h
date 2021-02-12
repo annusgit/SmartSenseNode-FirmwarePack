@@ -40,6 +40,9 @@
 #define DEBUG_EEPROM_CLEAR_MESSAGE_ID   10
 /** Message id for requesting SSN Reset received from Server */
 #define DEBUG_RESET_SSN_MESSAGE_ID      11
+/** Message id for requesting Current Configurations from Server */
+#define RETRIEVE_CURRENT_CONFIG         12
+
 
 #define GET_MAC_MESSAGE_Size            7
 #define SET_MAC_MESSAGE_Size            13

@@ -18,7 +18,9 @@
 #define WIZ5500_R_COMMON_RCR    0x001B0100 // Reset Value: 0x08
 #define WIZ5500_W_COMMON_RCR    0x001B05F1 // Write Value: 0xF1
 
-#define TCP_SOCKET      0
+#define UDP_DEBUG_SOCKET_NUMBER      4
+
+#define TCP_SOCKET      2
 #define MAX_LEN         100
 #define BUFFER_SIZE     2048
 #define MQTTPort        1883    // mqtt server port
@@ -32,7 +34,7 @@
 /***************************************
  * SOCKET NUMBER DEFINION for Examples *
  ***************************************/
-#define SOCK_DHCP			0
+#define DHCP_SOCKET			0
 #define MY_MAX_DHCP_RETRY	3
 
 /**********************************************
