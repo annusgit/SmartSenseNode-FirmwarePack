@@ -130,17 +130,12 @@ int main() {
                 Machine_status_duration, Machine_status_timestamp);
 		// Clear the watchdog
 		ServiceWatchdog();
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// a millisecond interrupt, just for MQTT. All MQTT processes require this timer function
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// we will report our status update out of sync with reporting interval if a state changes, this will allow us for accurate timing measurements
 		if (machine_status_change_flag == true) {
 			message_count++;
 			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, temperature_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
                     Machine_prev_status, Machine_status_flag, MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE, Machine_status_timestamp, ssn_static_clock, abnormal_activity);			
 			Clear_Machine_Status_flag(&Machine_status_flag);
-			// SSN_RESET_IF_SOCKET_CORRUPTED(socket_ok);
         }
 		if (report_now == true) {
 			message_count++;
