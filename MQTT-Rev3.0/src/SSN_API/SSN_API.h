@@ -160,7 +160,7 @@ extern SOCKET SSN_UDP_SOCKET;
 /** SSN Server Address */
 extern uint8_t SSN_SERVER_IP[4];
 /** SSN Server PORT */
-extern uint16_t SSN_SERVER_PORT;
+//extern uint16_t SSN_SERVER_PORT;
 
 /** Static IP Assignment */
 extern uint8_t SSN_STATIC_IP[4];
@@ -242,12 +242,7 @@ extern SOCKET SSN_UDP_DEBUG_SOCKET;
 extern uint8_t SSN_UDP_SERVER_IP[];
 extern uint16_t SSN_UDP_SERVER_PORT;
 extern unsigned char configreceivedstring[150];
-extern struct UDP_Debug_message{
-    uint8_t SSN_UDP_DEBUG_SERVER_IP;
-    uint16_t SSN_UDP_DEBUG_SERVER_PORT;
-    uint32_t ssn_curent_time;
-    SOCKET SSN_UDP_DEBUG_SOCKET;
-}UDP_Debug_message;
+//extern 
 /** 
  *  Includes are needed peripherals and APIs for SSN functionality
  */
@@ -265,7 +260,7 @@ void SSN_RESET_AFTER_N_SECONDS_IF_NO_MACHINE_ON(uint32_t seconds);
 void SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(uint32_t seconds);
 void SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(uint32_t seconds);
 void SSN_RESET_IF_SOCKET_CORRUPTED(bool socket_is_fine);
-
+void GetCurrentSensorConfigurationsOverUDP();
 /**
  * Peripheral testing and debugging functions
  */

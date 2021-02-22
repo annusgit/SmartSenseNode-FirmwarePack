@@ -164,8 +164,12 @@ void w5x00_disconnect(Network* n) {
  *         port : server port.
  */
 int ConnectNetwork(Network* n, uint8_t* ip, uint16_t port) {
-    uint16_t myport = 12345;
+    uint16_t myport = 1883;
     socket(n->my_socket, Sn_MR_TCP, myport, 0);
+    while(getSn_SR(n->my_socket) != SOCK_INIT){
+        printf("[MQTT] TCP Socket creation failed!\n");
+    };
+    printf("[MQTT] TCP Socket Created Successfully %d\n",myport);
     return connect(n->my_socket, ip, port);
 }
 

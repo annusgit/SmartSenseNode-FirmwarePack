@@ -15,6 +15,7 @@
 #include "SSN_API/SSN_API.h"
 #include "SSN_API/Communication/MQTT_Communication.h"
 
+
 /** A millisecond timer interrupt required for DHCP and MQTT Yielding functions */
 void __ISR(_TIMER_2_VECTOR, IPL4SOFT) Timer2IntHandler(void){
 	// clear timer 2 interrupt flag
@@ -94,15 +95,16 @@ int main() {
 	SSN_COPY_MAC_FROM_MEMORY();
 	// We can chose two ways to operate over UDP; static or dynamic IP
 	SetupConnectionWithDHCP(SSN_MAC_ADDRESS, DHCP_SOCKET);
-  	SSN_UDP_DEBUG_SOCKET = socket(UDP_DEBUG_SOCKET_NUMBER, Sn_MR_UDP, 25000, 0x00);
+    SetupUDPSocket_and_connection();
 	// Setup Static IP for SSN to join existing network
 	// SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
 	// Setup MQTT connection for SSN communication with broker
-	SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
+	SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT, &UDP_message, ssn_dynamic_clock);
 	// Get MAC address for SSN if we didn't have one already
 	SSN_GET_MAC();
 	// Get SSN configurations for SSN or pick from EEPROM if already assigned
     SSN_GET_CONFIG();
+    GetCurrentSensorConfigurationsOverUDP();
 	// Receive time of day from the server for accurate timestamps
 	SSN_GET_TIMEOFDAY();
 	// Clear the watchdog
@@ -114,13 +116,14 @@ int main() {
 	while (SSN_IS_ALIVE) {
 		// Network critical section begins here. Disable global half second interrupt
 		DisableGlobalHalfSecondInterrupt();
-		// Re-Sync Time of Day after every 4 seconds
-		SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(4 * 3600);
+		// Re-Sync Time of Day after every 4 hours
+		SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(4 * 3600 );
         SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(getDHCPLeasetime());
         // sendmessageUDP(SSN_MAC_ADDRESS, ssn_dynamic_clock, UDP_Debug_msg.SSN_UDP_DEBUG_SOCKET, SSN_UDP_SERVER_IP, SSN_UDP_SERVER_PORT, DHCP_IP_Time_Received);	
 		if (ms_100_counter >= 20) {
 			// Read temperature and humidity sensor
 			SSN_GET_AMBIENT_CONDITION();
+//            sendDebugmessageUDP(&UDP_message, ssn_dynamic_clock, SSN_just_Restarted);
             // sendmessageUDP(SSN_MAC_ADDRESS, ssn_dynamic_clock, SSN_UDP_DEBUG_SOCKET, SSN_UDP_SERVER_IP, SSN_UDP_SERVER_PORT, No_Ethernet_Connection);	
 			ms_100_counter = 0;
 		}
@@ -144,12 +147,12 @@ int main() {
                     Machine_status, Machine_status_flag, Machine_status_duration, Machine_status_timestamp, ssn_static_clock, abnormal_activity);
 			Clear_Machine_Status_flag(&Machine_status_flag);
 		}
-        // Check if we failed to publish, check connections and reconnect if necessary
-        message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// MQTT background handler
 		start_ms_timer_with_interrupt();
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Check if we failed to publish, check connections and reconnect if necessary
+        message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
     	MQTTYield(&Client_MQTT, 100);
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		stop_ms_timer_with_interrupt();

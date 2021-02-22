@@ -1,4 +1,5 @@
 #include "MQTT_Communication.h"
+#include "Communication.h"
 
 void setup_MQTT_Millisecond_Interrupt(uint32_t PERIPH_CLOCK) {
     // enable timer-5 interrupt
@@ -29,12 +30,13 @@ void SetupMQTTOptions(opts_struct* MQTTOptions, char* cliendId, enum QoS x, int 
     strcpy(MQTTOptions->username, "NULL");
     strcpy(MQTTOptions->password, "NULL");
     strcpy(MQTTOptions->host, MQTT_IP);
+//    printf("%d.%d.%d.%d\n",MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
     MQTTOptions->port = MQTT_Port;
     MQTTOptions->showtopics = showtopics;
 }
 
-int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct* MQTTOptions, uint8_t *MQTT_IP, char* cliendId, void* messageArrivedoverMQTT) {
-    int rc = FAILURE, retry_count = 0, timeout;
+int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct* MQTTOptions, uint8_t *MQTT_IP, char* cliendId, void* messageArrivedoverMQTT, UDP_Debug_message* UDP_message, uint32_t ssn_time) {
+    int rc = FAILURE, retry_count = 0, timeout, i;
     unsigned char tempBuffer[MQTT_BUFFER_SIZE] = {};
     printf("[MQTT] Creating MQTT Network Variables\n");
     NewNetwork(net, TCP_SOCKET);
@@ -53,8 +55,11 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
         printf("[MQTT] Trying to Establish Connection...\n");
         if (ConnectNetwork(net, MQTT_IP, MQTT_Port) != SOCK_OK) {
             printf("[**MQTT**] TCP Socket Connection with Broker Failed. Retrying [%d] in %d seconds\n", retry_count, timeout);
+            sendDebugmessageUDP(UDP_message, ssn_time, TCP_Socket_Conn_Failed);
+            close(net->my_socket);
         } else {
             printf("[MQTT] TCP Socket Connected with Broker Successfully\n");
+            start_ms_timer_with_interrupt();
             rc = MQTTConnect(mqtt_client, &MQTT_DataPacket);
             if (rc == SUCCESSS) {
                 printf("[MQTT] Successfully Connected to Broker at %d:%d:%d:%d as MQTT Client\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
@@ -63,7 +68,8 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
                 printf("[MQTT] Subscribing to Node Exclusive Channel: %s\n", NodeExclusiveChannel);
                 if (rc == SUCCESSS) {
                     printf("[MQTT] Subscription to Node Exclusive Channel [%s] Successful\n", NodeExclusiveChannel);
-                    return;
+                  	stop_ms_timer_with_interrupt();
+                    return SUCCESSS;
                 } else {
                     printf("[**MQTT**] Subscription Attempt Failed. Retrying [%d] in %d seconds\n", retry_count, timeout);
                 }
@@ -71,7 +77,13 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
                 printf("[**MQTT**] Connection to Broker Failed. Retrying [%d] in %d seconds\n", retry_count, timeout);
             }
         }
-        sleep_for_microseconds(timeout*1000000);
+        if (retry_count > 20){
+            printf("[**MQTT**]Too many [%d] retries attempted, SSN Restarting", retry_count);
+            sendDebugmessageUDP(UDP_message ,ssn_time, MQTT_Connection_failed_Restarting);
+            SoftReset();
+        
+        }
+        sleep_for_microseconds_and_clear_watchdog(timeout*1000000);
     }
     return SUCCESSS;
 }
@@ -79,8 +91,11 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
 void CloseMQTTClientConnectionAndSocket(MQTTClient* mqtt_client, uint8_t MQTT_Socket) {
     printf("[**MQTT**] Closing MQTT connection and TCP socket\n");
     MQTTDisconnect(mqtt_client);
+    printf("Closing MQTT connection\n");
     disconnect(MQTT_Socket);
+    printf("Disconnecting TCP connection\n");
     close(MQTT_Socket);
+    printf("Closing TCP socket\n");
 }
 
 void SetupMQTTMessage(MQTTMessage* Message_MQTT, uint8_t* payload, uint8_t payload_len, enum QoS x) {
@@ -111,8 +126,8 @@ int SendMessageMQTT(char* topic, uint8_t* messagetosend, uint8_t len) {
     return rc;
 }
 
-int getConnTimeout(int attemptNumber) {  
-    // First 10 attempts try within 3 seconds, next 10 attempts retry after every 1 minute
-   // after 20 attempts, retry every 10 minutes
+int getConnTimeout(int attemptNumber) {
+    // First 10 attempts try within 5 seconds, next 10 attempts retry after every 1 minute
+    // after 20 attempts, retry every 10 minutes
     return (attemptNumber < 10) ? 5 : (attemptNumber < 20) ? 60 : 600;
 }

@@ -42,6 +42,15 @@
  **********************************************/
 #define DATA_BUF_SIZE   2048
 uint8_t gDATABUF[DATA_BUF_SIZE];
+typedef struct UDP_Debug_message{
+    uint8_t SSN_MAC[6];
+    uint8_t SSN_UDP_DEBUG_SERVER_IP[4];
+    uint16_t SSN_UDP_DEBUG_SERVER_PORT;
+    uint32_t ssn_curent_time;
+    SOCKET SSN_UDP_DEBUG_SOCKET;
+}UDP_Debug_message;
+
+UDP_Debug_message UDP_message;
 
 /**************************************************************************//**
  * @MQTT variables

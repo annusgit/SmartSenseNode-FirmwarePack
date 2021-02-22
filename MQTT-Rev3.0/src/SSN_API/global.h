@@ -58,10 +58,15 @@
 #define __MQTT_COMMUNICATION
 
 /** SSN DEBUG MESSAGES OVER UDP */
-#define MQTT_Publication_Failed         0
-#define TCP_Socket_Error                1
-#define No_Ethernet_Connection          2
-#define DHCP_IP_Time_Received           3
+#define MQTT_Publication_Failed             0
+#define TCP_Socket_Error                    1
+#define Ethernet_just_recovered             2
+#define DHCP_IP_Time_Received               3
+#define SSN_just_Restarted                  4
+#define MQTT_Client_Reconnected             5
+#define TimeofDay_Received_for_syncing      6
+#define TCP_Socket_Conn_Failed              7
+#define MQTT_Connection_failed_Restarting   8
 
 #define stringtosendsize 100
 
@@ -168,6 +173,15 @@ static inline void EnableWatchdog() {
 
 static inline void ServiceWatchdog() {
     WDTCONbits.WDTCLR = 1;
+}
+
+static inline void sleep_for_microseconds_and_clear_watchdog(uint32_t delay_us) {
+    while (delay_us > 1000000) {
+        sleep_for_microseconds(1000000);
+        ServiceWatchdog();
+        delay_us -= 1000000;
+    }
+    sleep_for_microseconds(delay_us);
 }
 
 /** 

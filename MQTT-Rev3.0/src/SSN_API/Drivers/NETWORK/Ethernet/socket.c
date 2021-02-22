@@ -266,25 +266,30 @@ int8_t connect(uint8_t sn, uint8_t * addr, uint16_t port) {
 	while (getSn_CR(sn)) {
 		// timer exceeded?
 		if (--watchdog_counter <= 0) {
-			printf("(LOG): Socket Connection Watchdog Counter Exceeded (Limit: 1e5) in First Loop. Exiting Process...\n");
+			printf("[LOG] Socket Connection Watchdog Counter Exceeded (Limit: 1e5) in First Loop. Exiting Process...\n");
 			return SOCKERR_TIMEOUT;
 		}
 	}
-	if (sock_io_mode & (1 << sn)) return SOCK_BUSY;
+	if (sock_io_mode & (1 << sn)) {
+        printf("[LOG] Socket Connection Error SOCK_BUSY. Exiting Process...\n");
+        return SOCK_BUSY;
+    }
 	////////////////////////////////////////////////////////////////////////////////
 	// Control timing to make sure we don't hang up here
-	watchdog_counter = 500000;
+	watchdog_counter = 500000;    
 	while (getSn_SR(sn) != SOCK_ESTABLISHED) {
 		// timer exceeded?
 		if (--watchdog_counter <= 0) {
-			printf("(LOG): Socket Connection Watchdog Counter Exceeded (Limit: 1e5) in Second Loop. Exiting Process...\n");
+			printf("[LOG] Socket Connection Watchdog Counter Exceeded (Limit: 1e5) in Second Loop. Exiting Process...\n");
 			return SOCKERR_TIMEOUT;
 		}
 		if (getSn_IR(sn) & Sn_IR_TIMEOUT) {
 			setSn_IR(sn, Sn_IR_TIMEOUT);
-			return SOCKERR_TIMEOUT;
+            printf("[LOG] Socket Connection Error SOCKERR_TIMEOUT. Exiting Process...\n");
+            return SOCKERR_TIMEOUT;
 		}
 		if (getSn_SR(sn) == SOCK_CLOSED) {
+            printf("[LOG] Socket Connection Error SOCKERR_SOCKCLOSED. Exiting Process...\n");
 			return SOCKERR_SOCKCLOSED;
 		}
 	}
