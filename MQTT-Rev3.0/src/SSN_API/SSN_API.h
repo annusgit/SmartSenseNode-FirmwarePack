@@ -234,7 +234,7 @@ extern uint32_t message_count;
 extern int message_publish_status;
 /** MQTT failure counts and maximum allowed failure counts */
 extern uint8_t mqtt_failure_counts;
-extern uint8_t mqtt_allowed_failure_counts;
+extern uint8_t MQTTallowedfailureCount;
 /** SSN loop variable */
 extern uint8_t i;
 

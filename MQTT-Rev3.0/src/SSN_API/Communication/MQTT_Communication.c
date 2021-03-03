@@ -5,7 +5,7 @@ void setup_MQTT_Millisecond_Interrupt(uint32_t PERIPH_CLOCK) {
     // enable timer-5 interrupt
     IEC0bits.T5IE = 0x00; // disable timer 1 interrupt, IEC0<4>
     IFS0CLR = 0x0010; // clear timer 1 int flag, IFS0<4>
-    IPC1CLR = 0x001f; // clear timer 1 priority/subpriority fields 
+    IPC1CLR = 0x001f; // clear timer 1 priority/subpriority fields
     IPC1SET = 0x0010; // set timer 1 int priority = 4, IPC1<4:2>
     IEC0bits.T5IE = 0x01; // enable timer 1 int, IEC0<4>
     T5CON = 0x8030; // this prescaler reduces the input clock frequency by 256
@@ -77,11 +77,10 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
                 printf("[**MQTT**] Connection to Broker Failed. Retrying [%d] in %d seconds\n", retry_count, timeout);
             }
         }
-        if (retry_count > 20){
+        if (retry_count > 23){
             printf("[**MQTT**]Too many [%d] retries attempted, SSN Restarting", retry_count);
             sendDebugmessageUDP(UDP_message ,ssn_time, MQTT_Connection_failed_Restarting);
             SoftReset();
-        
         }
         sleep_for_microseconds_and_clear_watchdog(timeout*1000000);
     }
@@ -118,7 +117,7 @@ int SendMessageMQTT(char* topic, uint8_t* messagetosend, uint8_t len) {
     // printf("Published %d\r\n", rc);
     if (rc != SUCCESSS) {
         // TODO: UDP Debug Message for MQTT Publication Failed
-        printf("(ERROR): Message Publication to MQTT Broker Failed (Count = 1)\n");
+        printf("(ERROR): Message Publication to MQTT Broker Failed\n");
     } else {
         printf("(LOG): %d-Byte Message Sent to MQTT Broker\n", len);
     }
@@ -130,4 +129,8 @@ int getConnTimeout(int attemptNumber) {
     // First 10 attempts try within 5 seconds, next 10 attempts retry after every 1 minute
     // after 20 attempts, retry every 10 minutes
     return (attemptNumber < 10) ? 5 : (attemptNumber < 20) ? 60 : 600;
+}
+
+int MQTTallowedfailureCounts(uint8_t SSN_REPORT_INTERVAL){
+    return MQTT_DataPacket.keepAliveInterval/SSN_REPORT_INTERVAL;
 }

@@ -15,5 +15,5 @@ void SetupMQTTData(MQTTPacket_connectData* MQTT_DataPacket);
 void SetupMQTTMessage(MQTTMessage* Message_MQTT, uint8_t* payload, uint8_t payload_len, enum QoS x);
 int SendMessageMQTT(char* topic, uint8_t* messagetosend, uint8_t len);
 int getConnTimeout(int attemptNumber);
-
+int MQTTallowedfailureCounts(uint8_t SSN_REPORT_INTERVAL);
 #endif

@@ -89,11 +89,12 @@ uint8_t abnormal_activity;
 uint32_t message_count = 0;
 int message_publish_status = 0;
 uint8_t mqtt_failure_counts = 0;
-uint8_t mqtt_allowed_failure_counts = 3;
+uint8_t MQTTallowedfailureCount;
 /** SSN loop variable */
 uint8_t i;
 unsigned char configreceivedstring[150];
-//typedef struct UDP_Debug_message UDP_message;
+
+
 void SSN_Setup() {
 	// Setup calls for all our peripherals/devices
 	setup_printf(115200);
@@ -331,6 +332,7 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 				for (i = 0; i < NO_OF_MACHINES; i++) {
 					Machine_status[i] = SENSOR_NOT_CONNECTED;
 				}
+                MQTTallowedfailureCount = MQTTallowedfailureCounts(SSN_REPORT_INTERVAL);
 				CONFIG_received = true;
 				break;
 

@@ -100,10 +100,11 @@ int main() {
 	// SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
 	// Setup MQTT connection for SSN communication with broker
 	SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT, &UDP_message, ssn_dynamic_clock);
-	// Get MAC address for SSN if we didn't have one already
+    // Get MAC address for SSN if we didn't have one already
 	SSN_GET_MAC();
 	// Get SSN configurations for SSN or pick from EEPROM if already assigned
     SSN_GET_CONFIG();
+    MQTTallowedfailureCount = MQTTallowedfailureCounts(SSN_REPORT_INTERVAL);
     GetCurrentSensorConfigurationsOverUDP();
 	// Receive time of day from the server for accurate timestamps
 	SSN_GET_TIMEOFDAY();
@@ -139,6 +140,13 @@ int main() {
 			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, temperature_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
                     Machine_prev_status, Machine_status_flag, MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE, Machine_status_timestamp, ssn_static_clock, abnormal_activity);			
 			Clear_Machine_Status_flag(&Machine_status_flag);
+            if (message_publish_status != SUCCESSS) {
+                mqtt_failure_counts++;
+                printf("[ERROR] Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failure_counts, MQTTallowedfailureCount);
+            } 
+            else {
+                mqtt_failure_counts = 0;
+            }
         }
 		if (report_now == true) {
 			message_count++;
@@ -146,13 +154,27 @@ int main() {
 			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, temperature_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
                     Machine_status, Machine_status_flag, Machine_status_duration, Machine_status_timestamp, ssn_static_clock, abnormal_activity);
 			Clear_Machine_Status_flag(&Machine_status_flag);
-		}
+            if (message_publish_status != SUCCESSS) {
+                mqtt_failure_counts++;
+                printf("[ERROR] Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failure_counts, MQTTallowedfailureCount);
+            } 
+            else {
+                mqtt_failure_counts = 0;
+            }		
+        }
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// MQTT background handler
 		start_ms_timer_with_interrupt();
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Check if we failed to publish, check connections and reconnect if necessary
-        message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
+        		// check how many failure counts have we encountered and reconnect to broker if necessary
+		if (mqtt_failure_counts >= MQTTallowedfailureCount) {
+			// assume our connection has broken, we'll reconnect at this point
+			printf("[MQTT] SSN Message Publication to MQTT Broker Failed and Retry Exceeded...\n");
+            message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
+			// connection re-established, exit fault code and reset failure counts
+			mqtt_failure_counts = 0;
+		}
     	MQTTYield(&Client_MQTT, 100);
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		stop_ms_timer_with_interrupt();
