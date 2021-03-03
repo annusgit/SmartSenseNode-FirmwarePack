@@ -192,17 +192,6 @@ static inline void setup_Interrupts() {
     INTEnableSystemMultiVectoredInt();
 }
 
-static inline void setup_millisecond_timer_with_interrupt() {
-    IEC0CLR = 0x0200;                   // disable timer 2 interrupt, IEC0<9>
-    IFS0CLR = 0x0200;                   // clear timer 2 int flag, IFS0<9>
-    IPC2CLR = 0x001f;                   // clear timer 2 priority/subpriority fields 
-    IPC2SET = 0x0010;                   // set timer 2 int priority = 4, IPC2<4:2>
-    IEC0SET = 0x0200;                   // enable timer 2 int, IEC0<9>
-	// Turn on 16-bit Timer2, set prescaler to 1:256 (frequency is Pbclk / 256)
-    T2CON   = 0x8060;                   // this prescaler reduces the input clock frequency by 64    
-    PR2 = (0.001*PERIPH_CLK/64);	// 1 millisecond timer interrupt
-}
-
 static inline void start_ms_timer_with_interrupt() {
     IEC0CLR = 0x0200;       // disable timer 2 interrupt, IEC0<9>
     IFS0CLR = 0x0200;       // clear timer 2 int flag, IFS0<9>
@@ -213,6 +202,18 @@ static inline void stop_ms_timer_with_interrupt() {
     IEC0CLR = 0x0200;       // disable timer 2 interrupt, IEC0<9>
     IFS0CLR = 0x0200;       // clear timer 2 int flag, IFS0<9>
     IEC0SET = 0x0000;       // disable timer 2 int, IEC0<9>
+}
+
+static inline void setup_millisecond_timer_with_interrupt() {
+    IEC0CLR = 0x0200;                   // disable timer 2 interrupt, IEC0<9>
+    IFS0CLR = 0x0200;                   // clear timer 2 int flag, IFS0<9>
+    IPC2CLR = 0x001f;                   // clear timer 2 priority/subpriority fields 
+    IPC2SET = 0x0010;                   // set timer 2 int priority = 4, IPC2<4:2>
+    IEC0SET = 0x0200;                   // enable timer 2 int, IEC0<9>
+	// Turn on 16-bit Timer2, set prescaler to 1:256 (frequency is Pbclk / 256)
+    T2CON   = 0x8060;                   // this prescaler reduces the input clock frequency by 64    
+    PR2 = (0.001*PERIPH_CLK/64);	// 1 millisecond timer interrupt
+    stop_ms_timer_with_interrupt();
 }
 
 static inline void EnableGlobalHalfSecondInterrupt() {

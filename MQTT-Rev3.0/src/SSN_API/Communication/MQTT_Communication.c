@@ -1,17 +1,6 @@
 #include "MQTT_Communication.h"
 #include "Communication.h"
 
-void setup_MQTT_Millisecond_Interrupt(uint32_t PERIPH_CLOCK) {
-    // enable timer-5 interrupt
-    IEC0bits.T5IE = 0x00; // disable timer 1 interrupt, IEC0<4>
-    IFS0CLR = 0x0010; // clear timer 1 int flag, IFS0<4>
-    IPC1CLR = 0x001f; // clear timer 1 priority/subpriority fields
-    IPC1SET = 0x0010; // set timer 1 int priority = 4, IPC1<4:2>
-    IEC0bits.T5IE = 0x01; // enable timer 1 int, IEC0<4>
-    T5CON = 0x8030; // this prescaler reduces the input clock frequency by 256
-    PR5 = (0.001 * PERIPH_CLOCK / 256); // millsecond timer interrupt period
-}
-
 void SetupMQTTData(MQTTPacket_connectData* MQTT_DataPacket) {
     MQTT_DataPacket->willFlag = 0;
     MQTT_DataPacket->MQTTVersion = 3;

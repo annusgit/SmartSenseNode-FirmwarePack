@@ -236,7 +236,7 @@ void Ethernet_Save_DNS(uint8_t* this_dns) {
 void Ethernet_get_IP_from_DHCP() {
     uint8_t tmp, memsize[2][8] = {{2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};
     uint16_t my_dhcp_retry = 0;
-    setup_millisecond_timer_with_interrupt();
+    start_ms_timer_with_interrupt();
     /* wizchip initialize*/
     if(ctlwizchip(CW_INIT_WIZCHIP,(void*)memsize) == -1) {
        printf("LOG: -> WIZCHIP Initialized fail.\r\n");

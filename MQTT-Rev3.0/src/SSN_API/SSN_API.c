@@ -104,6 +104,7 @@ void SSN_Setup() {
 	setup_Temperature_Humidity_Sensor();
 	setup_LED_Indicator();
 	setup_Interrupts();
+    setup_millisecond_timer_with_interrupt();
 	fault_count = 0;
 }
 

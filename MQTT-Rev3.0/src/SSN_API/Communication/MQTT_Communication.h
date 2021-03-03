@@ -6,7 +6,6 @@
 #include "../Drivers/UART/uart.h"
 #include "../Drivers/NETWORK/network.h"
 
-void setup_MQTT_Millisecond_Interrupt(uint32_t PERIPH_CLOCK);
 int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct* MQTTOptions, uint8_t *MQTT_IP, char* cliendId, void* messageArrivedoverMQTT, 
         UDP_Debug_message* UDP_message, uint32_t ssn_time);
 void CloseMQTTClientConnectionAndSocket(MQTTClient* mqtt_client, uint8_t MQTT_Socket);
