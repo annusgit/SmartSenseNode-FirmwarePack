@@ -69,8 +69,4 @@ int Send_GETTimeOfDay_Message(uint8_t* NodeID);
 int Send_STATUSUPDATE_Message(uint8_t* NodeID, uint8_t* temperature_bytes, uint8_t* relative_humidity_bytes, float* Machine_load_currents, uint8_t* Machine_load_percentages, 
         uint8_t* Machine_status, uint8_t Machine_status_flag, uint32_t* Machine_status_duration, uint32_t* Machine_status_timestamp, uint32_t ssn_uptime_in_seconds, 
         uint8_t abnormal_activity);
-void initUDPDebug(struct UDP_Debug_message *UDP_Debug_msg, uint8_t* ssn_mac, uint16_t udp_debug_server_port, uint8_t* udp_debug_server_ip, uint32_t ssn_current_time , SOCKET udp_debug_socket);
-
-int32_t sendmessageUDP(uint8_t* SSN_MAC_ADDRESS, uint32_t ssn_time, uint8_t SSN_UDP_Socket, uint8_t* UDP_SERVER_IP, uint16_t UDP_SERVER_PORT,uint8_t Error_code);
-int32_t sendDebugmessageUDP(struct UDP_Debug_message* UDP_message, uint32_t ssn_time, uint8_t Error_code);  
 #endif

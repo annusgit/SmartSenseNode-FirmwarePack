@@ -83,8 +83,7 @@ void __ISR(_TIMER_1_VECTOR, IPL4SOFT) Timer1IntHandler_SSN_Hearbeat(void) {
  */
 
 
-
-int main() {
+int main1() {
 	// Setup Smart Sense Node
 	SSN_Setup();
 	// Check the EEPROM, temperature sensor and network connection before proceeding
@@ -95,37 +94,32 @@ int main() {
 	SSN_COPY_MAC_FROM_MEMORY();
 	// We can chose two ways to operate over UDP; static or dynamic IP
 	SetupConnectionWithDHCP(SSN_MAC_ADDRESS, DHCP_SOCKET);
-    SetupUDPSocket_and_connection();
 	// Setup Static IP for SSN to join existing network
 	// SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
 	// Setup MQTT connection for SSN communication with broker
-	SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT, &UDP_message, ssn_dynamic_clock);
+	SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
     // Get MAC address for SSN if we didn't have one already
 	SSN_GET_MAC();
 	// Get SSN configurations for SSN or pick from EEPROM if already assigned
     SSN_GET_CONFIG();
     MQTTallowedfailureCount = MQTTallowedfailureCounts(SSN_REPORT_INTERVAL);
-    GetCurrentSensorConfigurationsOverUDP();
 	// Receive time of day from the server for accurate timestamps
 	SSN_GET_TIMEOFDAY();
 	// Clear the watchdog
 	ServiceWatchdog();
 	// Start the global clock that will trigger a response each half of a second through our half-second interrupt defined above Main function
 	setup_Global_Clock_And_Half_Second_Interrupt(PERIPH_CLK);
-	//InterruptEnabled = true;
 	uint8_t ms_100_counter = 0;
 	while (SSN_IS_ALIVE) {
 		// Network critical section begins here. Disable global half second interrupt
 		DisableGlobalHalfSecondInterrupt();
 		// Re-Sync Time of Day after every 4 hours
-		SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(4 * 3600 );
+		SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(4 * 3600);
         SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(getDHCPLeasetime());
-        // sendmessageUDP(SSN_MAC_ADDRESS, ssn_dynamic_clock, UDP_Debug_msg.SSN_UDP_DEBUG_SOCKET, SSN_UDP_SERVER_IP, SSN_UDP_SERVER_PORT, DHCP_IP_Time_Received);	
 		if (ms_100_counter >= 20) {
 			// Read temperature and humidity sensor
-			SSN_GET_AMBIENT_CONDITION();
-//            sendDebugmessageUDP(&UDP_message, ssn_dynamic_clock, SSN_just_Restarted);
-            // sendmessageUDP(SSN_MAC_ADDRESS, ssn_dynamic_clock, SSN_UDP_DEBUG_SOCKET, SSN_UDP_SERVER_IP, SSN_UDP_SERVER_PORT, No_Ethernet_Connection);	
+			SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
+			SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
 			ms_100_counter = 0;
 		}
 		// Get load currents and status of machines
@@ -137,7 +131,7 @@ int main() {
 		// we will report our status update out of sync with reporting interval if a state changes, this will allow us for accurate timing measurements
 		if (machine_status_change_flag == true) {
 			message_count++;
-			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, temperature_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
+			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, MLX90614_data_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
                     Machine_prev_status, Machine_status_flag, MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE, Machine_status_timestamp, ssn_static_clock, abnormal_activity);			
 			Clear_Machine_Status_flag(&Machine_status_flag);
             if (message_publish_status != SUCCESSS) {
@@ -151,7 +145,7 @@ int main() {
 		if (report_now == true) {
 			message_count++;
 			report_now = false; // reset report flag
-			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, temperature_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
+			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, MLX90614_data_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
                     Machine_status, Machine_status_flag, Machine_status_duration, Machine_status_timestamp, ssn_static_clock, abnormal_activity);
 			Clear_Machine_Status_flag(&Machine_status_flag);
             if (message_publish_status != SUCCESSS) {
@@ -189,61 +183,12 @@ int main() {
 	return 0;
 }
 
-//int main() {
-//	// Setup Smart Sense Node
-//	SSN_Setup();
-//	uint16_t reg_value;
-//	while(1) {
-//		SPI2_send(0x00);
-//		SPI2_send(0x1C);
-//		SPI2_send(0x01);
-//		reg_value = ((SPI2_send(0x71) & 0x000000FF) << 8);
-////		SPI2_send(0x00);
-////		SPI2_send(0x1A);
-////		SPI2_send(0x01);
-////		reg_value |= ((SPI2_send(0x94) & 0x000000FF));
-//		printf("Got this Value: %04x\n", reg_value);
-//		reg_value = 0;
-//		sleep_for_microseconds(1000000);
-//	}
-//	return 0;
-//}
-//unsigned char* string = "hello world";
-uint8_t status = 0;
-
-//unsigned char* string[11]= "a";
- 
-uint8_t Error_code;
-int main1() {
+int main() {
 	// Setup Smart Sense Node
 	SSN_Setup();
-    printf("helloworld\n");
-    SSN_COPY_MAC_FROM_MEMORY();
-    unsigned char* string = "h";
-    
-  	SetupConnectionWithDHCP(SSN_MAC_ADDRESS, SSN_UDP_SOCKET_NUM);
-	SSN_UDP_DEBUG_SOCKET = socket(SSN_UDP_SOCKET_NUM, Sn_MR_UDP, 25000, 0x00);
-    //SetupConnectionWithStaticIPAndReturnSocket(SSN_UDP_SOCKET_NUM, SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
-    //    CreateUDPSocket(SSN_UDP_SOCKET_NUM, SSN_UDP_DEBUG_SOCKET, SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
-    while(1){
-//        uint8_t ssn_message_to_send_size = construct_get_mac_message(message_to_send, &SSN_MAC_ADDRESS[4]);
-//        Send_GETMAC_Message(&SSN_MAC_ADDRESS[4], SSN_UDP_SOCKET, SSN_SERVER_IP, SSN_SERVER_PORT);
-//        SendMessage(SSN_UDP_DEBUG_SOCKET, SSN_UDP_SERVER_IP, SSN_UDP_SERVER_PORT, message_to_send, ssn_message_to_send_size);
-//        status = sendmessageUDP(SSN_MAC_ADDRESS, SSN_UDP_DEBUG_SOCKET, SSN_UDP_SERVER_IP, SSN_UDP_SERVER_PORT, 0);	
-//        printf("%d byte message sent\n",status);
-//        sleep_for_microseconds(1000000);
-        status = sendmessageUDP(SSN_MAC_ADDRESS, ssn_dynamic_clock, SSN_UDP_DEBUG_SOCKET, SSN_UDP_SERVER_IP, SSN_UDP_SERVER_PORT, TCP_Socket_Error);	
-        printf("%d byte message sent\n",status);
-        sleep_for_microseconds(1000000);
-//        status = sendmessageUDP(SSN_MAC_ADDRESS, ssn_dynamic_clock, SSN_UDP_DEBUG_SOCKET, SSN_UDP_SERVER_IP, SSN_UDP_SERVER_PORT, MQTT_Publication_Failed);	
-//        printf("%d byte message sent\n",status);
-//        sleep_for_microseconds(1000000);
-//        status = sendmessageUDP(SSN_MAC_ADDRESS, ssn_dynamic_clock, SSN_UDP_DEBUG_SOCKET, SSN_UDP_SERVER_IP, SSN_UDP_SERVER_PORT, No_Ethernet_Connection);	
-//        printf("%d byte message sent\n",status);
-//        sleep_for_microseconds(1000000);
-//        status = sendmessageUDP(SSN_MAC_ADDRESS, ssn_dynamic_clock, SSN_UDP_DEBUG_SOCKET, SSN_UDP_SERVER_IP, SSN_UDP_SERVER_PORT, Retrieve_Current_Configurations);	
-//        printf("%d byte message sent\n",status);
-//        sleep_for_microseconds(1000000);        
-    }
-    return 0;
+	while(1) {
+		SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(0, 100);
+		sleep_for_microseconds(2000000);
+	}
+	return 0;
 }

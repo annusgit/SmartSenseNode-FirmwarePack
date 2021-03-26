@@ -83,6 +83,7 @@ uint32_t fault_count;
 
 #define TH_AM2320
 //#define TH_DHT22
+#define OTS_LS_MLX90614
 
 /** 
  * A simple loop count based delay 

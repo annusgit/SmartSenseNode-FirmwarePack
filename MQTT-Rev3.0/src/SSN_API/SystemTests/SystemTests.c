@@ -31,7 +31,7 @@ void RunSystemTests() {
         SSN_LED_INDICATE(SELF_TEST_FAILED_STATE);
         // while(SSN_IS_ALIVE); Temperature sensor is not crucial, we will not hang for this
     }
-    if (ambient_condition_status() != NORMAL_AMBIENT_CONDITION) {
+    if (ambient_condition_status(0, 100, 0, 100) != NORMAL_AMBIENT_CONDITION) {
         temperature_sensor_test_status = false;
         printf("LOG: TEMPERATURE SENSOR TEST FAILED DUE TO ABNORMAL CONDITION...\n");
         // Forever, indicate the status of SSN i.e. SELF_TEST_FAILED_STATE from the SSN LED

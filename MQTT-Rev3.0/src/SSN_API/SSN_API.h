@@ -155,8 +155,6 @@
 /**
  * Our global variables for SSN
  */
-/** Our SSN UDP communication socket */
-extern SOCKET SSN_UDP_SOCKET;
 /** SSN Server Address */
 extern uint8_t SSN_SERVER_IP[4];
 /** SSN Server PORT */
@@ -254,13 +252,14 @@ void SSN_GET_TIMEOFDAY();
 int SSN_Check_Connection_And_Reconnect(int return_code);
 void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) ;
 void SSN_CHECK_ETHERNET_CONNECTION();
-void SSN_GET_AMBIENT_CONDITION();
+void SSN_GET_AMBIENT_CONDITION(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MIN_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MAX_THRESHOLD);
+void SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD);
+void SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD);
 void SSN_RESET_AFTER_N_SECONDS(uint32_t seconds);
 void SSN_RESET_AFTER_N_SECONDS_IF_NO_MACHINE_ON(uint32_t seconds);
 void SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(uint32_t seconds);
 void SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(uint32_t seconds);
 void SSN_RESET_IF_SOCKET_CORRUPTED(bool socket_is_fine);
-void GetCurrentSensorConfigurationsOverUDP();
 /**
  * Peripheral testing and debugging functions
  */

@@ -1,4 +1,3 @@
-
 #ifndef __MQTT_Communication_h__
 #define __MQTT_Communication_h__
 
@@ -6,8 +5,7 @@
 #include "../Drivers/UART/uart.h"
 #include "../Drivers/NETWORK/network.h"
 
-int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct* MQTTOptions, uint8_t *MQTT_IP, char* cliendId, void* messageArrivedoverMQTT, 
-        UDP_Debug_message* UDP_message, uint32_t ssn_time);
+int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct* MQTTOptions, uint8_t *MQTT_IP, char* cliendId, void* messageArrivedoverMQTT);
 void CloseMQTTClientConnectionAndSocket(MQTTClient* mqtt_client, uint8_t MQTT_Socket);
 void SetupMQTTOptions(opts_struct* MQTTOptions, char* cliendId, enum QoS x, int showtopics, char* MQTT_IP);
 void SetupMQTTData(MQTTPacket_connectData* MQTT_DataPacket);

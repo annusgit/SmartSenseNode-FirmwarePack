@@ -24,7 +24,7 @@ void SetupMQTTOptions(opts_struct* MQTTOptions, char* cliendId, enum QoS x, int 
     MQTTOptions->showtopics = showtopics;
 }
 
-int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct* MQTTOptions, uint8_t *MQTT_IP, char* cliendId, void* messageArrivedoverMQTT, UDP_Debug_message* UDP_message, uint32_t ssn_time) {
+int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct* MQTTOptions, uint8_t *MQTT_IP, char* cliendId, void* messageArrivedoverMQTT) {
     int rc = FAILURE, retry_count = 0, timeout, i;
     unsigned char tempBuffer[MQTT_BUFFER_SIZE] = {};
     printf("[MQTT] Creating MQTT Network Variables\n");
@@ -44,7 +44,6 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
         printf("[MQTT] Trying to Establish Connection...\n");
         if (ConnectNetwork(net, MQTT_IP, MQTT_Port) != SOCK_OK) {
             printf("[**MQTT**] TCP Socket Connection with Broker Failed. Retrying [%d] in %d seconds\n", retry_count, timeout);
-            sendDebugmessageUDP(UDP_message, ssn_time, TCP_Socket_Conn_Failed);
             close(net->my_socket);
         } else {
             printf("[MQTT] TCP Socket Connected with Broker Successfully\n");
@@ -68,7 +67,6 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
         }
         if (retry_count > 23){
             printf("[**MQTT**]Too many [%d] retries attempted, SSN Restarting", retry_count);
-            sendDebugmessageUDP(UDP_message ,ssn_time, MQTT_Connection_failed_Restarting);
             SoftReset();
         }
         sleep_for_microseconds_and_clear_watchdog(timeout*1000000);

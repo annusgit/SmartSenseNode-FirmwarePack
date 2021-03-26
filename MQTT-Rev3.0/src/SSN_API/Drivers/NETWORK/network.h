@@ -18,8 +18,6 @@
 #define WIZ5500_R_COMMON_RCR    0x001B0100 // Reset Value: 0x08
 #define WIZ5500_W_COMMON_RCR    0x001B05F1 // Write Value: 0xF1
 
-#define UDP_DEBUG_SOCKET_NUMBER      4
-
 #define TCP_SOCKET      2
 #define MAX_LEN         100
 #define BUFFER_SIZE     2048

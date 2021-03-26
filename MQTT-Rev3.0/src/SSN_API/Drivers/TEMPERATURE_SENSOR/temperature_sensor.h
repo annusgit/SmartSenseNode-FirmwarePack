@@ -5,6 +5,7 @@
 #define _DISABLE_OPENADC10_CONFIGPORT_WARNING
 
 #include "../../global.h"
+#include "../CURRENT_SENSOR/current_sensor.h"
 #include <stdint.h>
 #include <plib.h>
 
@@ -37,6 +38,39 @@
 
 #define ONE_WIRE_TIMEOUT                0xFFFF
 #define ONE_WIRE_MIN_SAMPLES            50
+
+/* MLX90614 IR Temperater Sensor Variables */
+#define MLX90614_I2CADDR                0xB4
+
+// RAM
+#define MLX90614_RAWIR1                 0x04
+#define MLX90614_RAWIR2                 0x05
+#define MLX90614_TA                     0x06
+#define MLX90614_TOBJ1                  0x07
+#define MLX90614_TOBJ2                  0x08
+
+// EEPROM
+#define MLX90614_TOMAX                  0x20
+#define MLX90614_TOMIN                  0x21
+#define MLX90614_PWMCTRL                0x22
+#define MLX90614_TARANGE                0x23
+#define MLX90614_EMISS                  0x24
+#define MLX90614_CONFIG                 0x25
+#define MLX90614_ADDR                   0x2E
+#define MLX90614_ID1                    0x3C
+#define MLX90614_ID2                    0x3D
+#define MLX90614_ID3                    0x3E
+#define MLX90614_ID4                    0x3F
+#define MLX90614_COMM_ERROR_CODE        1000
+#define MLX90614_MIN_CELCIUS_LIMIT      -70
+#define MLX90614_MAX_CELCIUS_LIMIT      380
+
+uint16_t MLX90614_data;
+uint8_t MLX90614_data_bytes[2], MLX90614_pec;
+
+float NTC_Thermistor_4092_50k_LUT_Resistance[200], NTC_Thermistor_4092_50k_LUT_Temperature_Celcius[200];
+
+/* MLX90614 IR Temperater Sensor Variables */
 
 //#define TH_DHT22_DEBUG
 
@@ -104,6 +138,12 @@ bool I2C2_ack(void);
  */
 bool AM2320_I2C2_Read_Temp_and_Humidity();
 
+void setup_IR_Temperature_Sensor_And_Laser();
+float MLX90614_Read_Temperature_Ambient_Celcius();
+float MLX90614_Read_Temperature_Object_Celcius();
+float MLX90614_Read_Temperature_Ambient_Fahrenheit();
+float MLX90614_Read_Temperature_Object_Fahrenheit();
+
 /** 
  * Performs CRC check on received data
  * @param ptr Byte array containing received data
@@ -163,7 +203,7 @@ int8_t sample_Temperature_Humidity_bytes_using_DHT22(uint8_t* temperature_bytes,
  * Gets ambient condition status
  * @return <b>NORMAL_AMBIENT_CONDITION</b> if normal; <b>ABNORMAL_AMBIENT_CONDITION</b> otherwise.
  */
-uint8_t ambient_condition_status();
+uint8_t ambient_condition_status(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MIN_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MAX_THRESHOLD);
 
 #endif
 
