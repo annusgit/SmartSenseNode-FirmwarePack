@@ -82,8 +82,7 @@ void __ISR(_TIMER_1_VECTOR, IPL4SOFT) Timer1IntHandler_SSN_Hearbeat(void) {
 		  The ISR sends the status update after every ${SSN_REPORT_INTERVAL} seconds
  */
 
-
-int main1() {
+int main() {
 	// Setup Smart Sense Node
 	SSN_Setup();
 	// Check the EEPROM, temperature sensor and network connection before proceeding
@@ -118,8 +117,9 @@ int main1() {
         SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(getDHCPLeasetime());
 		if (ms_100_counter >= 20) {
 			// Read temperature and humidity sensor
-			SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
+			// SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
 			SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
+			SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
 			ms_100_counter = 0;
 		}
 		// Get load currents and status of machines
@@ -131,7 +131,7 @@ int main1() {
 		// we will report our status update out of sync with reporting interval if a state changes, this will allow us for accurate timing measurements
 		if (machine_status_change_flag == true) {
 			message_count++;
-			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, MLX90614_data_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
+			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, NTC_Thermistor_4092_50k_special_bytes, MLX90614_special_bytes, Machine_load_currents, Machine_load_percentages, 
                     Machine_prev_status, Machine_status_flag, MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE, Machine_status_timestamp, ssn_static_clock, abnormal_activity);			
 			Clear_Machine_Status_flag(&Machine_status_flag);
             if (message_publish_status != SUCCESSS) {
@@ -145,7 +145,9 @@ int main1() {
 		if (report_now == true) {
 			message_count++;
 			report_now = false; // reset report flag
-			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, MLX90614_data_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
+			// printf("Sending these temperatures: %.2f; %.2f\n", (float)((NTC_Thermistor_4092_50k_special_bytes[0] << 8) | NTC_Thermistor_4092_50k_special_bytes[1])/10.0f, 
+			//	(float)((MLX90614_special_bytes[0] << 8) | MLX90614_special_bytes[1])/10.0f);
+			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, NTC_Thermistor_4092_50k_special_bytes, MLX90614_special_bytes, Machine_load_currents, Machine_load_percentages, 
                     Machine_status, Machine_status_flag, Machine_status_duration, Machine_status_timestamp, ssn_static_clock, abnormal_activity);
 			Clear_Machine_Status_flag(&Machine_status_flag);
             if (message_publish_status != SUCCESSS) {
@@ -183,12 +185,12 @@ int main1() {
 	return 0;
 }
 
-int main() {
-	// Setup Smart Sense Node
-	SSN_Setup();
-	while(1) {
-		SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(0, 100);
-		sleep_for_microseconds(2000000);
-	}
-	return 0;
-}
+//int main() {
+//	// Setup Smart Sense Node
+//	SSN_Setup();
+//	while(1) {
+//		SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(0, 100);
+//		sleep_for_microseconds(2000000);
+//	}
+//	return 0;
+//}

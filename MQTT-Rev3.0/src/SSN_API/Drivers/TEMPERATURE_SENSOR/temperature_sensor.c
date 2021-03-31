@@ -14,7 +14,7 @@
 //	37.22, 38.33, 39.44, 40.56, 41.67, 42.78, 43.89, 45.0, 46.11, 47.22, 48.33, 49.44, 50.56, 51.67, 52.78, 53.89, 55.0, 56.11, 57.22, 58.33, 59.44, 60.56, 61.67, 62.78,
 //	63.89, 65.0, 66.11, 67.22, 68.33, 69.44, 70.56, 71.67, 72.78, 73.89, 75.0, 76.11, 77.22, 78.33, 79.44, 80.56, 81.67, 82.78, 83.89, 85.0, 86.11};
 
-float NTC_Thermistor_4092_50k_LUT_Resistance[200] = {
+float NTC_Thermistor_4092_50k_LUT_Resistance[THERMISTOR_LUT_SIZE] = {
 	4870621.06, 4487453.98, 4137440.56, 3817468.21, 3524738.25, 3256732.21, 3011181.86, 2786042.73, 2579470.54, 2389800.29, 2215527.65, 2055292.43, 1907863.82, 1772127.23, 1647072.59, 1531783.86, 
 	1425429.68, 1327255.02, 1236573.64, 1152761.43, 1075250.38, 1003523.17, 937108.35, 875575.97, 818533.67, 765623.17, 716517.08, 670916.08, 628546.3, 589157.02, 552518.6, 518420.5, 486669.68, 
 	457088.95, 429515.62, 403800.22, 379805.34, 357404.59, 336481.64, 316929.38, 298649.11, 281549.84, 265547.68, 250565.16, 236530.8, 223378.52, 211047.27, 199480.6, 188626.25, 178435.88, 
@@ -28,7 +28,7 @@ float NTC_Thermistor_4092_50k_LUT_Resistance[200] = {
 	973.66, 950.94, 928.86, 907.39, 886.52, 866.22, 846.48
 };
 
-float NTC_Thermistor_4092_50k_LUT_Temperature_Celcius[200] = {
+float NTC_Thermistor_4092_50k_LUT_Temperature_Celcius[THERMISTOR_LUT_SIZE] = {
 	-50, -49, -48, -47, -46, -45, -44, -43, -42, -41, -40, -39, -38, -37, -36, -35, -34, -33, -32, -31, -30, -29, -28, -27, -26, -25, -24, -23, -22, -21, -20, -19, -18, -17, -16, -15, -14, -13, -12,
 	-11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
 	40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 
@@ -433,9 +433,17 @@ float Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius() {
 	float reference_current = reference_voltage / reference_resistance;
 	float thermistor_voltage = VDD - reference_voltage;
 	float thermistor_resistance = thermistor_voltage / reference_current; // they are both in series
+	// printf("Thermistor Resistance: %.2f\n", thermistor_resistance);
 	// binary search the Thermistor LUT to find the appropriate corresponding temperature for this value of resistance
-	uint8_t first = 0, last = 199, mid;
+	uint8_t first = 0, last = THERMISTOR_LUT_SIZE - 1, mid;
 	bool found = false;
+	// first check if this resistance value is between LUT Min and Max resistances that we already know
+	// because if we don't check this, our binary search will fail
+	// if resistance is out of range, just return some out of range temperature, say 200*C
+	if (thermistor_resistance > NTC_Thermistor_4092_50k_LUT_Resistance[first] || thermistor_resistance < NTC_Thermistor_4092_50k_LUT_Resistance[last]) {
+		return THERMISTOR_LUT_SIZE;
+	}
+	// printf("Binary Search Begin...\n");
 	while(first <= last && !found) {
 		mid = (first+last)/2;
 		if (NTC_Thermistor_4092_50k_LUT_Resistance[mid] == thermistor_resistance) {
@@ -446,11 +454,13 @@ float Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius() {
 			last = mid - 1;
 		}
 	}
+	// printf("Binary Search End...\n");
 	if (found) {
-		printf("\nExact Resistance Value found in LUT!\n");
-		printf("Thermistor Resistance: %f\n", thermistor_resistance);	
-		printf("LUT Resistance: %f\n", NTC_Thermistor_4092_50k_LUT_Resistance[mid]);	
-		printf("LUT Temperature: %f\n", NTC_Thermistor_4092_50k_LUT_Temperature_Celcius[mid]);
+//		printf("\nExact Resistance Value found in LUT!\n");
+//		printf("Thermistor Resistance: %f\n", thermistor_resistance);	
+//		printf("LUT Resistance: %f\n", NTC_Thermistor_4092_50k_LUT_Resistance[mid]);	
+//		printf("LUT Temperature: %f\n", NTC_Thermistor_4092_50k_LUT_Temperature_Celcius[mid]);
+		return NTC_Thermistor_4092_50k_LUT_Temperature_Celcius[mid];
 	} else {
 		// interpolation step here, we approximate a straight line and calculate slope using two points
 		// first and last are the key indices
@@ -458,13 +468,14 @@ float Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius() {
 		float delta_r = NTC_Thermistor_4092_50k_LUT_Resistance[last] - NTC_Thermistor_4092_50k_LUT_Resistance[first];
 		float m = delta_c/delta_r;
 		float calculated_temperature_in_celcius = m * (thermistor_resistance - NTC_Thermistor_4092_50k_LUT_Resistance[first]) + NTC_Thermistor_4092_50k_LUT_Temperature_Celcius[first];
-		printf("\nNo Resistance Value found in LUT. Interpolating to Approximate Temperature Value...\n");
-		printf("\nThermistor Resistance: %f\n", thermistor_resistance);	
-		printf("Reference Resistance - 1: %f\n", NTC_Thermistor_4092_50k_LUT_Resistance[first]);
-		printf("Reference Temperature - 1: %f\n", NTC_Thermistor_4092_50k_LUT_Temperature_Celcius[first]);
-		printf("Reference Resistance - 2: %f\n", NTC_Thermistor_4092_50k_LUT_Resistance[last]);
-		printf("Reference Temperature - 2: %f\n", NTC_Thermistor_4092_50k_LUT_Temperature_Celcius[last]);
-		printf("Interpolated Temperature: %f\n", calculated_temperature_in_celcius);
+//		printf("\nNo Resistance Value found in LUT. Interpolating to Approximate Temperature Value...\n");
+//		printf("\nThermistor Resistance: %f\n", thermistor_resistance);	
+//		printf("Reference Resistance - 1: %f\n", NTC_Thermistor_4092_50k_LUT_Resistance[first]);
+//		printf("Reference Temperature - 1: %f\n", NTC_Thermistor_4092_50k_LUT_Temperature_Celcius[first]);
+//		printf("Reference Resistance - 2: %f\n", NTC_Thermistor_4092_50k_LUT_Resistance[last]);
+//		printf("Reference Temperature - 2: %f\n", NTC_Thermistor_4092_50k_LUT_Temperature_Celcius[last]);
+//		printf("Interpolated Temperature: %f\n", calculated_temperature_in_celcius);
+		return calculated_temperature_in_celcius;
 	}
 }
 

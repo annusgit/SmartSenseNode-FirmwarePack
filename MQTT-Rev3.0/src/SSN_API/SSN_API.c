@@ -4,8 +4,8 @@
 #include "SSN_API.h"
 
 /** SSN Server Address */
-uint8_t SSN_SERVER_IP[] = {192, 168, 0, 120};
-//uint8_t SSN_SERVER_IP[] = {34, 87, 92, 5};
+// uint8_t SSN_SERVER_IP[] = {192, 168, 0, 120};
+uint8_t SSN_SERVER_IP[] = {34, 87, 92, 5};
 //uint8_t SSN_SERVER_IP[] = {115, 186, 183, 129};
 /** SSN Server PORT */
 //uint16_t SSN_SERVER_PORT = 36000;
@@ -448,7 +448,9 @@ void SSN_GET_AMBIENT_CONDITION(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPER
 }
 
 void SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD) {
+	// printf("here\n");
 	float object_celcius_temperature = MLX90614_Read_Temperature_Object_Celcius();
+	int integer_temperature;
 	if (object_celcius_temperature == MLX90614_COMM_ERROR_CODE) {
 		abnormal_activity = TEMP_SENSOR_READ_ERROR_CONDITION;
 	} else if (object_celcius_temperature > TEMPERATURE_MIN_THRESHOLD && object_celcius_temperature < TEMPERATURE_MAX_THRESHOLD){
@@ -456,6 +458,10 @@ void SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(uint8_t TEMPERATURE_MIN_THRESHOLD, 
 	} else {
 		abnormal_activity = ABNORMAL_AMBIENT_CONDITION;
 	}
+	/* convert to special bytes for backend */
+	integer_temperature = (int)(object_celcius_temperature*10);
+	MLX90614_special_bytes[0] = ((0xFF00 & integer_temperature) >> 8);
+	MLX90614_special_bytes[1] = (0x00FF & integer_temperature);
 	if (abnormal_activity == NORMAL_AMBIENT_CONDITION) {
 		SSN_PREV_STATE = SSN_CURRENT_STATE;
 		SSN_CURRENT_STATE = NORMAL_AMBIENT_CONDITION;
@@ -472,7 +478,32 @@ void SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(uint8_t TEMPERATURE_MIN_THRESHOLD, 
 }
 
 void SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD) {
-	Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius();
+	// printf("there\n");
+	float object_celcius_temperature = Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius();
+	// printf("Thermistor Reading: %.2f\n", object_celcius_temperature);
+	int integer_temperature;
+	if (object_celcius_temperature > TEMPERATURE_MIN_THRESHOLD && object_celcius_temperature < TEMPERATURE_MAX_THRESHOLD){
+		abnormal_activity = NORMAL_AMBIENT_CONDITION;
+	} else {
+		abnormal_activity = ABNORMAL_AMBIENT_CONDITION;
+	}
+	/* convert to special bytes for backend */
+	integer_temperature = (int)(object_celcius_temperature*10);
+	NTC_Thermistor_4092_50k_special_bytes[0] = ((0xFF00 & integer_temperature) >> 8);
+	NTC_Thermistor_4092_50k_special_bytes[1] = (0x00FF & integer_temperature);
+	if (abnormal_activity == NORMAL_AMBIENT_CONDITION) {
+		SSN_PREV_STATE = SSN_CURRENT_STATE;
+		SSN_CURRENT_STATE = NORMAL_AMBIENT_CONDITION;
+		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
+			Clear_LED_INDICATOR();
+		}
+	} else {
+		SSN_PREV_STATE = SSN_CURRENT_STATE;
+		SSN_CURRENT_STATE = ABNORMAL_AMBIENT_CONDITION;
+		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
+			Clear_LED_INDICATOR();
+		}
+	}
 }
 
 void SSN_RESET_AFTER_N_SECONDS(uint32_t seconds) {

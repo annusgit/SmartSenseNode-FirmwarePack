@@ -66,11 +66,15 @@
 #define MLX90614_MAX_CELCIUS_LIMIT      380
 
 uint16_t MLX90614_data;
-uint8_t MLX90614_data_bytes[2], MLX90614_pec;
-
-float NTC_Thermistor_4092_50k_LUT_Resistance[200], NTC_Thermistor_4092_50k_LUT_Temperature_Celcius[200];
+uint8_t MLX90614_data_bytes[2], MLX90614_special_bytes[2], MLX90614_pec;
 
 /* MLX90614 IR Temperater Sensor Variables */
+
+/* NTC Thermistor 4092 50k Temperater Sensor Variables */
+#define THERMISTOR_LUT_SIZE             200
+float NTC_Thermistor_4092_50k_LUT_Resistance[THERMISTOR_LUT_SIZE], NTC_Thermistor_4092_50k_LUT_Temperature_Celcius[THERMISTOR_LUT_SIZE];
+uint8_t NTC_Thermistor_4092_50k_special_bytes[2];
+/* NTC Thermistor 4092 50k Temperater Sensor Variables */
 
 //#define TH_DHT22_DEBUG
 
@@ -143,6 +147,8 @@ float MLX90614_Read_Temperature_Ambient_Celcius();
 float MLX90614_Read_Temperature_Object_Celcius();
 float MLX90614_Read_Temperature_Ambient_Fahrenheit();
 float MLX90614_Read_Temperature_Object_Fahrenheit();
+
+float Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius();
 
 /** 
  * Performs CRC check on received data
