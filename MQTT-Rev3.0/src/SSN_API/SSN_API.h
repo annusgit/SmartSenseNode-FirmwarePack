@@ -1,4 +1,3 @@
-
 #ifndef __SSN_API_h__    /* Guard against multiple inclusion */
 #define __SSN_API_h__
 
@@ -7,6 +6,8 @@
 #include "FlashMemory/FlashMemory.h"
 #include "Connection/Connection.h"
 #include "Communication/Communication.h"
+#include <lightmodbus/lightmodbus.h>
+#include <lightmodbus/master.h>
 
 /** 
  * \mainpage 

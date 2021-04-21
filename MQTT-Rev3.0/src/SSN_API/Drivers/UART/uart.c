@@ -1,6 +1,14 @@
-
-
 #include "uart.h"
+
+void open_UART1(unsigned int baudrate) {
+    /* To open and configure UART1 for printf function */
+    RPB3R  = 0x0001;            // U1TX
+    U1RXR  = 0x0001;            // U1RX
+    U1MODE = 0x00000000;        // U1 configurations
+    U1STA  = 0x1400;
+    U1BRG  = (PERIPH_CLK/(16*baudrate))-1;
+    U1MODESET = 0x00008000;     // enable UART1
+}
 
 void open_UART2(unsigned int baudrate) {
     /* To open and configure UART2 for printf function */

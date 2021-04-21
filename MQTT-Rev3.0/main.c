@@ -13,25 +13,23 @@
 #pragma config JTAGEN		= OFF           // JTAG Enable (Disabled)
 
 #include "SSN_API/SSN_API.h"
-#include "SSN_API/Communication/MQTT_Communication.h"
-
 
 /** A millisecond timer interrupt required for DHCP and MQTT Yielding functions */
-void __ISR(_TIMER_2_VECTOR, IPL4SOFT) Timer2IntHandler(void){
+void __ISR(_TIMER_2_VECTOR, IPL4SOFT) Timer2IntHandler(void) {
 	// clear timer 2 interrupt flag
 	IFS0bits.T2IF = 0x00;
-    // millisecond ticks for DHCP
-    msTicks++; /* increment counter necessary in Delay()*/
+	// millisecond ticks for DHCP
+	msTicks++; /* increment counter necessary in Delay()*/
 	// millisecond ticks for MQTT
 	MilliTimer_Handler();
 	////////////////////////////////////////////////////////
 	// SHOULD BE Added DHCP Timer Handler your 1s tick timer
-	if(msTicks % 1000 == 0)	{
-        DHCP_time_handler();
-        /* Give the Ethernet Indication */
-        // No_Ethernet_LED_INDICATE();
+	if (msTicks % 1000 == 0) {
+		DHCP_time_handler();
+		/* Give the Ethernet Indication */
+		// No_Ethernet_LED_INDICATE();
 		// printf("\n(LOG): One Second Passed in Millisecond Interrupt Handler\n");
-    }
+	}
 	//////////////////////////////////////////////////////
 }
 
@@ -82,7 +80,7 @@ void __ISR(_TIMER_1_VECTOR, IPL4SOFT) Timer1IntHandler_SSN_Hearbeat(void) {
 		  The ISR sends the status update after every ${SSN_REPORT_INTERVAL} seconds
  */
 
-int main() {
+int main1() {
 	// Setup Smart Sense Node
 	SSN_Setup();
 	// Check the EEPROM, temperature sensor and network connection before proceeding
@@ -97,11 +95,11 @@ int main() {
 	// SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
 	// Setup MQTT connection for SSN communication with broker
 	SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
-    // Get MAC address for SSN if we didn't have one already
+	// Get MAC address for SSN if we didn't have one already
 	SSN_GET_MAC();
 	// Get SSN configurations for SSN or pick from EEPROM if already assigned
-    SSN_GET_CONFIG();
-    MQTTallowedfailureCount = MQTTallowedfailureCounts(SSN_REPORT_INTERVAL);
+	SSN_GET_CONFIG();
+	MQTTallowedfailureCount = MQTTallowedfailureCounts(SSN_REPORT_INTERVAL);
 	// Receive time of day from the server for accurate timestamps
 	SSN_GET_TIMEOFDAY();
 	// Clear the watchdog
@@ -114,7 +112,7 @@ int main() {
 		DisableGlobalHalfSecondInterrupt();
 		// Re-Sync Time of Day after every 4 hours
 		SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(4 * 3600);
-        SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(getDHCPLeasetime());
+		SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(getDHCPLeasetime());
 		if (ms_100_counter >= 20) {
 			// Read temperature and humidity sensor
 			// SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
@@ -123,55 +121,55 @@ int main() {
 			ms_100_counter = 0;
 		}
 		// Get load currents and status of machines
-		machine_status_change_flag = Get_Machines_Status_Update(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, SSN_CURRENT_SENSOR_THRESHOLDS, 
-                SSN_CURRENT_SENSOR_MAXLOADS, Machine_load_currents, Machine_load_percentages, Machine_status, Machine_prev_status, &Machine_status_flag, 
-                Machine_status_duration, Machine_status_timestamp);
+		machine_status_change_flag = Get_Machines_Status_Update(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, SSN_CURRENT_SENSOR_THRESHOLDS,
+			SSN_CURRENT_SENSOR_MAXLOADS, Machine_load_currents, Machine_load_percentages, Machine_status, Machine_prev_status, &Machine_status_flag,
+			Machine_status_duration, Machine_status_timestamp);
 		// Clear the watchdog
 		ServiceWatchdog();
 		// we will report our status update out of sync with reporting interval if a state changes, this will allow us for accurate timing measurements
 		if (machine_status_change_flag == true) {
 			message_count++;
-			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, NTC_Thermistor_4092_50k_special_bytes, MLX90614_special_bytes, Machine_load_currents, Machine_load_percentages, 
-                    Machine_prev_status, Machine_status_flag, MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE, Machine_status_timestamp, ssn_static_clock, abnormal_activity);			
+			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, NTC_Thermistor_4092_50k_special_bytes, MLX90614_special_bytes, Machine_load_currents, Machine_load_percentages,
+				Machine_prev_status, Machine_status_flag, MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE, Machine_status_timestamp, ssn_static_clock, abnormal_activity);
 			Clear_Machine_Status_flag(&Machine_status_flag);
-            if (message_publish_status != SUCCESSS) {
-                mqtt_failure_counts++;
-                printf("[ERROR] Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failure_counts, MQTTallowedfailureCount);
-            } 
-            else {
-                mqtt_failure_counts = 0;
-            }
-        }
+			if (message_publish_status != SUCCESSS) {
+				mqtt_failure_counts++;
+				printf("[ERROR] Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failure_counts, MQTTallowedfailureCount);
+			}
+			else {
+				mqtt_failure_counts = 0;
+			}
+		}
 		if (report_now == true) {
 			message_count++;
 			report_now = false; // reset report flag
 			// printf("Sending these temperatures: %.2f; %.2f\n", (float)((NTC_Thermistor_4092_50k_special_bytes[0] << 8) | NTC_Thermistor_4092_50k_special_bytes[1])/10.0f, 
 			//	(float)((MLX90614_special_bytes[0] << 8) | MLX90614_special_bytes[1])/10.0f);
-			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, NTC_Thermistor_4092_50k_special_bytes, MLX90614_special_bytes, Machine_load_currents, Machine_load_percentages, 
-                    Machine_status, Machine_status_flag, Machine_status_duration, Machine_status_timestamp, ssn_static_clock, abnormal_activity);
+			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, NTC_Thermistor_4092_50k_special_bytes, MLX90614_special_bytes, Machine_load_currents, Machine_load_percentages,
+				Machine_status, Machine_status_flag, Machine_status_duration, Machine_status_timestamp, ssn_static_clock, abnormal_activity);
 			Clear_Machine_Status_flag(&Machine_status_flag);
-            if (message_publish_status != SUCCESSS) {
-                mqtt_failure_counts++;
-                printf("[ERROR] Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failure_counts, MQTTallowedfailureCount);
-            } 
-            else {
-                mqtt_failure_counts = 0;
-            }		
-        }
+			if (message_publish_status != SUCCESSS) {
+				mqtt_failure_counts++;
+				printf("[ERROR] Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failure_counts, MQTTallowedfailureCount);
+			}
+			else {
+				mqtt_failure_counts = 0;
+			}
+		}
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// MQTT background handler
 		start_ms_timer_with_interrupt();
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Check if we failed to publish, check connections and reconnect if necessary
-        		// check how many failure counts have we encountered and reconnect to broker if necessary
+		// Check if we failed to publish, check connections and reconnect if necessary
+		// check how many failure counts have we encountered and reconnect to broker if necessary
 		if (mqtt_failure_counts >= MQTTallowedfailureCount) {
 			// assume our connection has broken, we'll reconnect at this point
 			printf("[MQTT] SSN Message Publication to MQTT Broker Failed and Retry Exceeded...\n");
-            message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
+			message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
 			// connection re-established, exit fault code and reset failure counts
 			mqtt_failure_counts = 0;
 		}
-    	MQTTYield(&Client_MQTT, 100);
+		MQTTYield(&Client_MQTT, 100);
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		stop_ms_timer_with_interrupt();
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,12 +183,212 @@ int main() {
 	return 0;
 }
 
+
+//Configuration structures
+ModbusMaster mstatus;
+ModbusSlave sstatus;
+
+//Registers and coils
+uint8_t coils[2] = {0};
+uint16_t regs[32] = {0};
+
+//For storing exit codes
+uint8_t sec, mec;
+
+
+//Dump slave information
+
+void slavedump() {
+	int i;
+	printf("==SLAVE DUMP==\n");
+
+	printf("Registers:");
+	for (i = 0; i < sstatus.registerCount; i++)
+		printf(" %d", sstatus.registers[i]);
+	printf("\n");
+
+	printf("Coils:");
+	for (i = 0; i < sstatus.coilCount >> 3; i++)
+		printf(" %d", sstatus.coils[i]);
+	printf("\n");
+
+	printf("Request:");
+	for (i = 0; i < sstatus.request.length; i++)
+		printf(" %d", sstatus.request.frame[i]);
+	printf("\n");
+
+	printf("Response:");
+	for (i = 0; i < sstatus.response.length; i++)
+		printf(" %d", sstatus.response.frame[i]);
+	printf("\n");
+
+	printf("Exit code: %d\n\n", sec);
+}
+
+//Dump master information
+
+void masterdump() {
+	int i;
+	printf("==MASTER DUMP==\n");
+
+	printf("Received data: slave: %d, addr: %d, count: %d, type: %d\n",
+		mstatus.data.address, mstatus.data.index, mstatus.data.count, mstatus.data.type);
+	printf("\t\tvalues:");
+	switch (mstatus.data.type) {
+		case MODBUS_HOLDING_REGISTER:
+		case MODBUS_INPUT_REGISTER:
+			for (i = 0; i < mstatus.data.count; i++)
+				printf(" %d", mstatus.data.regs[i]);
+			break;
+
+		case MODBUS_COIL:
+		case MODBUS_DISCRETE_INPUT:
+			for (i = 0; i < mstatus.data.count; i++)
+				printf(" %d", modbusMaskRead(mstatus.data.coils, mstatus.data.length, i));
+			break;
+	}
+	printf("\n");
+
+	printf("Request:");
+	for (i = 0; i < mstatus.request.length; i++)
+		printf(" %d", mstatus.request.frame[i]);
+	printf("\n");
+
+	printf("Response:");
+	for (i = 0; i < mstatus.response.length; i++)
+		printf(" %d", mstatus.response.frame[i]);
+	printf("\n");
+
+	printf("Exit code: %d\n\n", mec);
+}
+
+int main() {
+	SSN_Setup();
+	while (1) {
+		//Init slave (input registers and discrete inputs work just the same)
+		sstatus.address = 27;
+		sstatus.registers = regs;
+		sstatus.registerCount = 32;
+		sstatus.coils = coils;
+		sstatus.coilCount = 16;
+		modbusSlaveInit(&sstatus);
+
+		//Init master
+		modbusMasterInit(&mstatus);
+
+		//Dump status
+		slavedump();
+		masterdump();
+
+		/* WRITE VALUE */
+
+		//Build frame to write single register
+		modbusBuildRequest06(&mstatus, 27, 03, 56);
+
+		//Pretend frame is being sent to slave
+		sstatus.request.frame = mstatus.request.frame;
+		sstatus.request.length = mstatus.request.length;
+
+		//Let slave parse frame
+		sec = modbusParseRequest(&sstatus);
+
+		//Pretend frame is being sent to master
+		mstatus.response.frame = sstatus.response.frame;
+		mstatus.response.length = sstatus.response.length;
+
+		//Let master parse the frame
+		mec = modbusParseResponse(&mstatus);
+
+		//Dump status again
+		slavedump();
+		masterdump();
+
+		/* READ VALUE */
+
+		//Build frame to read 4 registers
+		modbusBuildRequest03(&mstatus, 27, 0, 4);
+
+		//Pretend frame is being sent to slave
+		sstatus.request.frame = mstatus.request.frame;
+		sstatus.request.length = mstatus.request.length;
+
+		//Let slave parse frame
+		sec = modbusParseRequest(&sstatus);
+
+		//Pretend frame is being sent to master
+		mstatus.response.frame = sstatus.response.frame;
+		mstatus.response.length = sstatus.response.length;
+
+		mec = modbusParseResponse(&mstatus);
+
+		//Dump status again
+		slavedump();
+		masterdump();
+
+		/* COILS */
+
+		//Build frame to write single coil
+		modbusBuildRequest05(&mstatus, 27, 07, 1);
+
+		//Pretend frame is being sent to slave
+		sstatus.request.frame = mstatus.request.frame;
+		sstatus.request.length = mstatus.request.length;
+
+		//Let slave parse frame
+		sec = modbusParseRequest(&sstatus);
+
+		//Pretend frame is being sent to master
+		mstatus.response.frame = sstatus.response.frame;
+		mstatus.response.length = sstatus.response.length;
+
+		mec = modbusParseResponse(&mstatus);
+
+		//Dump status again
+		slavedump();
+		masterdump();
+
+		/* READ VALUE */
+
+		//Build frame to read 4 coils
+		modbusBuildRequest01(&mstatus, 27, 0, 8);
+
+		//Pretend frame is being sent to slave
+		sstatus.request.frame = mstatus.request.frame;
+		sstatus.request.length = mstatus.request.length;
+
+		//Let slave parse frame
+		sec = modbusParseRequest(&sstatus);
+
+		//Pretend frame is being sent to master
+		mstatus.response.frame = sstatus.response.frame;
+		mstatus.response.length = sstatus.response.length;
+
+		mec = modbusParseResponse(&mstatus);
+
+		//Dump status again
+		slavedump();
+		masterdump();
+
+		sleep_for_microseconds(2000);
+	}
+	return 0;
+}
+
+//#include "SSN_API/MODBUS/modbus_interface.h"
+//
 //int main() {
-//	// Setup Smart Sense Node
 //	SSN_Setup();
+//	open_UART1(19200); /* This one we will use for MODBUS */
+//	eMBErrorCode eStatus;
+//	eStatus = eMBInit( MB_RTU, 0x01, 1, 19200, MB_PAR_NONE );
+//    /* Enable the Modbus Protocol Stack. */
+//	eStatus = eMBEnable(  );
 //	while(1) {
-//		SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(0, 100);
-//		sleep_for_microseconds(2000000);
+//		printf("Check123\n");
+//		( void )eMBPoll(  );
+//        /* Here we simply count the number of poll cycles. */
+//        usRegInputBuf[0]++;
+//		sleep_for_microseconds(1000000);
 //	}
 //	return 0;
 //}

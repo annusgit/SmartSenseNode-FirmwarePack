@@ -96,8 +96,8 @@ void SSN_Setup() {
 	setup_EEPROM();
 	setup_Ethernet(5000000);
 	setup_Current_Sensors();
-//	setup_Temperature_Humidity_Sensor();
-	setup_IR_Temperature_Sensor_And_Laser();
+	setup_Temperature_Humidity_Sensor();
+//	setup_IR_Temperature_Sensor_And_Laser();
 	setup_LED_Indicator();
 	setup_Interrupts();
     setup_millisecond_timer_with_interrupt();
@@ -634,6 +634,15 @@ int DHT22_Sensor_Test() {
 	return 1;
 }
 
+//int main() {
+//	// Setup Smart Sense Node
+//	SSN_Setup();
+//	while(1) {
+//		SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(0, 100);
+//		sleep_for_microseconds(2000000);
+//	}
+//	return 0;
+//}
 
 //unsigned char tempBuffer[BUFFER_SIZE] = {};
 //unsigned char TargetName[40] = "m11.cloudmqtt.com";

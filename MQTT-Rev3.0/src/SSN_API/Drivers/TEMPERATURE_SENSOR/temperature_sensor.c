@@ -644,7 +644,7 @@ uint8_t ambient_condition_status(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMP
 	temperature = (float) (((recv_data[2] & 0x7F) << 8) | recv_data[3]) / 10.0f;
 	relative_humidity = (float) ((recv_data[0] << 8) | recv_data[1]) / 10.0f;
 #endif
-	//printf("Temperature: %.2f, Humidity: %.2f\n", temperature, relative_humidity);
+	printf("Temperature: %.2f, Humidity: %.2f\n", temperature, relative_humidity);
 	// Normal condition, return 0
 	if (temperature < TEMPERATURE_MAX_THRESHOLD && temperature > TEMPERATURE_MIN_THRESHOLD)
 		if (relative_humidity < RELATIVE_HUMIDITY_MAX_THRESHOLD && relative_humidity > RELATIVE_HUMIDITY_MIN_THRESHOLD)
