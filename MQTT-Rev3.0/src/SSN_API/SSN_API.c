@@ -93,10 +93,11 @@ unsigned char configreceivedstring[150];
 void SSN_Setup() {
 	// Setup calls for all our peripherals/devices
 	setup_printf(115200);
+	open_UART1(9600);
 	setup_EEPROM();
 	setup_Ethernet(5000000);
 	setup_Current_Sensors();
-	setup_Temperature_Humidity_Sensor();
+//	setup_Temperature_Humidity_Sensor();
 //	setup_IR_Temperature_Sensor_And_Laser();
 	setup_LED_Indicator();
 	setup_Interrupts();
@@ -815,6 +816,100 @@ int DHT22_Sensor_Test() {
 //    return 1;
 //}
 //
+
+//int main() {
+//	// direct stdout to uart1. This will make printf() use UART1
+//	setup_printf(115200);
+//	open_UART1(115200);
+////	__XC_UART = 1;
+//	printf("Starting now...\n");
+//	int i, num_char;
+//	const int count = 20;
+//	char buffer[count];
+//	for (i=0; i<count; i++) {
+//		buffer[i] = '\0';
+//	}
+//	uint8_t command[6] = {0x01, 0x03, 0x00, 0x2F, 0x00, 0x01};
+//	while(1) {
+//		printf("<< 0X0103002f0001\n");
+//		SerialTransmit_UART1(command);
+//		sleep_for_microseconds(1000);
+//		// clear reception array
+//		for (i=0; i<count; i++) {
+//			buffer[i] = '\0';
+//		}
+//		num_char = SerialReceive_UART1(buffer, count);
+//		if (num_char > 0) {
+//			printf(">> ");
+//			for(i=0; i<num_char; i++) {
+//				printf("%x ", buffer[i]);
+//			}
+//			printf("\n");			
+//		}
+//		sleep_for_microseconds(500000);
+//	}
+//	return 0;
+//}
+
+//int main2() {
+//	__XC_UART = 1;
+////	setup_printf(115200);
+//	open_UART1(115200);
+//	open_UART2(115200);
+//	printf("Starting now...\n");
+//	// create and initiate the MODBUS MASTER object
+//	ModbusMaster master;
+//	if (modbusMasterInit(&master) != MODBUS_OK) {
+//		printf("[LOG]: Can't initiate Master Object!\n");
+//	}
+//	unsigned int max_len, recv_len; 
+//	uint8_t frame[256];
+//	ModbusError error;
+//	while (1) {
+//		// create MODBUS request for reading holding registers
+//		error = modbusBuildRequest03(&master, 23, 1, 1);
+//		if (error != MODBUS_OK) {
+//			printf("[LOG]: Can't build request using Master Object!\n");
+//		}
+//		// transmit function request to MODBUS slave over UART2
+//		SerialTransmit_UART2("hello world\r\n"); // master.request.frame); // 
+//		printf("Transmission Successful: ");
+//		printf(master.request.frame);
+//		printf("\n");
+//		// receive response from the slave
+//		recv_len = SerialReceive_UART2((char*)&frame, max_len);
+//		if (recv_len > 0) {
+//			printf("Reception Successful!: [%d bytes]", recv_len);
+//			uint8_t i; for(i=0; i<recv_len; i++) {
+//				printf("%d", frame[i]);
+//			}
+//			printf("\n");			
+//		} else {
+//			printf("Reception Failed!\n");
+//		}
+////		//Pass the frame to the library
+////		master.response.frame = frame;
+////		master.response.length = recv_len;
+////		error = modbusParseResponse(&master);
+////		if (error == MODBUS_OK) {
+////			//Use the data
+////			//see ModbusMaster::data
+////			printf("MODBUS Data Received: ");
+////			uint8_t i; for(i=0; i<recv_len; i++) {
+////				printf("%d", frame[i]);
+////			}
+////			printf("\n");
+////		} else if (error == MODBUS_ERROR_EXCEPTION) {
+////			//Use the exception information
+////			printf("slave threw an exception - %d\n", master.exception.code);
+////		} else {
+////			//Handle the other errors
+////			//see ModbusError
+////		}
+//		sleep_for_microseconds(1000000);
+//	}
+//	return 0;
+//}
 
 
 
