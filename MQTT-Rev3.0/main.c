@@ -80,7 +80,7 @@ void __ISR(_TIMER_1_VECTOR, IPL4SOFT) Timer1IntHandler_SSN_Hearbeat(void) {
 		  The ISR sends the status update after every ${SSN_REPORT_INTERVAL} seconds
  */
 
-int main2() {
+int main3() {
 	// Setup Smart Sense Node
 	SSN_Setup();
 	// Check the EEPROM, temperature sensor and network connection before proceeding
@@ -186,7 +186,7 @@ unsigned char TargetName[40] = "mqtt.hamzadogar.com";
 uint8_t DNS_ADDRESS[4] = {8, 8, 8, 8};
 uint8_t MQTT_IP[4];
 
-int main() {
+int main2() {
 	// Basic setup for our SSN to work    
 	SSN_Setup();
 	SSN_COPY_MAC_FROM_MEMORY();
@@ -202,12 +202,31 @@ int main() {
 	while (1) {
 		T5CON = 0x8000;
 		TMR5 = 0;
-		strcpy(TargetName, "www.carepvtltd.com");
+		strcpy(TargetName, "mqtt.hamzadogar.com");
 		while ((DNS_run(DNS_ADDRESS, TargetName, MQTT_IP) == 0) && (TMR5 < PERIPH_CLK));
 		TMR5 = 0;
 		T5CONCLR = 0x8000;
 		printf("***%s\n", TargetName);
 		printf("***%d.%d.%d.%d\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
+		sleep_for_microseconds(1000000);
+	}
+
+	return 1;
+}
+
+int main() {
+	// Basic setup for our SSN to work    
+	SSN_Setup();
+    uint8_t i; for(i=0; i<NO_OF_MACHINES; i++) {
+        SSN_CURRENT_SENSOR_RATINGS[i] = 100;
+        SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.65f;
+    }
+	while (1) {
+		Calculate_True_RMS_Current_On_All_Channels(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, 150, Machine_load_currents);
+        printf("\n\n");
+        for(i=0; i<NO_OF_MACHINES; i++) {
+            printf("Current-%d: %f Arms\n", i+1, Machine_load_currents[i]);   
+        }
 		sleep_for_microseconds(1000000);
 	}
 
