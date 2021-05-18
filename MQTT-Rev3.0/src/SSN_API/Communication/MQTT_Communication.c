@@ -35,6 +35,8 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
     MQTTClientInit(mqtt_client, net, 1000, MQTT_buf, 100, tempBuffer, 2048);
     //printf("%d\n",Client_MQTT.command_timeout_ms);
     printf("[MQTT] Setting Up MQTT Communication Options\n");
+    printf("***%d.%d.%d.%d\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
+
     SetupMQTTOptions(MQTTOptions, cliendId, QOS1, 1, MQTT_IP);
     printf("[MQTT] Setting Up MQTT Data Variables\n");
     SetupMQTTData(&MQTT_DataPacket);

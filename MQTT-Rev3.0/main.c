@@ -79,8 +79,7 @@ void __ISR(_TIMER_1_VECTOR, IPL4SOFT) Timer1IntHandler_SSN_Hearbeat(void) {
  *      - SSN calculates machine status update and ambient conditions every 100 milliseconds. 
 		  The ISR sends the status update after every ${SSN_REPORT_INTERVAL} seconds
  */
-
-int main3() {
+int main2() {
 	// Setup Smart Sense Node
 	SSN_Setup();
 	// Check the EEPROM, temperature sensor and network connection before proceeding
@@ -90,9 +89,10 @@ int main3() {
 	// First find MAC in flash memory or assign default MAC address
 	SSN_COPY_MAC_FROM_MEMORY();
 	// We can chose two ways to operate over UDP; static or dynamic IP
-	SetupConnectionWithDHCP(SSN_MAC_ADDRESS, DHCP_SOCKET);
+	SetupConnectionWithDHCP(SSN_MAC_ADDRESS);
 	// Setup Static IP for SSN to join existing network
 	// SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
+    GetServerIP_UsingDNS(DEFAULT_SERVER_IP, MQTT_SERVER_DNS, SSN_SERVER_IP);
 	// Setup MQTT connection for SSN communication with broker
 	SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
 	// Get MAC address for SSN if we didn't have one already
@@ -181,53 +181,23 @@ int main3() {
 	return 0;
 }
 
-unsigned char tempBuffer[BUFFER_SIZE] = {};
-unsigned char TargetName[40] = "mqtt.hamzadogar.com";
-uint8_t DNS_ADDRESS[4] = {8, 8, 8, 8};
-uint8_t MQTT_IP[4];
-
-int main2() {
-	// Basic setup for our SSN to work    
-	SSN_Setup();
-	SSN_COPY_MAC_FROM_MEMORY();
-	Ethernet_Register_MAC(SSN_MAC_ADDRESS);
-	Ethernet_set_Static_IP(SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, DNS_ADDRESS);
-	printf("HELLOWORLD\n");
-	printf("***%d.%d.%d.%d\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
-
-	Network n;
-	n.my_socket = 0;
-	DNS_init(1, tempBuffer);
-
-	while (1) {
-		T5CON = 0x8000;
-		TMR5 = 0;
-		strcpy(TargetName, "mqtt.hamzadogar.com");
-		while ((DNS_run(DNS_ADDRESS, TargetName, MQTT_IP) == 0) && (TMR5 < PERIPH_CLK));
-		TMR5 = 0;
-		T5CONCLR = 0x8000;
-		printf("***%s\n", TargetName);
-		printf("***%d.%d.%d.%d\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
-		sleep_for_microseconds(1000000);
-	}
-
-	return 1;
-}
-
 int main() {
 	// Basic setup for our SSN to work    
 	SSN_Setup();
+    
+	printf("HELLOWORLD\n");
     uint8_t i; for(i=0; i<NO_OF_MACHINES; i++) {
-        SSN_CURRENT_SENSOR_RATINGS[i] = 100;
-        SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.65f;
+        SSN_CURRENT_SENSOR_RATINGS[i] = 50;
+        SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.00f;
     }
+
 	while (1) {
-		Calculate_True_RMS_Current_On_All_Channels(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, 150, Machine_load_currents);
+		Calculate_True_RMS_Current_On_All_Channels(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, 200, Machine_load_currents);
         printf("\n\n");
         for(i=0; i<NO_OF_MACHINES; i++) {
             printf("Current-%d: %f Arms\n", i+1, Machine_load_currents[i]);   
         }
-		sleep_for_microseconds(1000000);
+		sleep_for_microseconds(100000);
 	}
 
 	return 1;

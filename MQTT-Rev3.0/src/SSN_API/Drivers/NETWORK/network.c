@@ -4,7 +4,6 @@ char* StatusUpdatesChannel   = "StatusUpdates";
 char* GettersChannel         = "Getters";
 char NodeExclusiveChannel[17];
 
-
 void WIZ5500_Reset() {
     /* Reset WIZ5500 for ~460ms */
     PORTSetBits(IOPORT_B, BIT_4);

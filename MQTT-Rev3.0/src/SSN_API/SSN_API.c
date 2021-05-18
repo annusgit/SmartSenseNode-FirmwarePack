@@ -4,15 +4,19 @@
 #include "SSN_API.h"
 
 /** SSN Server Address */
-// uint8_t SSN_SERVER_IP[] = {192, 168, 0, 120};
-uint8_t SSN_SERVER_IP[] = {34, 87, 92, 5};
+ uint8_t SSN_SERVER_IP[];// = {192, 168, 0, 110};
+//uint8_t SSN_SERVER_IP[] = {};//34, 87, 92, 5};
+uint8_t DEFAULT_SERVER_IP[] = {34, 87, 92, 5};
 //uint8_t SSN_SERVER_IP[] = {115, 186, 183, 129};
+unsigned char MQTT_SERVER_DNS[40] = "mqtt.hamzadogar.com";
+
 /** SSN Server PORT */
 //uint16_t SSN_SERVER_PORT = 36000;
 //uint8_t SSN_SERVER_IP[] = {192, 168, 0, 120};
 ///** SSN Server PORT */
 //uint16_t SSN_SERVER_PORT = 36000;
 
+//uint8_t DNS_ADDRESS[4] = {8, 8, 8, 8};
 
 /** Static IP Assignment */
 uint8_t SSN_STATIC_IP[4]		= {192, 168, 0, 110};
@@ -545,7 +549,7 @@ void SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(uint32_t seconds) {
         printf("[LOG] Closing all existing connections and sockets...\n");
         CloseMQTTClientConnectionAndSocket(&Client_MQTT, TCP_SOCKET);
         // get new IP from DHCP
-       	SetupConnectionWithDHCP(SSN_MAC_ADDRESS, DHCP_SOCKET);
+       	SetupConnectionWithDHCP(SSN_MAC_ADDRESS);
         // create sockets and connections all over again
         SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
 	}

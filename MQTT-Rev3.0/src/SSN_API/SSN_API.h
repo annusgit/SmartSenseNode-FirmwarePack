@@ -158,6 +158,9 @@
 extern uint8_t SSN_SERVER_IP[4];
 /** SSN Server PORT */
 //extern uint16_t SSN_SERVER_PORT;
+//extern uint8_t DNS_ADDRESS[4];
+extern uint8_t DEFAULT_SERVER_IP[4];
+extern unsigned char MQTT_SERVER_DNS[40];
 
 /** Static IP Assignment */
 extern uint8_t SSN_STATIC_IP[4];

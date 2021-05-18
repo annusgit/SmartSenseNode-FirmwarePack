@@ -11,7 +11,7 @@
  * @param UDP_SOCKET SSN UDP socket number  
  * @return Socket Number, should be the same as UDP_SOCKET if successfully created
  */
-uint8_t SetupConnectionWithDHCP(uint8_t* SSN_MAC_ADDRESS, uint8_t UDP_SOCKET);
+uint8_t SetupConnectionWithDHCP(uint8_t* SSN_MAC_ADDRESS);
 
 uint8_t SetupConnectionWithStaticIP(uint8_t* SSN_MAC_ADDRESS, uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway, uint8_t* dns);
 uint8_t SetupConnectionWithStaticIPAndReturnSocket(uint8_t UDP_SOCKET, uint8_t* SSN_MAC_ADDRESS, uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway, uint8_t* dns);
@@ -23,5 +23,6 @@ uint8_t SetupConnectionWithStaticIPAndReturnSocket(uint8_t UDP_SOCKET, uint8_t* 
  * @return Will return a new socket for communication
  */
 uint8_t ResetConnection(uint8_t* SSN_CURRENT_MAC, uint8_t UDP_SOCKET);
+void GetServerIP_UsingDNS(uint8_t* DEFAULT_SERVER_IP, unsigned char* MQTT_SERVER_DNS, uint8_t* SSN_SERVER_IP);
 
 #endif

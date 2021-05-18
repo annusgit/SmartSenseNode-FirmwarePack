@@ -150,7 +150,7 @@ void Calculate_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, uint16_t num
     }
 }
 
-void Calculate_True_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, float* SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, uint16_t num_samples, float* RMS_CURRENTS) {
+ void Calculate_True_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, float* SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, uint16_t num_samples, float* RMS_CURRENTS) {
     // sensor_relative_voltage means we are looking at the max output voltage of our sensors
     // e.g voltage-output 30Amp sensor would give 1Vrms -> 30Arms
     // and current-output 100Amp sensor would give max 1.65Vrms -> 100Arms
@@ -167,23 +167,55 @@ void Calculate_True_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, float* 
 			sensor_relative_scalar = SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i];
             // Sample one value from i-th channel
             uint16_t adc_raw_sample = sample_Current_Sensor_channel(i);
-            sensor_relative_voltage[i] = (3.3 * (float)adc_raw_sample / 1024) / sensor_relative_scalar;
-            if(sensor_relative_voltage[i]>0) {
+//            adc_raw_sample +=100;
+            if(adc_raw_sample == 0){
+                sleep_for_microseconds(93);
+                // all_adc_raw_samples[count]=sample_Current_Sensor_channel(i);
+            }
+            else {
+                sensor_relative_voltage[i] = (3.3 * (float)adc_raw_sample / 1024) / sensor_relative_scalar;
                 non_zero_voltage_squared_running_sum[i] += sensor_relative_voltage[i]*sensor_relative_voltage[i];
                 non_zero_voltage_count[i]++;
+                sleep_for_microseconds(84);
             }
+////            else if(i==2){
+////                all_adc_raw_samples[i2+count]=sample_Current_Sensor_channel(i);
+////            }
+////            else if(i==3){
+////                all_adc_raw_samples[i3+count]=sample_Current_Sensor_channel(i);
+////            }
+////            printf("sample: %u \n", adc_raw_sample);     
+//            sensor_relative_voltage[i] = (3.3 * (float)adc_raw_sample / 1024) / sensor_relative_scalar;
+//            if(sensor_relative_voltage[i]=0){
+//                PORTToggleBits(IOPORT_A, GREEN_LED);
+////                sleep_for_microseconds(0);
+//            }
+//            else{
+//                non_zero_voltage_squared_running_sum[i] += sensor_relative_voltage[i]*sensor_relative_voltage[i];
+//                non_zero_voltage_count[i]++;
+////              PORTToggleBits(IOPORT_A, RED_LED);
+////                sleep_for_microseconds(100);             
+//            }
+//            sleep_for_microseconds(100);
+//            PORTToggleBits(IOPORT_A, GREEN_LED);
         }
         count++;
         // pick 200 samples per wave cycle of AC Sine Wave @ 50Hz => 100us sampling period
         // but we want to keep only 3/4-th of the wave with us in order to capture just one positive half-wave, therefore, we sample only 150 times, not 200
-        sleep_for_microseconds(100); 
+//        PORTToggleBits(IOPORT_A, GREEN_LED);
+//        sleep_for_microseconds(100); 
     }
+    count=0;
+
     /* Calculate the True RMS Current Values on all 4 channels */
     for (i = 0; i < NO_OF_MACHINES; i++) {
         if(non_zero_voltage_count[i]<1) {
             CURRENT_RMS_VALUE[i] = 0;
         } else {
             CURRENT_RMS_VALUE[i] = (float)SENSOR_RATINGS[i] * sqrt(non_zero_voltage_squared_running_sum[i]/non_zero_voltage_count[i]);
+            // empirical error compensation
+            // error = 0.01444*CURRENT_RMS_VALUE[i] + 0.055555;
+            CURRENT_RMS_VALUE[i] += 0.01444*CURRENT_RMS_VALUE[i] + 0.055555;
         }
         // fill the new current value into the RMS buffer for RMS Averaging
         RMS_buffer[i*n_for_rms_averaging+rms_averaging_sample_count] = CURRENT_RMS_VALUE[i];
@@ -205,7 +237,7 @@ void Calculate_True_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, float* 
         uint8_t j=0; for(j=0; j<n_for_rms_averaging; j++) {
             buffer_sum += RMS_buffer[i*n_for_rms_averaging+j];
         }
-        RMS_CURRENTS[i] = buffer_sum/n_for_rms_averaging;
+        RMS_CURRENTS[i] = buffer_sum/n_for_rms_averaging;        
     }
 //    printf("%.2f, %.2f, %.2f, %.2f\n", CURRENT_RMS_VALUE[0], CURRENT_RMS_VALUE[1], CURRENT_RMS_VALUE[2], CURRENT_RMS_VALUE[3]);
 }
