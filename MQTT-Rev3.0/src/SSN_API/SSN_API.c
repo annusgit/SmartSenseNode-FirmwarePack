@@ -4,7 +4,7 @@
 #include "SSN_API.h"
 
 /** SSN Server Address */
-uint8_t SSN_SERVER_IP[] ;//= {192, 168, 0, 110};
+uint8_t SSN_SERVER_IP[] = {192, 168, 0, 110};
 //uint8_t SSN_SERVER_IP[] = {};//34, 87, 92, 5};
 uint8_t DEFAULT_SERVER_IP[] = {34, 87, 92, 5};//{192, 168, 0, 110};
 //uint8_t SSN_SERVER_IP[] = {115, 186, 183, 129};
@@ -19,10 +19,10 @@ unsigned char MQTT_SERVER_DNS[40] = "mqtt.wisermachines.com";//"maryum";
 //uint8_t DNS_ADDRESS[4] = {8, 8, 8, 8};
 
 /** Static IP Assignment */
-uint8_t SSN_STATIC_IP[4]		= {192, 168, 0, 110};
-uint8_t SSN_SUBNET_MASK[4]		= {255, 255, 255, 0};
-uint8_t SSN_GATWAY_ADDRESS[4]	= {192, 168, 0, 1};
-uint8_t SSN_DNS_ADDRESS[4]		= {192, 168, 0, 1};
+uint8_t SSN_STATIC_IP[4]		= {172, 16, 41, 131};
+uint8_t SSN_SUBNET_MASK[4]		= {255, 255, 0, 0};
+uint8_t SSN_GATWAY_ADDRESS[4]	= {172, 16, 5, 1};
+uint8_t SSN_DNS_ADDRESS[4]		= {172, 16, 14, 12};
 
 /** A counter to maintain how many messages have been sent from SSN to Server since wakeup */
 uint32_t SSN_SENT_MESSAGES_COUNTER = 0;
