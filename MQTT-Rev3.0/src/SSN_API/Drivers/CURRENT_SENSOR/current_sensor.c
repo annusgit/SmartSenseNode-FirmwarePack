@@ -214,8 +214,13 @@ void Calculate_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, uint16_t num
         } else {
             CURRENT_RMS_VALUE[i] = (float)SENSOR_RATINGS[i] * sqrt(non_zero_voltage_squared_running_sum[i]/non_zero_voltage_count[i]);
             // empirical error compensation
-            // error = 0.01444*CURRENT_RMS_VALUE[i] + 0.055555;
-            CURRENT_RMS_VALUE[i] += 0.01444*CURRENT_RMS_VALUE[i] + 0.055555;
+//            // error = 0.01444*CURRENT_RMS_VALUE[i] + 0.055555;
+//            CURRENT_RMS_VALUE[i] += 0.01444*CURRENT_RMS_VALUE[i] + 0.055555;      //linear compensation on pure sine wave using function generator
+            //y=-0.1074+0.0483x-0.0001x2
+            CURRENT_RMS_VALUE[i] += 0.03652005*CURRENT_RMS_VALUE[i] + 0.1115812;    // linear compensation on 100A-1.65V YHDC sensors
+//            y = 0.03652005*x + 0.1115812
+//            CURRENT_RMS_VALUE[i] += (-0.0001144244*CURRENT_RMS_VALUE[i]*CURRENT_RMS_VALUE[i]) + 0.04828584*CURRENT_RMS_VALUE[i] - 0.1073718 ;     //quadratic
+            //y = -0.1073718 + 0.04828584*x - 0.0001144244*x^2
         }
         // fill the new current value into the RMS buffer for RMS Averaging
         RMS_buffer[i*n_for_rms_averaging+rms_averaging_sample_count] = CURRENT_RMS_VALUE[i];

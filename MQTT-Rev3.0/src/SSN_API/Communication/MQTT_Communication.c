@@ -19,7 +19,7 @@ void SetupMQTTOptions(opts_struct* MQTTOptions, char* cliendId, enum QoS x, int 
     strcpy(MQTTOptions->username, "NULL");
     strcpy(MQTTOptions->password, "NULL");
     strcpy(MQTTOptions->host, MQTT_IP);
-//    printf("%d.%d.%d.%d\n",MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
+    //    printf("%d.%d.%d.%d\n",MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
     MQTTOptions->port = MQTT_Port;
     MQTTOptions->showtopics = showtopics;
 }
@@ -35,11 +35,12 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
     MQTTClientInit(mqtt_client, net, 1000, MQTT_buf, 100, tempBuffer, 2048);
     //printf("%d\n",Client_MQTT.command_timeout_ms);
     printf("[MQTT] Setting Up MQTT Communication Options\n");
-    printf("***%d.%d.%d.%d\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
+//    printf("***%d.%d.%d.%d\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
 
     SetupMQTTOptions(MQTTOptions, cliendId, QOS1, 1, MQTT_IP);
     printf("[MQTT] Setting Up MQTT Data Variables\n");
     SetupMQTTData(&MQTT_DataPacket);
+    uint32_t total_delay_in_us;
     while (1) {
         ServiceWatchdog();
         timeout = getConnTimeout(retry_count++);
@@ -58,7 +59,7 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
                 printf("[MQTT] Subscribing to Node Exclusive Channel: %s\n", NodeExclusiveChannel);
                 if (rc == SUCCESSS) {
                     printf("[MQTT] Subscription to Node Exclusive Channel [%s] Successful\n", NodeExclusiveChannel);
-                  	stop_ms_timer_with_interrupt();
+                    stop_ms_timer_with_interrupt();
                     return SUCCESSS;
                 } else {
                     printf("[**MQTT**] Subscription Attempt Failed. Retrying [%d] in %d seconds\n", retry_count, timeout);
@@ -67,11 +68,21 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
                 printf("[**MQTT**] Connection to Broker Failed. Retrying [%d] in %d seconds\n", retry_count, timeout);
             }
         }
-        if (retry_count > 23){
+        if (retry_count > 23) {
             printf("[**MQTT**]Too many [%d] retries attempted, SSN Restarting", retry_count);
             SoftReset();
         }
-        sleep_for_microseconds_and_clear_watchdog(timeout*1000000);
+        // sleep_for_microseconds_and_clear_watchdog(timeout*1000000);
+        Clear_LED_INDICATOR();
+        total_delay_in_us = timeout*1000000;
+        while (total_delay_in_us > 1000000) {
+            SSN_LED_INDICATE(ESTABLISHING_MQTT_CONNECTION);
+            sleep_for_microseconds(1000000);
+            ServiceWatchdog();
+            total_delay_in_us -= 1000000;
+        }
+        sleep_for_microseconds(total_delay_in_us);
+        Clear_LED_INDICATOR();
     }
     return SUCCESSS;
 }
@@ -120,6 +131,6 @@ int getConnTimeout(int attemptNumber) {
     return (attemptNumber < 10) ? 5 : (attemptNumber < 20) ? 60 : 600;
 }
 
-int MQTTallowedfailureCounts(uint8_t SSN_REPORT_INTERVAL){
-    return MQTT_DataPacket.keepAliveInterval/SSN_REPORT_INTERVAL;
+int MQTTallowedfailureCounts(uint8_t SSN_REPORT_INTERVAL) {
+    return MQTT_DataPacket.keepAliveInterval / SSN_REPORT_INTERVAL;
 }

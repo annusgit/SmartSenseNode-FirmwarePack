@@ -40,6 +40,7 @@ void __ISR(_TIMER_1_VECTOR, IPL4SOFT) Timer1IntHandler_SSN_Hearbeat(void) {
 	// clear timer 1 interrupt flag, IFS0<4>
 	IFS0bits.T1IF = 0x00;
 	// Indicate the status of SSN from the SSN LED after every half second
+//    printf("Current State: %d\n", SSN_CURRENT_STATE);
 	SSN_LED_INDICATE(SSN_CURRENT_STATE);
 	// check of we have reached one second interval (because two half-seconds make one second)
 	half_second_counter++;
@@ -79,7 +80,7 @@ void __ISR(_TIMER_1_VECTOR, IPL4SOFT) Timer1IntHandler_SSN_Hearbeat(void) {
  *      - SSN calculates machine status update and ambient conditions every 100 milliseconds. 
 		  The ISR sends the status update after every ${SSN_REPORT_INTERVAL} seconds
  */
-int main2() {
+int main() {
 	// Setup Smart Sense Node
 	SSN_Setup();
 	// Check the EEPROM, temperature sensor and network connection before proceeding
@@ -115,9 +116,9 @@ int main2() {
 		SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(getDHCPLeasetime());
 		if (ms_100_counter >= 20) {
 			// Read temperature and humidity sensor
-			// SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
-			SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
-			SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
+//			 SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
+//			SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
+//			SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
 			ms_100_counter = 0;
 		}
 		// Get load currents and status of machines
@@ -170,7 +171,7 @@ int main2() {
 		MQTTYield(&Client_MQTT, 100);
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		stop_ms_timer_with_interrupt();
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		///////////////////////////////////////////////////////////////////// ///////////////////////////////////////////
 		// Network critical section ends here. Enable global half second interrupt
 		EnableGlobalHalfSecondInterrupt();
 		// sleep for 100 milliseconds
@@ -181,14 +182,14 @@ int main2() {
 	return 0;
 }
 
-int main() {
+int main2() {
 	// Basic setup for our SSN to work    
 	SSN_Setup();
     
 	printf("HELLOWORLD\n");
     uint8_t i; for(i=0; i<NO_OF_MACHINES; i++) {
-        SSN_CURRENT_SENSOR_RATINGS[i] = 50;
-        SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.00f;
+        SSN_CURRENT_SENSOR_RATINGS[i] = 100;
+        SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.65f;
     }
 
 	while (1) {

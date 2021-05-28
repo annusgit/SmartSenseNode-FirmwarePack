@@ -241,7 +241,8 @@ extern uint8_t i;
 extern SOCKET SSN_UDP_DEBUG_SOCKET;
 extern uint8_t SSN_UDP_SERVER_IP[];
 extern uint16_t SSN_UDP_SERVER_PORT;
-extern unsigned char configreceivedstring[150];
+extern uint8_t currentconfig[100];
+
 //extern 
 /** 
  *  Includes are needed peripherals and APIs for SSN functionality

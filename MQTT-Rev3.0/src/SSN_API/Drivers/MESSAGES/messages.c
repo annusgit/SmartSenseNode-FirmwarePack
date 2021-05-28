@@ -266,7 +266,27 @@ uint8_t decipher_received_message(uint8_t* message, uint8_t* params) {
 }
 
 
+uint8_t construct_retrieve_configuration_message(uint8_t* message_array, uint8_t* node_id, uint8_t* current_configs) {
+	uint8_t count = 0;
 
+	/* Send the NODE ID */
+	message_array[count++] = node_id[0];
+	message_array[count++] = node_id[1];
+	message_array[count++] = node_id[2];
+	message_array[count++] = node_id[3];
+	message_array[count++] = node_id[4];
+	message_array[count++] = node_id[5];
+
+	/* Send the MESSAGE ID */
+	message_array[count++] = RETRIEVE_CURRENT_CONFIG;
+
+	/* Attach the received configurations with this message */
+	for (count; count < EEPROM_CONFIG_SIZE + 7; count++) {
+		message_array[count] = current_configs[count - 7];
+	}
+	// return how many bytes the message is
+	return count;
+}
 
 
 

@@ -286,7 +286,8 @@ void Ethernet_get_IP_from_DHCP() {
                 // printf("LOG: -> Default Case. Return code: %d\n", dhcp_status);
                 if (request_started > 0) {
                     if (request_started % 500 == 0) {
-						printf(".");	
+						printf(".");
+                        SSN_LED_INDICATE(GETTING_IP_FROM_DHCP);
 					}
                 }
                 else
@@ -300,6 +301,7 @@ void Ethernet_get_IP_from_DHCP() {
             break;
         }
     }
+    Clear_LED_INDICATOR();
     close(DHCP_SOCKET);
 }
 

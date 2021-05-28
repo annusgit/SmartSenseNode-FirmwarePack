@@ -1,5 +1,6 @@
 
 #include "SystemTests.h"
+#include "SSN_API/SSN_API.h"
 
 void RunSystemTests() {
     // 1. Check EEPROM
@@ -14,30 +15,32 @@ void RunSystemTests() {
         while(SSN_IS_ALIVE);
     }
     
-    // 2. Check Temperature Sensor
-    int8_t read_status = sample_Temperature_Humidity_bytes_using_DHT22(temperature_bytes, relative_humidity_bytes);
-    // TODO: Add gradient based temperature and humidity change check
-    bool temperature_sensor_test_status = true;
-    if (read_status==SENSOR_READ_ERROR) {
-        temperature_sensor_test_status = false;
-        printf("LOG: TEMPERATURE SENSOR TEST FAILED DUE TO READING CORRUPTION...\n");
-        // Forever, indicate the status of SSN i.e. SELF_TEST_FAILED_STATE from the SSN LED
-        SSN_LED_INDICATE(SELF_TEST_FAILED_STATE);
-        // while(SSN_IS_ALIVE); Temperature sensor is not crucial, we will not hang for this
-    } else if (read_status==SENSOR_CRC_ERROR) {
-        temperature_sensor_test_status = false;
-        printf("LOG: TEMPERATURE SENSOR TEST FAILED DUE TO CRC CHECK FAILURE...\n");
-        // Forever, indicate the status of SSN i.e. SELF_TEST_FAILED_STATE from the SSN LED
-        SSN_LED_INDICATE(SELF_TEST_FAILED_STATE);
-        // while(SSN_IS_ALIVE); Temperature sensor is not crucial, we will not hang for this
-    }
-    if (ambient_condition_status(0, 100, 0, 100) != NORMAL_AMBIENT_CONDITION) {
-        temperature_sensor_test_status = false;
-        printf("LOG: TEMPERATURE SENSOR TEST FAILED DUE TO ABNORMAL CONDITION...\n");
-        // Forever, indicate the status of SSN i.e. SELF_TEST_FAILED_STATE from the SSN LED
-        SSN_LED_INDICATE(SELF_TEST_FAILED_STATE);
-        // while(SSN_IS_ALIVE); Temperature sensor is not crucial, we will not hang for this
-    }
+//    // This part is not needed in the Rastgar nodes
+//    // 2. Check Temperature Sensor
+//    int8_t read_status = sample_Temperature_Humidity_bytes_using_DHT22(temperature_bytes, relative_humidity_bytes);
+//    // TODO: Add gradient based temperature and humidity change check
+//    bool temperature_sensor_test_status = true;
+//    if (read_status==SENSOR_READ_ERROR) {
+//        temperature_sensor_test_status = false;
+//        printf("LOG: TEMPERATURE SENSOR TEST FAILED DUE TO READING CORRUPTION...\n");
+//        // Forever, indicate the status of SSN i.e. SELF_TEST_FAILED_STATE from the SSN LED
+//        SSN_LED_INDICATE(SELF_TEST_FAILED_STATE);
+//        // while(SSN_IS_ALIVE); Temperature sensor is not crucial, we will not hang for this
+//    } else if (read_status==SENSOR_CRC_ERROR) {
+//        temperature_sensor_test_status = false;
+//        printf("LOG: TEMPERATURE SENSOR TEST FAILED DUE TO CRC CHECK FAILURE...\n");
+//        // Forever, indicate the status of SSN i.e. SELF_TEST_FAILED_STATE from the SSN LED
+//        SSN_LED_INDICATE(SELF_TEST_FAILED_STATE);
+//        // while(SSN_IS_ALIVE); Temperature sensor is not crucial, we will not hang for this
+//    }
+//    if (ambient_condition_status(0, 100, 0, 100) != NORMAL_AMBIENT_CONDITION) {
+//        temperature_sensor_test_status = false;
+//        printf("LOG: TEMPERATURE SENSOR TEST FAILED DUE TO ABNORMAL CONDITION...\n");
+//        // Forever, indicate the status of SSN i.e. SELF_TEST_FAILED_STATE from the SSN LED
+//        SSN_LED_INDICATE(SELF_TEST_FAILED_STATE);
+//        // while(SSN_IS_ALIVE); Temperature sensor is not crucial, we will not hang for this
+//    }
+    
 //    if (temperature_sensor_test_status) {
 //        printf("LOG: TEMPERATURE SENSOR TEST SUCCESSFUL.\n");   
 //        // reduce wait loop count only if test is successful

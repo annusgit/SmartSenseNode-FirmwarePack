@@ -54,6 +54,7 @@
 
 #include "../../Ethernet/socket.h"
 #include "dns.h"
+#define _DNS_DEBUG_
 
 #ifdef _DNS_DEBUG_
    #include <stdio.h>
@@ -500,7 +501,8 @@ void DNS_init(uint8_t s, uint8_t * buf)
 
 /* DNS CLIENT RUN */
 int8_t DNS_run(uint8_t * dns_ip, uint8_t * name, uint8_t * ip_from_dns)
-{
+{    
+    start_ms_timer_with_interrupt();
 	int8_t ret;
 	struct dhdr dhp;
 	uint8_t ip[4];
@@ -519,11 +521,16 @@ int8_t DNS_run(uint8_t * dns_ip, uint8_t * name, uint8_t * ip_from_dns)
 
 	len = dns_makequery(0, (char *)name, pDNSMSG, MAX_DNS_BUF_SIZE);
 	sendto(DNS_SOCKET, pDNSMSG, len, dns_ip, IPPORT_DOMAIN);
-
+#ifdef _DNS_DEBUG_
+    printf("DNS Request Sent\n");
+#endif
 	while (1)
 	{
 		if ((len = getSn_RX_RSR(DNS_SOCKET)) > 0)
 		{
+#ifdef _DNS_DEBUG_
+    printf("DNS Request Received a Response!\n");
+#endif
 			if (len > MAX_DNS_BUF_SIZE) len = MAX_DNS_BUF_SIZE;
 			len = recvfrom(DNS_SOCKET, pDNSMSG, len, ip, &port);
       #ifdef _DNS_DEBUG_
@@ -553,7 +560,8 @@ int8_t DNS_run(uint8_t * dns_ip, uint8_t * name, uint8_t * ip_from_dns)
 	close(DNS_SOCKET);
 	// Return value
 	// 0 > :  failed / 1 - success
-	return ret;
+    stop_ms_timer_with_interrupt();
+    return ret;
 }
 
 
