@@ -4,7 +4,7 @@
 #include "SSN_API.h"
 
 /** SSN Server Address */
-uint8_t SSN_SERVER_IP[] = {192, 168, 0, 110};
+uint8_t SSN_SERVER_IP[] = {34, 87, 92, 5};//192, 168, 0, 110
 //uint8_t SSN_SERVER_IP[] = {};//34, 87, 92, 5};
 uint8_t DEFAULT_SERVER_IP[] = {34, 87, 92, 5};//{192, 168, 0, 110};
 //uint8_t SSN_SERVER_IP[] = {115, 186, 183, 129};
@@ -19,7 +19,7 @@ unsigned char MQTT_SERVER_DNS[40] = "mqtt.wisermachines.com";//"maryum";
 //uint8_t DNS_ADDRESS[4] = {8, 8, 8, 8};
 
 /** Static IP Assignment */
-uint8_t SSN_STATIC_IP[4]		= {172, 16, 41, 131};
+uint8_t SSN_STATIC_IP[4]		= {172, 16, 41, 139};
 uint8_t SSN_SUBNET_MASK[4]		= {255, 255, 0, 0};
 uint8_t SSN_GATWAY_ADDRESS[4]	= {172, 16, 5, 1};
 uint8_t SSN_DNS_ADDRESS[4]		= {172, 16, 14, 12};
@@ -512,7 +512,7 @@ void SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(uint8_t TEMPERATURE_MIN_THRESHOLD, 
 void SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD) {
 	// printf("there\n");
 	float object_celcius_temperature = Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius();
-	// printf("Thermistor Reading: %.2f\n", object_celcius_temperature);
+	 printf("Thermistor Reading: %.2f\n", object_celcius_temperature);
 	int integer_temperature;
 	if (object_celcius_temperature > TEMPERATURE_MIN_THRESHOLD && object_celcius_temperature < TEMPERATURE_MAX_THRESHOLD){
 		abnormal_activity = NORMAL_AMBIENT_CONDITION;

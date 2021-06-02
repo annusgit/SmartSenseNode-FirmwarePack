@@ -24,7 +24,7 @@ void SetupMQTTOptions(opts_struct* MQTTOptions, char* cliendId, enum QoS x, int 
     MQTTOptions->showtopics = showtopics;
 }
 
-int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct* MQTTOptions, uint8_t *MQTT_IP, char* cliendId, void* messageArrivedoverMQTT) {
+int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct* MQTTOptions, uint8_t *MQTT_IP, char* cliendId, void* messageArrivedoverMQTT, uint8_t* SSN_MAC_ADDRESS) {
     int rc = FAILURE, retry_count = 0, timeout, i;
     unsigned char tempBuffer[MQTT_BUFFER_SIZE] = {};
     printf("[MQTT] Creating MQTT Network Variables\n");
@@ -35,11 +35,14 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
     MQTTClientInit(mqtt_client, net, 1000, MQTT_buf, 100, tempBuffer, 2048);
     //printf("%d\n",Client_MQTT.command_timeout_ms);
     printf("[MQTT] Setting Up MQTT Communication Options\n");
-//    printf("***%d.%d.%d.%d\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
+    printf("***%d.%d.%d.%d\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
 
     SetupMQTTOptions(MQTTOptions, cliendId, QOS1, 1, MQTT_IP);
     printf("[MQTT] Setting Up MQTT Data Variables\n");
     SetupMQTTData(&MQTT_DataPacket);
+    // also create the exclusive MQTT channel here
+	sprintf(NodeExclusiveChannel, "%02X:%02X:%02X:%02X:%02X:%02X", SSN_MAC_ADDRESS[0], SSN_MAC_ADDRESS[1], SSN_MAC_ADDRESS[2], SSN_MAC_ADDRESS[3], SSN_MAC_ADDRESS[4], SSN_MAC_ADDRESS[5]);
+    printf("%s\n",NodeExclusiveChannel);
     uint32_t total_delay_in_us;
     while (1) {
         ServiceWatchdog();
