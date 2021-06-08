@@ -137,5 +137,5 @@ uint8_t construct_status_update_message(uint8_t* message_array, uint8_t* node_id
  */
 uint8_t decipher_received_message(uint8_t* message, uint8_t* params);
 
-
+uint8_t construct_retrieve_configuration_message(uint8_t* message_array, uint8_t* node_id, uint8_t* received_configs);
 #endif

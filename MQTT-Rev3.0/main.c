@@ -13,7 +13,6 @@
 #pragma config JTAGEN		= OFF           // JTAG Enable (Disabled)
 
 #include "SSN_API/SSN_API.h"
-#include "SSN_API/Communication/MQTT_Communication.h"
 
 
 /** A millisecond timer interrupt required for DHCP and MQTT Yielding functions */
@@ -27,6 +26,7 @@ void __ISR(_TIMER_2_VECTOR, IPL4SOFT) Timer2IntHandler(void){
 	////////////////////////////////////////////////////////
 	// SHOULD BE Added DHCP Timer Handler your 1s tick timer
 	if(msTicks % 1000 == 0)	{
+        DNS_time_handler(); 
         DHCP_time_handler();
         /* Give the Ethernet Indication */
         // No_Ethernet_LED_INDICATE();
@@ -42,6 +42,7 @@ void __ISR(_TIMER_1_VECTOR, IPL4SOFT) Timer1IntHandler_SSN_Hearbeat(void) {
 	// clear timer 1 interrupt flag, IFS0<4>
 	IFS0bits.T1IF = 0x00;
 	// Indicate the status of SSN from the SSN LED after every half second
+//    printf("Current State: %d\n", SSN_CURRENT_STATE);
 	SSN_LED_INDICATE(SSN_CURRENT_STATE);
 	// check of we have reached one second interval (because two half-seconds make one second)
 	half_second_counter++;
@@ -92,10 +93,11 @@ int main() {
 	// First find MAC in flash memory or assign default MAC address
 	SSN_COPY_MAC_FROM_MEMORY();
 	// We can chose two ways to operate over UDP; static or dynamic IP
-	SetupConnectionWithDHCP(SSN_MAC_ADDRESS, DHCP_SOCKET);
+	SetupConnectionWithDHCP(SSN_MAC_ADDRESS);
 	// Setup Static IP for SSN to join existing network
 	// SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
-	// Setup MQTT connection for SSN communication with broker
+    GetServerIP_UsingDNS(DEFAULT_SERVER_IP, MQTT_SERVER_DNS, SSN_SERVER_IP);
+    // Setup MQTT connection for SSN communication with broker
 	SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
     // Get MAC address for SSN if we didn't have one already
 	SSN_GET_MAC();
@@ -118,7 +120,7 @@ int main() {
 		if (ms_100_counter >= 20) {
 			// Read temperature and humidity sensor
 			// SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
-			SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
+//			SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
 			SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
 			ms_100_counter = 0;
 		}
@@ -194,3 +196,27 @@ int main() {
 //	}
 //	return 0;
 //}
+
+
+
+int main3() {
+	// Basic setup for our SSN to work    
+	SSN_Setup();
+
+	printf("HELLOWORLD\n");
+    uint8_t i; for(i=0; i<NO_OF_MACHINES; i++) {
+        SSN_CURRENT_SENSOR_RATINGS[i] = 50;
+        SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.00f;
+    }
+
+	while (1) {
+		Calculate_True_RMS_Current_On_All_Channels(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, 200, Machine_load_currents);
+        printf("\n\n");
+        for(i=0; i<NO_OF_MACHINES; i++) {
+            printf("Current-%d: %f Arms\n", i+1, Machine_load_currents[i]);   
+        }
+		sleep_for_microseconds(100000);
+	}
+
+	return 1;
+}

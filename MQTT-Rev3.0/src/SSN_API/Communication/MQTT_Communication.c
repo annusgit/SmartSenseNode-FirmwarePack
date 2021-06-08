@@ -38,6 +38,7 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
     SetupMQTTOptions(MQTTOptions, cliendId, QOS1, 1, MQTT_IP);
     printf("[MQTT] Setting Up MQTT Data Variables\n");
     SetupMQTTData(&MQTT_DataPacket);
+    uint32_t total_delay_in_us;
     while (1) {
         ServiceWatchdog();
         timeout = getConnTimeout(retry_count++);
@@ -69,7 +70,17 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
             printf("[**MQTT**]Too many [%d] retries attempted, SSN Restarting", retry_count);
             SoftReset();
         }
-        sleep_for_microseconds_and_clear_watchdog(timeout*1000000);
+        // sleep_for_microseconds_and_clear_watchdog(timeout*1000000);
+        Clear_LED_INDICATOR();
+        total_delay_in_us = timeout*1000000;
+        while (total_delay_in_us > 1000000) {
+            SSN_LED_INDICATE(ESTABLISHING_MQTT_CONNECTION);
+            sleep_for_microseconds(1000000);
+            ServiceWatchdog();
+            total_delay_in_us -= 1000000;
+        }
+        sleep_for_microseconds(total_delay_in_us);
+        Clear_LED_INDICATOR();
     }
     return SUCCESSS;
 }
@@ -119,5 +130,5 @@ int getConnTimeout(int attemptNumber) {
 }
 
 int MQTTallowedfailureCounts(uint8_t SSN_REPORT_INTERVAL){
-    return MQTT_DataPacket.keepAliveInterval/SSN_REPORT_INTERVAL;
+    return MQTT_DataPacket.keepAliveInterval / SSN_REPORT_INTERVAL;
 }

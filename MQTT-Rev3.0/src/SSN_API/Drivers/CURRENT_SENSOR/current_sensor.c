@@ -167,23 +167,38 @@ void Calculate_True_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, float* 
 			sensor_relative_scalar = SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i];
             // Sample one value from i-th channel
             uint16_t adc_raw_sample = sample_Current_Sensor_channel(i);
-            sensor_relative_voltage[i] = (3.3 * (float)adc_raw_sample / 1024) / sensor_relative_scalar;
-            if(sensor_relative_voltage[i]>0) {
+//            adc_raw_sample +=100;
+            if(adc_raw_sample == 0){
+                sleep_for_microseconds(93);
+                // all_adc_raw_samples[count]=sample_Current_Sensor_channel(i);
+            }
+            else {
+                sensor_relative_voltage[i] = (3.3 * (float)adc_raw_sample / 1024) / sensor_relative_scalar;
                 non_zero_voltage_squared_running_sum[i] += sensor_relative_voltage[i]*sensor_relative_voltage[i];
                 non_zero_voltage_count[i]++;
+                sleep_for_microseconds(84);
             }
         }
         count++;
         // pick 200 samples per wave cycle of AC Sine Wave @ 50Hz => 100us sampling period
         // but we want to keep only 3/4-th of the wave with us in order to capture just one positive half-wave, therefore, we sample only 150 times, not 200
-        sleep_for_microseconds(100); 
-    }
+//        PORTToggleBits(IOPORT_A, GREEN_LED);
+//        sleep_for_microseconds(100); 
+        }
     /* Calculate the True RMS Current Values on all 4 channels */
     for (i = 0; i < NO_OF_MACHINES; i++) {
         if(non_zero_voltage_count[i]<1) {
             CURRENT_RMS_VALUE[i] = 0;
         } else {
             CURRENT_RMS_VALUE[i] = (float)SENSOR_RATINGS[i] * sqrt(non_zero_voltage_squared_running_sum[i]/non_zero_voltage_count[i]);
+            // empirical error compensation
+//            // error = 0.01444*CURRENT_RMS_VALUE[i] + 0.055555;
+//            CURRENT_RMS_VALUE[i] += 0.01444*CURRENT_RMS_VALUE[i] + 0.055555;      //linear compensation on pure sine wave using function generator
+            //y=-0.1074+0.0483x-0.0001x2
+            CURRENT_RMS_VALUE[i] += 0.03652005*CURRENT_RMS_VALUE[i] + 0.1115812;    // linear compensation on 100A-1.65V YHDC sensors
+//            y = 0.03652005*x + 0.1115812
+//            CURRENT_RMS_VALUE[i] += (-0.0001144244*CURRENT_RMS_VALUE[i]*CURRENT_RMS_VALUE[i]) + 0.04828584*CURRENT_RMS_VALUE[i] - 0.1073718 ;     //quadratic compensation on 100A-1.65V YHDC sensors
+            //y = -0.1073718 + 0.04828584*x - 0.0001144244*x^2
         }
         // fill the new current value into the RMS buffer for RMS Averaging
         RMS_buffer[i*n_for_rms_averaging+rms_averaging_sample_count] = CURRENT_RMS_VALUE[i];

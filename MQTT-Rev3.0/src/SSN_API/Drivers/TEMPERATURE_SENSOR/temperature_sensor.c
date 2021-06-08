@@ -429,7 +429,7 @@ float MLX90614_Read_Temperature_Ambient_Celcius(void) {
 /* NTC Thermistor 4092 50Kohm */
 float Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius() {
 	float reference_resistance = 3300, VDD = 3.3;
-	float reference_voltage = 3.3 * (float)sample_Current_Sensor_channel(2) / 1024;
+	float reference_voltage = 3.3 * (float)sample_Current_Sensor_channel(0) / 1024;
 	float reference_current = reference_voltage / reference_resistance;
 	float thermistor_voltage = VDD - reference_voltage;
 	float thermistor_resistance = thermistor_voltage / reference_current; // they are both in series
