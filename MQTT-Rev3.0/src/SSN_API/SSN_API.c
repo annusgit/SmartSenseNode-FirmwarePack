@@ -8,7 +8,7 @@
 //uint8_t SSN_SERVER_IP[] = {34, 87, 92, 5};
 //uint8_t SSN_SERVER_IP[] = {115, 186, 183, 129};
 uint8_t DEFAULT_SERVER_IP[] = {34, 87, 92, 5};//{192, 168, 0, 110};
-unsigned char MQTT_SERVER_DNS[40] = "mqtt.hamzadogar.com";
+unsigned char MQTT_SERVER_DNS[40] = "mqtt.wisermachines.com";
 /** SSN Server PORT */
 //uint16_t SSN_SERVER_PORT = 36000;
 //uint8_t SSN_SERVER_IP[] = {192, 168, 0, 120};
@@ -98,7 +98,7 @@ void SSN_Setup() {
 	setup_Ethernet(5000000);
 	setup_Current_Sensors();
 	setup_Temperature_Humidity_Sensor();
-	setup_IR_Temperature_Sensor_And_Laser();
+//	setup_IR_Temperature_Sensor_And_Laser();
 	setup_LED_Indicator();
 	setup_Interrupts();
     setup_millisecond_timer_with_interrupt();

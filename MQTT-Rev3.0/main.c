@@ -119,9 +119,16 @@ int main() {
         SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(getDHCPLeasetime());
 		if (ms_100_counter >= 20) {
 			// Read temperature and humidity sensor
-			// SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
-//			SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
+#ifdef TH_AM2320			
+            SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
+#endif
+#ifdef NTC_Thermistor			
 			SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
+            temperature_bytes[0] = NTC_Thermistor_4092_50k_special_bytes[0];
+            temperature_bytes[1] = NTC_Thermistor_4092_50k_special_bytes[1];
+//            relative_humidity_bytes[2];
+#endif            
+//			SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
 			ms_100_counter = 0;
 		}
 		// Get load currents and status of machines
@@ -133,7 +140,7 @@ int main() {
 		// we will report our status update out of sync with reporting interval if a state changes, this will allow us for accurate timing measurements
 		if (machine_status_change_flag == true) {
 			message_count++;
-			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, NTC_Thermistor_4092_50k_special_bytes, MLX90614_special_bytes, Machine_load_currents, Machine_load_percentages, 
+			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, temperature_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
                     Machine_prev_status, Machine_status_flag, MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE, Machine_status_timestamp, ssn_static_clock, abnormal_activity);			
 			Clear_Machine_Status_flag(&Machine_status_flag);
             if (message_publish_status != SUCCESSS) {
@@ -149,7 +156,7 @@ int main() {
 			report_now = false; // reset report flag
 			// printf("Sending these temperatures: %.2f; %.2f\n", (float)((NTC_Thermistor_4092_50k_special_bytes[0] << 8) | NTC_Thermistor_4092_50k_special_bytes[1])/10.0f, 
 			//	(float)((MLX90614_special_bytes[0] << 8) | MLX90614_special_bytes[1])/10.0f);
-			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, NTC_Thermistor_4092_50k_special_bytes, MLX90614_special_bytes, Machine_load_currents, Machine_load_percentages, 
+			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, temperature_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
                     Machine_status, Machine_status_flag, Machine_status_duration, Machine_status_timestamp, ssn_static_clock, abnormal_activity);
 			Clear_Machine_Status_flag(&Machine_status_flag);
             if (message_publish_status != SUCCESSS) {
@@ -199,24 +206,24 @@ int main() {
 
 
 
-int main3() {
-	// Basic setup for our SSN to work    
-	SSN_Setup();
-
-	printf("HELLOWORLD\n");
-    uint8_t i; for(i=0; i<NO_OF_MACHINES; i++) {
-        SSN_CURRENT_SENSOR_RATINGS[i] = 50;
-        SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.00f;
-    }
-
-	while (1) {
-		Calculate_True_RMS_Current_On_All_Channels(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, 200, Machine_load_currents);
-        printf("\n\n");
-        for(i=0; i<NO_OF_MACHINES; i++) {
-            printf("Current-%d: %f Arms\n", i+1, Machine_load_currents[i]);   
-        }
-		sleep_for_microseconds(100000);
-	}
-
-	return 1;
-}
+//int main3() {
+//	// Basic setup for our SSN to work    
+//	SSN_Setup();
+//
+//	printf("HELLOWORLD\n");
+//    uint8_t i; for(i=0; i<NO_OF_MACHINES; i++) {
+//        SSN_CURRENT_SENSOR_RATINGS[i] = 50;
+//        SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.00f;
+//    }
+//
+//	while (1) {
+//		Calculate_True_RMS_Current_On_All_Channels(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, 200, Machine_load_currents);
+//        printf("\n\n");
+//        for(i=0; i<NO_OF_MACHINES; i++) {
+//            printf("Current-%d: %f Arms\n", i+1, Machine_load_currents[i]);   
+//        }
+//		sleep_for_microseconds(100000);
+//	}
+//
+//	return 1;
+//}
