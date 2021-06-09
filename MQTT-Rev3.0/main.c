@@ -93,9 +93,9 @@ int main() {
 	// First find MAC in flash memory or assign default MAC address
 	SSN_COPY_MAC_FROM_MEMORY();
 	// We can chose two ways to operate over UDP; static or dynamic IP
-	SetupConnectionWithDHCP(SSN_MAC_ADDRESS);
+//	SetupConnectionWithDHCP(SSN_MAC_ADDRESS);
 	// Setup Static IP for SSN to join existing network
-	// SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
+	 SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
     GetServerIP_UsingDNS(DEFAULT_SERVER_IP, MQTT_SERVER_DNS, SSN_SERVER_IP);
     // Setup MQTT connection for SSN communication with broker
 	SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);

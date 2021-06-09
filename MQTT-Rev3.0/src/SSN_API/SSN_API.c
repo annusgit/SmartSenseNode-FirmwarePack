@@ -17,10 +17,10 @@ unsigned char MQTT_SERVER_DNS[40] = "mqtt.wisermachines.com";
 
 
 /** Static IP Assignment */
-uint8_t SSN_STATIC_IP[4]		= {192, 168, 0, 110};
-uint8_t SSN_SUBNET_MASK[4]		= {255, 255, 255, 0};
-uint8_t SSN_GATWAY_ADDRESS[4]	= {192, 168, 0, 1};
-uint8_t SSN_DNS_ADDRESS[4]		= {192, 168, 0, 1};
+uint8_t SSN_STATIC_IP[4]		= {172, 16, 41, 129}; 
+uint8_t SSN_SUBNET_MASK[4]		= {255, 255, 0, 0};
+uint8_t SSN_GATWAY_ADDRESS[4]	= {172, 16, 5, 1};
+uint8_t SSN_DNS_ADDRESS[4]		= {172, 16, 14, 12};
 
 /** A counter to maintain how many messages have been sent from SSN to Server since wakeup */
 uint32_t SSN_SENT_MESSAGES_COUNTER = 0;
@@ -75,9 +75,9 @@ uint8_t SSN_DEFAULT_MAC[] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
 /** SSN current MAC address. May hold the default MAC or the one received from SSN Server. The last two bytes are the SSN Identity */
 uint8_t SSN_MAC_ADDRESS[6] = {0};
 /** SSN temperature sensor reading bytes */
-uint8_t temperature_bytes[2];
+uint8_t temperature_bytes[2] = {0, 0};
 /** SSN relative humidity reading bytes */
-uint8_t relative_humidity_bytes[2];
+uint8_t relative_humidity_bytes[2]= {0, 0};
 /** SSN temperature and humidity reading successful/unsuccessful status bit */
 int8_t temp_humidity_recv_status;
 /** SSN abnormal activity byte */
