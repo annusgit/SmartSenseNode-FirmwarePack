@@ -61,6 +61,7 @@
  * @return 1 if valid; 0 otherwise
  */
 uint8_t is_Valid_MAC(uint8_t* mac_address);
+uint8_t is_Valid_MAC_String(char* mac_address);
 
 /** 
  * Checks the validity of current sensor configurations

@@ -93,9 +93,13 @@ int main() {
 	// First find MAC in flash memory or assign default MAC address
 	SSN_COPY_MAC_FROM_MEMORY();
 	// We can chose two ways to operate over UDP; static or dynamic IP
-//	SetupConnectionWithDHCP(SSN_MAC_ADDRESS);
+#ifdef DHCPIP
+    SetupConnectionWithDHCP(SSN_MAC_ADDRESS);
+#endif
+#ifdef STATICIP
 	// Setup Static IP for SSN to join existing network
-	 SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
+    SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
+#endif	 
     GetServerIP_UsingDNS(DEFAULT_SERVER_IP, MQTT_SERVER_DNS, SSN_SERVER_IP);
     // Setup MQTT connection for SSN communication with broker
 	SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
@@ -116,7 +120,9 @@ int main() {
 		DisableGlobalHalfSecondInterrupt();
 		// Re-Sync Time of Day after every 4 hours
 		SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(4 * 3600);
+#ifdef DHCPIP
         SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(getDHCPLeasetime());
+#endif        
 		if (ms_100_counter >= 20) {
 			// Read temperature and humidity sensor
 #ifdef TH_AM2320			
@@ -206,24 +212,24 @@ int main() {
 
 
 
-//int main3() {
-//	// Basic setup for our SSN to work    
-//	SSN_Setup();
-//
-//	printf("HELLOWORLD\n");
-//    uint8_t i; for(i=0; i<NO_OF_MACHINES; i++) {
-//        SSN_CURRENT_SENSOR_RATINGS[i] = 50;
-//        SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.00f;
-//    }
-//
-//	while (1) {
-//		Calculate_True_RMS_Current_On_All_Channels(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, 200, Machine_load_currents);
-//        printf("\n\n");
-//        for(i=0; i<NO_OF_MACHINES; i++) {
-//            printf("Current-%d: %f Arms\n", i+1, Machine_load_currents[i]);   
-//        }
-//		sleep_for_microseconds(100000);
-//	}
-//
-//	return 1;
-//}
+int main6() {
+	// Basic setup for our SSN to work    
+	SSN_Setup();
+
+	printf("HELLOWORLD\n");
+    uint8_t i; for(i=0; i<NO_OF_MACHINES; i++) {
+        SSN_CURRENT_SENSOR_RATINGS[i] = 150;
+        SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 0.333f;
+    }
+
+	while (1) {
+		Calculate_True_RMS_Current_On_All_Channels(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, 200, Machine_load_currents);
+        printf("\n\n");
+        for(i=0; i<NO_OF_MACHINES; i++) {
+            printf("Current-%d: %f Arms\n", i+1, Machine_load_currents[i]);   
+        }
+		sleep_for_microseconds(100000);
+	}
+
+	return 1;
+}

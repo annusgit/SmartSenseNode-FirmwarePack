@@ -43,6 +43,9 @@
 /* EEPROM Read/Write Position for current sensor configurations */
 #define EEPROM_CONFIG_LOC           12
 
+#define EEPROM_MAC_STRING_LOC       50
+#define EEPROM_MAC_STRING_SIZE      17
+
 /* EEPROM MAC address size */
 #define EEPROM_MAC_SIZE             6
 /* EEPROM current sensor configurations size */
@@ -85,11 +88,13 @@ uint32_t fault_count;
 //#define _TEMPSENSOR_DEBUG_
 //#define _NETWORK_DEBUG_
 
-//#define TH_AM2320
+#define TH_AM2320
 //#define TH_DHT22
 //#define OTS_LS_MLX90614
-#define NTC_Thermistor
+//#define NTC_Thermistor
 
+#define DHCPIP
+//#define STATICIP
 
 /** 
  * A simple loop count based delay 

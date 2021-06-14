@@ -206,7 +206,7 @@ void Ethernet_Register_MAC(uint8_t* this_mac) {
     WIZ5500_network_information.mac[4] = this_mac[4];
     WIZ5500_network_information.mac[5] = this_mac[5];
 	// also create the exclusive MQTT channel here
-	sprintf(NodeExclusiveChannel, "%02X:%02X:%02X:%02X:%02X:%02X", this_mac[0], this_mac[1], this_mac[2], this_mac[3], this_mac[4], this_mac[5]);
+//	sprintf(NodeExclusiveChannel, "%02X:%02X:%02X:%02X:%02X:%02X", this_mac[0], this_mac[1], this_mac[2], this_mac[3], this_mac[4], this_mac[5]);
 }
 
 void Ethernet_Save_Static_IP(uint8_t* this_IP) {

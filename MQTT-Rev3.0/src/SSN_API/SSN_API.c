@@ -4,7 +4,7 @@
 #include "SSN_API.h"
 
 /** SSN Server Address */
- uint8_t SSN_SERVER_IP[] ;//= {192, 168, 0, 110};
+ uint8_t SSN_SERVER_IP[]; // {34, 87, 92, 5}; // {192, 168, 0, 110};
 //uint8_t SSN_SERVER_IP[] = {34, 87, 92, 5};
 //uint8_t SSN_SERVER_IP[] = {115, 186, 183, 129};
 uint8_t DEFAULT_SERVER_IP[] = {34, 87, 92, 5};//{192, 168, 0, 110};
@@ -99,6 +99,10 @@ void SSN_Setup() {
 	setup_Current_Sensors();
 	setup_Temperature_Humidity_Sensor();
 //	setup_IR_Temperature_Sensor_And_Laser();
+    // initialize temperature readings array with all zeros
+    uint8_t i; for (i=0; i<N_TEMPERATURE_READINGS; i++) {
+        TEMPERATURE_READINGS_ARRAY[i] = 0;
+    }
 	setup_LED_Indicator();
 	setup_Interrupts();
     setup_millisecond_timer_with_interrupt();
@@ -274,6 +278,10 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 				printf("Resetting Controller Now...\n");
 				// write the new MAC addresses to designated location in EEPROM
 				EEPROM_Write_Array(EEPROM_BLOCK_0, EEPROM_MAC_LOC, params, EEPROM_MAC_SIZE);
+                // convert and write the string of MAC address to designated location in EEPROM. 
+                // That will be used by MQTT API to connect to special channels for this node
+                sprintf(NodeExclusiveChannel, "%02X:%02X:%02X:%02X:%02X:%02X", params[0], params[1], params[2], params[3], params[4], params[5]);
+                EEPROM_Write_Array(EEPROM_BLOCK_0, EEPROM_MAC_STRING_LOC, NodeExclusiveChannel, EEPROM_MAC_STRING_SIZE);
 				// reset the SSN from software
 				SoftReset();
 				while (1);
@@ -308,6 +316,8 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.0;
 					} else if (SSN_CONFIG[4 * i + 3] == 1) {
 						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 0.333;
+					} else if (SSN_CONFIG[4 * i + 3] == 2) {
+						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.65;
 					}
 				}
 				TEMPERATURE_MIN_THRESHOLD = SSN_CONFIG[16];
@@ -511,10 +521,12 @@ void SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(uint8_t TEMPERATURE_MIN_THRESHOLD, 
 }
 
 void SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD) {
-	// printf("there\n");
+//	 printf("there\n");
 	float object_celcius_temperature = Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius();
-	// printf("Thermistor Reading: %.2f\n", object_celcius_temperature);
-	int integer_temperature;
+    // get the average value of last N temperature readings
+    object_celcius_temperature = average_value_of_temperature(object_celcius_temperature); 
+    printf("Thermistor Reading: %.2f\n", object_celcius_temperature);
+    int integer_temperature;
 	if (object_celcius_temperature > TEMPERATURE_MIN_THRESHOLD && object_celcius_temperature < TEMPERATURE_MAX_THRESHOLD){
 		abnormal_activity = NORMAL_AMBIENT_CONDITION;
 	} else {
@@ -537,6 +549,7 @@ void SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(uint8_t TEMPERATURE_MIN_THR
 			Clear_LED_INDICATOR();
 		}
 	}
+//	 printf("there\n");
 }
 
 void SSN_RESET_AFTER_N_SECONDS(uint32_t seconds) {

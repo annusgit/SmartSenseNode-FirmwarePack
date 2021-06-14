@@ -1,5 +1,7 @@
 
 #include "FlashMemory.h"
+#include "SSN_API/Drivers/NETWORK/network.h"
+#include "SSN_API/Drivers/MESSAGES/messages.h"
 
 
 uint8_t FindMACInFlashMemory(uint8_t* SSN_MAC_ADDRESS, uint8_t* SSN_DEFAULT_MAC) {
@@ -16,7 +18,20 @@ uint8_t FindMACInFlashMemory(uint8_t* SSN_MAC_ADDRESS, uint8_t* SSN_DEFAULT_MAC)
         return NO_MAC_STATE;
     } 
     else {
-        printf("LOG: Found MAC in EEPROM -> %X:%X:%X:%X:%X:%X\n", SSN_MAC_ADDRESS[0], SSN_MAC_ADDRESS[1], SSN_MAC_ADDRESS[2], SSN_MAC_ADDRESS[3], SSN_MAC_ADDRESS[4], SSN_MAC_ADDRESS[5]);
+        printf("LOG: Found MAC in EEPROM -> %X:%X:%X:%X:%X:%X\n", SSN_MAC_ADDRESS[0], SSN_MAC_ADDRESS[1], SSN_MAC_ADDRESS[2], SSN_MAC_ADDRESS[3], SSN_MAC_ADDRESS[4], 
+                SSN_MAC_ADDRESS[5]);
+        EEPROM_Read_Array(EEPROM_BLOCK_0, EEPROM_MAC_STRING_LOC, NodeExclusiveChannel, EEPROM_MAC_STRING_SIZE);
+        uint8_t valid_MAC_string_in_EEPROM = is_Valid_MAC_String(NodeExclusiveChannel);
+        if (!valid_MAC_string_in_EEPROM) {
+            printf("[LOG] Acquired INVALID Node Exclusive Channel from EEPROM: %s\n", NodeExclusiveChannel);
+            printf("[LOG] Creating new valid EEPROM string...\n");
+            sprintf(NodeExclusiveChannel, "%02X:%02X:%02X:%02X:%02X:%02X", SSN_MAC_ADDRESS[0], SSN_MAC_ADDRESS[1], SSN_MAC_ADDRESS[2], SSN_MAC_ADDRESS[3], 
+                    SSN_MAC_ADDRESS[4], SSN_MAC_ADDRESS[5]);
+            EEPROM_Write_Array(EEPROM_BLOCK_0, EEPROM_MAC_STRING_LOC, NodeExclusiveChannel, EEPROM_MAC_STRING_SIZE);
+            printf("[LOG] Written new valid EEPROM string in EEPROM: %s\n", NodeExclusiveChannel);
+        } else {
+            printf("[LOG] Acquired Valid Node Exclusive Channel from EEPROM: %s\n", NodeExclusiveChannel);
+        }
         return NO_CONFIG_STATE;
     }
 }
