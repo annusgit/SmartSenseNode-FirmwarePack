@@ -18,30 +18,30 @@
 #define max_recv_message_size   65
 
 /** Message id for requesting MAC address from Server */
-#define GET_MAC_MESSAGE_ID              1
+#define GET_MAC_MESSAGE_ID                      1
 /** Message id for set MAC address message received from Server */
-#define SET_MAC_MESSAGE_ID              2
+#define SET_MAC_MESSAGE_ID                      2
 /** Message id for requesting time of day from Server */
-#define GET_TIMEOFDAY_MESSAGE_ID        3
+#define GET_TIMEOFDAY_MESSAGE_ID                3
 /** Message id for set time of day message received from Server */
-#define SET_TIMEOFDAY_MESSAGE_ID        4
+#define SET_TIMEOFDAY_MESSAGE_ID                4
 /** Message id for requesting current sensor configurations from Server */
-#define GET_CONFIG_MESSAGE_ID           5
+#define GET_CONFIG_MESSAGE_ID                   5
 /** Message id for set current sensor configurations message received from Server */
-#define SET_CONFIG_MESSAGE_ID           6
+#define SET_CONFIG_MESSAGE_ID                   6
 /** Message id for acknowledge current sensor configurations message to Server */
-#define ACK_CONFIG_MESSAGE_ID           7
+#define ACK_CONFIG_MESSAGE_ID                   7
 /** Message id for status update message to send to Server */
-#define STATUS_UPDATE_MESSAGE_ID        8
+#define STATUS_UPDATE_MESSAGE_ID                8
 /** Message id for machine reset accumulated time received from Server */
-#define RESET_MACHINE_TIME_MESSAGE_ID   9
+#define RESET_MACHINE_TIME_MESSAGE_ID           9
 
 /** Message id for requesting SSN EEPROM Clear received from Server */
-#define DEBUG_EEPROM_CLEAR_MESSAGE_ID   10
+#define DEBUG_EEPROM_CLEAR_MESSAGE_ID           10
 /** Message id for requesting SSN Reset received from Server */
-#define DEBUG_RESET_SSN_MESSAGE_ID      11
+#define DEBUG_RESET_SSN_MESSAGE_ID              11
 /** Message id for requesting Current Configurations from Server */
-#define RETRIEVE_CURRENT_CONFIG         12
+#define RETRIEVE_CURRENT_CONFIG_MESSAGE_ID      12
 
 
 #define GET_MAC_MESSAGE_Size            7

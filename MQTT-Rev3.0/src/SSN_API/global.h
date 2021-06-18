@@ -88,13 +88,15 @@ uint32_t fault_count;
 //#define _TEMPSENSOR_DEBUG_
 //#define _NETWORK_DEBUG_
 
-#define TH_AM2320
+//#define TH_AM2320
 //#define TH_DHT22
+#define NTC_Thermistor
 //#define OTS_LS_MLX90614
-//#define NTC_Thermistor
 
 #define DHCPIP
 //#define STATICIP
+
+//#define USE_DNS
 
 /** 
  * A simple loop count based delay 

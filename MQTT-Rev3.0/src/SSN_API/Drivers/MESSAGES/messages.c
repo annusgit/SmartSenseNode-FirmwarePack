@@ -89,8 +89,8 @@ uint8_t construct_ack_configuration_message(uint8_t* message_array, uint8_t* nod
     message_array[count++] = ACK_CONFIG_MESSAGE_ID;
 
     /* Attach the received configurations with this message */
-    for (count; count < EEPROM_CONFIG_SIZE + 3; count++) {
-        message_array[count] = received_configs[count - 3];
+    for (count; count < EEPROM_CONFIG_SIZE + 7; count++) {
+        message_array[count] = received_configs[count - 7];
     }
 
     // return how many bytes the message is
@@ -290,7 +290,7 @@ uint8_t construct_retrieve_configuration_message(uint8_t* message_array, uint8_t
     message_array[count++] = node_id[5];
 
     /* Send the MESSAGE ID */
-    message_array[count++] = RETRIEVE_CURRENT_CONFIG;
+    message_array[count++] = RETRIEVE_CURRENT_CONFIG_MESSAGE_ID;
 
     /* Attach the received configurations with this message */
     for (count; count < EEPROM_CONFIG_SIZE + 7; count++) {

@@ -58,9 +58,11 @@ uint8_t FindSensorConfigurationsInFlashMemory(uint8_t* SSN_CONFIG, uint8_t* SSN_
 			SSN_CURRENT_SENSOR_THRESHOLDS[i]    = SSN_CONFIG[4*i+1] / 10.0f;
 			SSN_CURRENT_SENSOR_MAXLOADS[i]      = SSN_CONFIG[4*i+2];
 			if (SSN_CONFIG[4*i+3] == 0) {
-				SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.0;
-			} else {
 				SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 0.333;
+			} else if (SSN_CONFIG[4*i+3] == 1) {
+				SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.00;
+			} else if (SSN_CONFIG[4*i+3] == 2) {
+				SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.65;
 			}
 		}
 		*TEMPERATURE_MIN_THRESHOLD	= SSN_CONFIG[16];

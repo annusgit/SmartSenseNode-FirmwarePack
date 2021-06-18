@@ -4,10 +4,10 @@
 #include "SSN_API.h"
 
 /** SSN Server Address */
- uint8_t SSN_SERVER_IP[]; // {34, 87, 92, 5}; // {192, 168, 0, 110};
+uint8_t SSN_SERVER_IP[4] = {192, 168, 0, 130}; // {34, 87, 92, 5}; // 
 //uint8_t SSN_SERVER_IP[] = {34, 87, 92, 5};
 //uint8_t SSN_SERVER_IP[] = {115, 186, 183, 129};
-uint8_t DEFAULT_SERVER_IP[] = {34, 87, 92, 5};//{192, 168, 0, 110};
+uint8_t DEFAULT_SERVER_IP[4] = {192, 168, 0, 130}; //{34, 87, 92, 5};
 unsigned char MQTT_SERVER_DNS[40] = "mqtt.wisermachines.com";
 /** SSN Server PORT */
 //uint16_t SSN_SERVER_PORT = 36000;
@@ -15,9 +15,12 @@ unsigned char MQTT_SERVER_DNS[40] = "mqtt.wisermachines.com";
 ///** SSN Server PORT */
 //uint16_t SSN_SERVER_PORT = 36000;
 
-
 /** Static IP Assignment */
-uint8_t SSN_STATIC_IP[4]		= {172, 16, 41, 129}; 
+//uint8_t SSN_STATIC_IP[4]		= {192, 168, 0, 135}; 
+//uint8_t SSN_SUBNET_MASK[4]		= {255, 255, 255, 0};
+//uint8_t SSN_GATWAY_ADDRESS[4]	= {192, 168, 0, 1};
+//uint8_t SSN_DNS_ADDRESS[4]		= {192, 168, 0, 1};
+uint8_t SSN_STATIC_IP[4]		= {172, 16, 41, 125}; 
 uint8_t SSN_SUBNET_MASK[4]		= {255, 255, 0, 0};
 uint8_t SSN_GATWAY_ADDRESS[4]	= {172, 16, 5, 1};
 uint8_t SSN_DNS_ADDRESS[4]		= {172, 16, 14, 12};
@@ -71,7 +74,7 @@ bool machine_status_change_flag = false;
 /** SSN UDP socket number */
 uint8_t SSN_UDP_SOCKET_NUM = 4;
 /** SSN default MAC address. This is the same for all SSNs */
-uint8_t SSN_DEFAULT_MAC[] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+uint8_t SSN_DEFAULT_MAC[] = {0x70, 0xB3, 0xD5, 0xFE, 0x4F, 0xFF}; // {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF}; //
 /** SSN current MAC address. May hold the default MAC or the one received from SSN Server. The last two bytes are the SSN Identity */
 uint8_t SSN_MAC_ADDRESS[6] = {0};
 /** SSN temperature sensor reading bytes */
@@ -313,9 +316,9 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 					SSN_CURRENT_SENSOR_THRESHOLDS[i] = SSN_CONFIG[4 * i + 1] / 10.0f;
 					SSN_CURRENT_SENSOR_MAXLOADS[i] = SSN_CONFIG[4 * i + 2];
 					if (SSN_CONFIG[4 * i + 3] == 0) {
-						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.0;
-					} else if (SSN_CONFIG[4 * i + 3] == 1) {
 						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 0.333;
+					} else if (SSN_CONFIG[4 * i + 3] == 1) {
+						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.00;
 					} else if (SSN_CONFIG[4 * i + 3] == 2) {
 						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.65;
 					}
@@ -372,28 +375,9 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 				SoftReset();
 				while (1);
 				break;
-            case RETRIEVE_CURRENT_CONFIG:
-                if(!CONFIG_retrieved) {
-                    
-
-                    printf("<- RETRIEVE CURRENT CONFIG MESSAGE RECEIVED\n");
-				for (i = 0; i < NO_OF_MACHINES; i++) {
-					currentconfig[4 * i + 0] = SSN_CURRENT_SENSOR_RATINGS[i];
-					currentconfig[4 * i + 1] = (int) (10.0 * SSN_CURRENT_SENSOR_THRESHOLDS[i]);
-					currentconfig[4 * i + 2] = SSN_CURRENT_SENSOR_MAXLOADS[i];
-                    SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 0.333;
-					if (SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] == 1.0) {
-						currentconfig[4 * i + 3] = 0;
-					} else if (SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] == 0.333) {
-						currentconfig[4 * i + 3] = 1;
-					}
-				}
-				currentconfig[16] = TEMPERATURE_MIN_THRESHOLD;
-				currentconfig[17] = TEMPERATURE_MAX_THRESHOLD;
-				currentconfig[18] = RELATIVE_HUMIDITY_MIN_THRESHOLD;
-				currentconfig[19] = RELATIVE_HUMIDITY_MAX_THRESHOLD;
-				// save new reporting interval
-				currentconfig[20] = SSN_REPORT_INTERVAL;
+				
+            case RETRIEVE_CURRENT_CONFIG_MESSAGE_ID:
+				printf("<- RETRIEVE CURRENT CONFIG MESSAGE RECEIVED\n");
 				printf("[LOG] Sending Sensor Configuration to SSN Server: \n"
 					"     >> S1-Rating: %d Arms | M1-Threshold: %.2f Arms | M1-Maxload: %d Arms | S1-Scalar: %d Vrms | \n"
 					"     >> S2-Rating: %d Arms | M2-Threshold: %.2f Arms | M2-Maxload: %d Arms | S2-Scalar: %d Vrms | \n"
@@ -402,15 +386,14 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 					"     >> MIN TEMP : %03d C    | MAX TEMP : %03d C    |\n"
 					"     >> MIN RH   : %03d %    | MIN RH   : %03d %    |\n"
 					"     >> Report   : %d seconds\n",
-					currentconfig[0], (float)currentconfig[1]/10.0f, currentconfig[2], currentconfig[3],
-					currentconfig[4], (float)currentconfig[5]/10.0f, currentconfig[6], currentconfig[7],
-					currentconfig[8], (float)currentconfig[9]/10.0f, currentconfig[10], currentconfig[11],
-					currentconfig[12], (float)currentconfig[13]/10.0f, currentconfig[14], currentconfig[15],
-					currentconfig[16], currentconfig[17], currentconfig[18], currentconfig[19], currentconfig[20]);
-                Send_RETRIEVECONFIG_Message(SSN_MAC_ADDRESS,currentconfig);
-				CONFIG_retrieved = true;
-				break;                
-                }
+					SSN_CONFIG[0], SSN_CONFIG[1], SSN_CONFIG[2], SSN_CONFIG[3],
+					SSN_CONFIG[4], SSN_CONFIG[5], SSN_CONFIG[6], SSN_CONFIG[7],
+					SSN_CONFIG[8], SSN_CONFIG[9], SSN_CONFIG[10], SSN_CONFIG[11],
+					SSN_CONFIG[12], SSN_CONFIG[13], SSN_CONFIG[14], SSN_CONFIG[15],
+					SSN_CONFIG[16], SSN_CONFIG[17], SSN_CONFIG[18], SSN_CONFIG[19], SSN_CONFIG[20]);
+                Send_RETRIEVECONFIG_Message(SSN_MAC_ADDRESS, SSN_CONFIG);
+				break;
+				
             default:
 				break;
 		}
@@ -493,6 +476,7 @@ void SSN_GET_AMBIENT_CONDITION(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPER
 void SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD) {
 	// printf("here\n");
 	float object_celcius_temperature = MLX90614_Read_Temperature_Object_Celcius();
+	printf("Temperature: %.2f C\n", object_celcius_temperature);
 	int integer_temperature;
 	if (object_celcius_temperature == MLX90614_COMM_ERROR_CODE) {
 		abnormal_activity = TEMP_SENSOR_READ_ERROR_CONDITION;
@@ -854,4 +838,36 @@ int DHT22_Sensor_Test() {
 //
 
 
+//int main() {
+//	// Setup Smart Sense Node
+//	SSN_Setup();
+//	while(1) {
+//		SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(0, 100);
+//		sleep_for_microseconds(2000000);
+//	}
+//	return 0;
+//}
+
+
+//int main6() {
+//	// Basic setup for our SSN to work    
+//	SSN_Setup();
+//
+//	printf("HELLOWORLD\n");
+//    uint8_t i; for(i=0; i<NO_OF_MACHINES; i++) {
+//        SSN_CURRENT_SENSOR_RATINGS[i] = 150;
+//        SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 0.333f;
+//    }
+//
+//	while (1) {
+//		Calculate_True_RMS_Current_On_All_Channels(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, 200, Machine_load_currents);
+//        printf("\n\n");
+//        for(i=0; i<NO_OF_MACHINES; i++) {
+//            printf("Current-%d: %f Arms\n", i+1, Machine_load_currents[i]);   
+//        }
+//		sleep_for_microseconds(100000);
+//	}
+//
+//	return 1;
+//}
 

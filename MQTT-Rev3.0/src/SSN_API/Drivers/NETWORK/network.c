@@ -308,7 +308,7 @@ void Ethernet_get_IP_from_DHCP() {
 
 void Ethernet_set_Static_IP(uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway, uint8_t* dns) {
     WIZ5500_network_information.dhcp = NETINFO_STATIC;
-    uint8_t tmp, memsize[2][8] = { {2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};
+    uint8_t tmp, memsize[2][8] = {{2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};
     uint16_t my_dhcp_retry = 0;
     /* wizchip initialize*/
     if(ctlwizchip(CW_INIT_WIZCHIP,(void*)memsize) == -1) {
