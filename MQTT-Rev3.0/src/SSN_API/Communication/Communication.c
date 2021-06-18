@@ -1,7 +1,6 @@
 #include "Communication.h"
 
 char* ConfigurationsChannel  = "Configurations";
-
 int Send_GETMAC_Message(uint8_t* NodeID) {
 	/* Clear the message array */
 	clear_array(message_to_send, max_send_message_size);

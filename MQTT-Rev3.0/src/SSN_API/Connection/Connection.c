@@ -13,7 +13,7 @@ uint8_t SetupConnectionWithDHCP(uint8_t* SSN_MAC_ADDRESS) {
 uint8_t SetupConnectionWithStaticIP(uint8_t* SSN_MAC_ADDRESS, uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway, uint8_t* dns) {
 	// Start Ethernet Now with a MAC address (either default MAC or custom SSN MAC)
 	Ethernet_Register_MAC(SSN_MAC_ADDRESS);
-	// Setup static ip for the SSN
+	// Setup static IP for the SSN
 	Ethernet_set_Static_IP(static_IP, subnet_mask, gateway, dns);
 }
 
@@ -35,7 +35,9 @@ uint8_t ResetConnection(uint8_t* SSN_MAC_ADDRESS, uint8_t UDP_SOCKET) {
 	return socket(UDP_SOCKET, Sn_MR_UDP, SSN_DEFAULT_PORT, 0x00);
 }
 
+
 void GetServerIP_UsingDNS(uint8_t* DEFAULT_SERVER_IP, unsigned char* MQTT_SERVER_DNS, uint8_t* SSN_SERVER_IP){
+    start_ms_timer_with_interrupt();
 //    printf("here\n");
     unsigned char tempBuffer[BUFFER_SIZE] = {};
     unsigned int timeout_count_to_1sec = 100;
@@ -75,6 +77,7 @@ void GetServerIP_UsingDNS(uint8_t* DEFAULT_SERVER_IP, unsigned char* MQTT_SERVER
     TMR5 = 0;
     T5CONCLR = 0x8000;
     Clear_LED_INDICATOR();
+    stop_ms_timer_with_interrupt();
 //    printf("%s\n", MQTT_SERVER_DNS);
 //    printf("server %d.%d.%d.%d\n", SSN_SERVER_IP[0], SSN_SERVER_IP[1], SSN_SERVER_IP[2], SSN_SERVER_IP[3]);
 }

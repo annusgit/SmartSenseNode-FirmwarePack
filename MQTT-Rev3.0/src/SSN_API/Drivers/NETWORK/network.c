@@ -204,7 +204,7 @@ void Ethernet_Register_MAC(uint8_t* this_mac) {
     WIZ5500_network_information.mac[3] = this_mac[3];
     WIZ5500_network_information.mac[4] = this_mac[4];
     WIZ5500_network_information.mac[5] = this_mac[5];
-//	// also create the exclusive MQTT channel here
+	// also create the exclusive MQTT channel here
 //	sprintf(NodeExclusiveChannel, "%02X:%02X:%02X:%02X:%02X:%02X", this_mac[0], this_mac[1], this_mac[2], this_mac[3], this_mac[4], this_mac[5]);
 }
 
@@ -286,7 +286,7 @@ void Ethernet_get_IP_from_DHCP() {
                 // printf("LOG: -> Default Case. Return code: %d\n", dhcp_status);
                 if (request_started > 0) {
                     if (request_started % 500 == 0) {
-						printf(".");
+						printf(".");	
                         SSN_LED_INDICATE(GETTING_IP_FROM_DHCP);
 					}
                 }
@@ -307,7 +307,7 @@ void Ethernet_get_IP_from_DHCP() {
 
 void Ethernet_set_Static_IP(uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway, uint8_t* dns) {
     WIZ5500_network_information.dhcp = NETINFO_STATIC;
-    uint8_t tmp, memsize[2][8] = { {2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};
+    uint8_t tmp, memsize[2][8] = {{2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};
     uint16_t my_dhcp_retry = 0;
     /* wizchip initialize*/
     if(ctlwizchip(CW_INIT_WIZCHIP,(void*)memsize) == -1) {

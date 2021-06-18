@@ -158,10 +158,8 @@
 extern uint8_t SSN_SERVER_IP[4];
 /** SSN Server PORT */
 //extern uint16_t SSN_SERVER_PORT;
-//extern uint8_t DNS_ADDRESS[4];
 extern uint8_t DEFAULT_SERVER_IP[4];
 extern unsigned char MQTT_SERVER_DNS[40];
-
 /** Static IP Assignment */
 extern uint8_t SSN_STATIC_IP[4];
 extern uint8_t SSN_SUBNET_MASK[4];
@@ -186,7 +184,7 @@ extern uint8_t SSN_REPORT_INTERVAL;
 /** SSN current sensor configurations */
 extern uint8_t SSN_CONFIG[EEPROM_CONFIG_SIZE];
 /** Flags used to indicate if we have received configurations */
-extern bool CONFIG_received, TimeOfDay_received;
+extern bool CONFIG_received, TimeOfDay_received, CONFIG_retrieved;
 /** SSN current sensor relative scalar for voltage output */
 extern float SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[NO_OF_MACHINES];
 /** SSN current sensor ratings */
@@ -237,6 +235,7 @@ extern uint8_t mqtt_failure_counts;
 extern uint8_t MQTTallowedfailureCount;
 /** SSN loop variable */
 extern uint8_t i;
+extern uint8_t currentconfig[100];
 
 extern SOCKET SSN_UDP_DEBUG_SOCKET;
 extern uint8_t SSN_UDP_SERVER_IP[];

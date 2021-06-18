@@ -24,25 +24,27 @@
 #define SSN_IS_ALIVE                100
 
 /** States of our SSN */
-#define SELF_TEST_FAILED_STATE          0
-//#define NO_CURRENT_SENSOR_STATE         1
-#define NO_ETHERNET_STATE               2
-#define NO_MAC_STATE                    3
-#define NO_CONFIG_STATE                 4    
-#define ACK_CONFIG_STATE                5
-#define NO_TIMEOFDAY_STATE              6
-#define ABNORMAL_ACTIVITY_STATE         7
-#define NORMAL_ACTIVITY_STATE           8
+#define SELF_TEST_FAILED_STATE      0
+#define NO_CURRENT_SENSOR_STATE     1
+#define NO_ETHERNET_STATE           2
+#define NO_MAC_STATE                3
+#define NO_CONFIG_STATE             4   
+#define ACK_CONFIG_STATE            5
+#define NO_TIMEOFDAY_STATE          6
+#define ABNORMAL_ACTIVITY_STATE     7
+#define NORMAL_ACTIVITY_STATE       8
 // some additional states while we try to connect to the network
 #define GETTING_IP_FROM_DHCP            9
 #define LOOKING_UP_DNS                  10
 #define ESTABLISHING_MQTT_CONNECTION    11
 
-
 /* EEPROM Read/Write Position for MAC address */
 #define EEPROM_MAC_LOC              0
 /* EEPROM Read/Write Position for current sensor configurations */
 #define EEPROM_CONFIG_LOC           12
+
+#define EEPROM_MAC_STRING_LOC       50
+#define EEPROM_MAC_STRING_SIZE      17
 
 /* EEPROM MAC address size */
 #define EEPROM_MAC_SIZE             6
@@ -86,9 +88,15 @@ uint32_t fault_count;
 //#define _TEMPSENSOR_DEBUG_
 //#define _NETWORK_DEBUG_
 
-#define TH_AM2320
+//#define TH_AM2320
 //#define TH_DHT22
-#define OTS_LS_MLX90614
+#define NTC_Thermistor
+//#define OTS_LS_MLX90614
+
+#define DHCPIP
+//#define STATICIP
+
+//#define USE_DNS
 
 /** 
  * A simple loop count based delay 
@@ -322,7 +330,6 @@ static inline void establishing_connection_LED_INDICATE() {
     PORTSetBits(IOPORT_A, RED_LED);
     PORTToggleBits(IOPORT_A, GREEN_LED);
 }
-
 /** 
  * Indicates SSN state from LED
  * @param this_state A variable indicating the current state of SSN 
@@ -342,8 +349,7 @@ static inline void SSN_LED_INDICATE(uint8_t this_state) {
             break;
         case ESTABLISHING_MQTT_CONNECTION:
             establishing_connection_LED_INDICATE();
-            break;
-        /* No configuration? */
+            break;        /* No configuration? */
         case NO_CONFIG_STATE:
             Node_Up_Not_Configured_LED_INDICATE();
             break;
@@ -363,7 +369,7 @@ static inline void SSN_LED_INDICATE(uint8_t this_state) {
         case SELF_TEST_FAILED_STATE:
             Self_Test_Failed_LED_INDICATE();
             break;
-        /* there is no ethernet ? */
+//        /* there is no ethernet ? */
 //        case NO_CURRENT_SENSOR_STATE:
 //            Current_Sensors_Disconnected_LED_INDICATE();
 //            break;

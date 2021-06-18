@@ -1,5 +1,9 @@
 #include "temperature_sensor.h"
 
+float TEMPERATURE_READINGS_ARRAY[N_TEMPERATURE_READINGS];
+int current_temperature_reading_index = 0;
+bool first_N_temperature_readings_acquired = false;
+
 //float NTC_Thermistor_4092_50k_LUT_Resistance[114] = {
 //	1956240, 1812199, 1679700, 1557748, 1445439, 1341952, 1246540, 1158525, 1077290, 1001621, 932353, 868317, 809086, 754271, 703517, 656499, 612919, 572506, 534686, 
 //	499905, 467604, 437592, 409692, 383745, 359601, 337126, 316194, 296522, 278353, 261408, 245599, 230842, 217062, 204189, 192156, 180906, 170291, 160449, 151235, 
@@ -429,8 +433,8 @@ float MLX90614_Read_Temperature_Ambient_Celcius(void) {
 /* NTC Thermistor 4092 50Kohm */
 float Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius() {
 	float reference_resistance = 3300, VDD = 3.3;
-	float reference_voltage = 3.3 * (float)sample_Current_Sensor_channel(2) / 1024;
-	float reference_current = reference_voltage / reference_resistance;
+	float reference_voltage = 3.3 * (float)sample_Current_Sensor_channel(0) / 1024;
+    float reference_current = reference_voltage / reference_resistance;
 	float thermistor_voltage = VDD - reference_voltage;
 	float thermistor_resistance = thermistor_voltage / reference_current; // they are both in series
 	// printf("Thermistor Resistance: %.2f\n", thermistor_resistance);
@@ -653,3 +657,21 @@ uint8_t ambient_condition_status(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMP
 	return ABNORMAL_AMBIENT_CONDITION;
 }
 
+float average_value_of_temperature(float current_temperature) {
+    TEMPERATURE_READINGS_ARRAY[current_temperature_reading_index++] = current_temperature;
+    if (current_temperature_reading_index >= N_TEMPERATURE_READINGS) {
+        current_temperature_reading_index = 0;
+        first_N_temperature_readings_acquired = true;
+    } else {
+        if (!first_N_temperature_readings_acquired) {
+            printf("[LOG] Returning raw temperature reading. Will average after %d values have been acquired\n", N_TEMPERATURE_READINGS);
+            return current_temperature;
+        }
+    }
+    float sum = 0;
+    uint8_t k; for (k=0; k<N_TEMPERATURE_READINGS; k++) {
+        sum += TEMPERATURE_READINGS_ARRAY[k];
+    }
+    printf("[LOG] Returning average temperature reading\n");
+    return sum/N_TEMPERATURE_READINGS;
+}

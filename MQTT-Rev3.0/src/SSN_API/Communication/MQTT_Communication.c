@@ -40,9 +40,6 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
     SetupMQTTOptions(MQTTOptions, cliendId, QOS1, 1, MQTT_IP);
     printf("[MQTT] Setting Up MQTT Data Variables\n");
     SetupMQTTData(&MQTT_DataPacket);
-    // also create the exclusive MQTT channel here
-	sprintf(NodeExclusiveChannel, "%02X:%02X:%02X:%02X:%02X:%02X", SSN_MAC_ADDRESS[0], SSN_MAC_ADDRESS[1], SSN_MAC_ADDRESS[2], SSN_MAC_ADDRESS[3], SSN_MAC_ADDRESS[4], SSN_MAC_ADDRESS[5]);
-    printf("%s\n",NodeExclusiveChannel);
     uint32_t total_delay_in_us;
     while (1) {
         ServiceWatchdog();
@@ -134,6 +131,6 @@ int getConnTimeout(int attemptNumber) {
     return (attemptNumber < 10) ? 5 : (attemptNumber < 20) ? 60 : 600;
 }
 
-int MQTTallowedfailureCounts(uint8_t SSN_REPORT_INTERVAL) {
+int MQTTallowedfailureCounts(uint8_t SSN_REPORT_INTERVAL){
     return MQTT_DataPacket.keepAliveInterval / SSN_REPORT_INTERVAL;
 }

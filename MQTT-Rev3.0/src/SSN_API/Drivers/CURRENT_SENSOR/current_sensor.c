@@ -204,9 +204,7 @@ void Calculate_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, uint16_t num
         // but we want to keep only 3/4-th of the wave with us in order to capture just one positive half-wave, therefore, we sample only 150 times, not 200
 //        PORTToggleBits(IOPORT_A, GREEN_LED);
 //        sleep_for_microseconds(100); 
-    }
-    count=0;
-
+        }
     /* Calculate the True RMS Current Values on all 4 channels */
     for (i = 0; i < NO_OF_MACHINES; i++) {
         if(non_zero_voltage_count[i]<1) {
@@ -217,9 +215,9 @@ void Calculate_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, uint16_t num
 //            // error = 0.01444*CURRENT_RMS_VALUE[i] + 0.055555;
 //            CURRENT_RMS_VALUE[i] += 0.01444*CURRENT_RMS_VALUE[i] + 0.055555;      //linear compensation on pure sine wave using function generator
             //y=-0.1074+0.0483x-0.0001x2
-            CURRENT_RMS_VALUE[i] += 0.03652005*CURRENT_RMS_VALUE[i] + 0.1115812;    // linear compensation on 100A-1.65V YHDC sensors
+//            CURRENT_RMS_VALUE[i] += 0.03652005*CURRENT_RMS_VALUE[i] + 0.1115812;    // linear compensation on 100A-1.65V YHDC sensors
 //            y = 0.03652005*x + 0.1115812
-//            CURRENT_RMS_VALUE[i] += (-0.0001144244*CURRENT_RMS_VALUE[i]*CURRENT_RMS_VALUE[i]) + 0.04828584*CURRENT_RMS_VALUE[i] - 0.1073718 ;     //quadratic
+//            CURRENT_RMS_VALUE[i] += (-0.0001144244*CURRENT_RMS_VALUE[i]*CURRENT_RMS_VALUE[i]) + 0.04828584*CURRENT_RMS_VALUE[i] - 0.1073718 ;     //quadratic compensation on 100A-1.65V YHDC sensors
             //y = -0.1073718 + 0.04828584*x - 0.0001144244*x^2
         }
         // fill the new current value into the RMS buffer for RMS Averaging
