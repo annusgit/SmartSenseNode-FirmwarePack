@@ -71,4 +71,5 @@ int Send_STATUSUPDATE_Message(uint8_t* NodeID, uint8_t* temperature_bytes, uint8
         uint8_t abnormal_activity);
 
 int Send_RETRIEVECONFIG_Message(uint8_t* NodeID, uint8_t* SSN_CONFIG);
+
 #endif

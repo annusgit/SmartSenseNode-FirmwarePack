@@ -6,6 +6,7 @@
 #include "FlashMemory/FlashMemory.h"
 #include "Connection/Connection.h"
 #include "Communication/Communication.h"
+#include "SSN_API/Communication/MQTT_Communication.h"
 
 /** 
  * \mainpage 
@@ -154,12 +155,15 @@
 /**
  * Our global variables for SSN
  */
-/** SSN Server Address */
+
+/** DNS Variables */
+extern uint8_t DEFAULT_SERVER_IP[4];
+extern char MQTT_SERVER_DNS_STRING[22];
+/** SSN Server Address (in case DNS fails) */
 extern uint8_t SSN_SERVER_IP[4];
 /** SSN Server PORT */
 //extern uint16_t SSN_SERVER_PORT;
-extern uint8_t DEFAULT_SERVER_IP[4];
-extern unsigned char MQTT_SERVER_DNS[40];
+
 /** Static IP Assignment */
 extern uint8_t SSN_STATIC_IP[4];
 extern uint8_t SSN_SUBNET_MASK[4];
@@ -176,6 +180,7 @@ extern uint8_t interrupts_per_second;
 extern uint8_t half_second_counter, delays_per_second_counter; 
 /** Counter variable for counting after how many intervals to send the status update */
 extern uint8_t report_counter;
+/** A boolean to flag that an MQTT message is to be sent now */
 extern bool report_now;
 /** Current State of the SSN. There is no state machine of the SSN but we still use this variable to keep track at some instances */
 extern uint8_t SSN_CURRENT_STATE, SSN_PREV_STATE;
@@ -184,7 +189,7 @@ extern uint8_t SSN_REPORT_INTERVAL;
 /** SSN current sensor configurations */
 extern uint8_t SSN_CONFIG[EEPROM_CONFIG_SIZE];
 /** Flags used to indicate if we have received configurations */
-extern bool CONFIG_received, TimeOfDay_received, CONFIG_retrieved;
+extern bool CONFIG_received, TimeOfDay_received;
 /** SSN current sensor relative scalar for voltage output */
 extern float SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[NO_OF_MACHINES];
 /** SSN current sensor ratings */
@@ -193,8 +198,9 @@ extern uint8_t SSN_CURRENT_SENSOR_RATINGS[4];
 extern uint8_t SSN_CURRENT_SENSOR_MAXLOADS[4];
 /** SSN machine thresholds for deciding IDLE state */
 extern float SSN_CURRENT_SENSOR_THRESHOLDS[4];
-/** SSN Temperature and Humidity Sensor Thresholds */
+/** SSN Temperature Thresholds */
 extern uint8_t TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD;
+/** SSN Humidity Thresholds */
 extern uint8_t RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD;
 /** SSN machine load currents array */
 extern float Machine_load_currents[NO_OF_MACHINES];
@@ -230,27 +236,22 @@ extern uint8_t abnormal_activity;
 extern uint32_t message_count; 
 /** Socket health check variable */
 extern int message_publish_status;
-/** MQTT failure counts and maximum allowed failure counts */
+/** MQTT failure counts */
 extern uint8_t mqtt_failure_counts;
+/** Maximum allowed MQTT failure counts */
 extern uint8_t MQTTallowedfailureCount;
 /** SSN loop variable */
 extern uint8_t i;
-extern uint8_t currentconfig[100];
 
-extern SOCKET SSN_UDP_DEBUG_SOCKET;
-extern uint8_t SSN_UDP_SERVER_IP[];
-extern uint16_t SSN_UDP_SERVER_PORT;
-extern uint8_t currentconfig[100];
-
-//extern 
 /** 
  *  Includes are needed peripherals and APIs for SSN functionality
  */
 void SSN_Setup();
+void SSN_Show_Message();
 void SSN_COPY_MAC_FROM_MEMORY();
-void SSN_GET_MAC();
-void SSN_GET_CONFIG();
-void SSN_GET_TIMEOFDAY();
+void SSN_GET_MAC(uint8_t allowed_mqtt_failure_counts);
+void SSN_GET_CONFIG(uint8_t allowed_mqtt_failure_counts);
+void SSN_GET_TIMEOFDAY(uint8_t allowed_mqtt_failure_counts);
 int SSN_Check_Connection_And_Reconnect(int return_code);
 void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) ;
 void SSN_CHECK_ETHERNET_CONNECTION();
@@ -259,7 +260,7 @@ void SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(uint8_t TEMPERATURE_MIN_THRESHOLD, 
 void SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD);
 void SSN_RESET_AFTER_N_SECONDS(uint32_t seconds);
 void SSN_RESET_AFTER_N_SECONDS_IF_NO_MACHINE_ON(uint32_t seconds);
-void SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(uint32_t seconds);
+void SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(uint32_t seconds, uint8_t allowed_mqtt_failure_counts);
 void SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(uint32_t seconds);
 void SSN_RESET_IF_SOCKET_CORRUPTED(bool socket_is_fine);
 /**

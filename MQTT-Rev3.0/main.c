@@ -14,24 +14,22 @@
 
 #include "SSN_API/SSN_API.h"
 
- 
 /** A millisecond timer interrupt required for DHCP and MQTT Yielding functions */
 void __ISR(_TIMER_2_VECTOR, IPL4SOFT) Timer2IntHandler(void) {
 	// clear timer 2 interrupt flag
 	IFS0bits.T2IF = 0x00;
-	// millisecond ticks for DHCP
-	msTicks++; /* increment counter necessary in Delay()*/
+    // millisecond ticks for DHCP
+    msTicks++; /* increment counter necessary in Delay()*/
 	// millisecond ticks for MQTT
 	MilliTimer_Handler();
 	////////////////////////////////////////////////////////
 	// SHOULD BE Added DHCP Timer Handler your 1s tick timer
 	if(msTicks % 1000 == 0)	{
-        DNS_time_handler(); 
         DHCP_time_handler();
         /* Give the Ethernet Indication */
         // No_Ethernet_LED_INDICATE();
 		// printf("\n(LOG): One Second Passed in Millisecond Interrupt Handler\n");
-	}
+    }
 	//////////////////////////////////////////////////////
 }
 
@@ -42,7 +40,6 @@ void __ISR(_TIMER_1_VECTOR, IPL4SOFT) Timer1IntHandler_SSN_Hearbeat(void) {
 	// clear timer 1 interrupt flag, IFS0<4>
 	IFS0bits.T1IF = 0x00;
 	// Indicate the status of SSN from the SSN LED after every half second
-//    printf("Current State: %d\n", SSN_CURRENT_STATE);
 	SSN_LED_INDICATE(SSN_CURRENT_STATE);
 	// check of we have reached one second interval (because two half-seconds make one second)
 	half_second_counter++;
@@ -82,6 +79,7 @@ void __ISR(_TIMER_1_VECTOR, IPL4SOFT) Timer1IntHandler_SSN_Hearbeat(void) {
  *      - SSN calculates machine status update and ambient conditions every 100 milliseconds. 
 		  The ISR sends the status update after every ${SSN_REPORT_INTERVAL} seconds
  */
+
 int main() {
 	// Setup Smart Sense Node
 	SSN_Setup();
@@ -91,7 +89,7 @@ int main() {
 	EnableWatchdog();
 	// First find MAC in flash memory or assign default MAC address
 	SSN_COPY_MAC_FROM_MEMORY();
-	// We can chose two ways to operate over UDP; static or dynamic IP
+	// Choose STATIC or Dynamic IP assignment
 #ifdef DHCPIP
     SetupConnectionWithDHCP(SSN_MAC_ADDRESS);
 #endif
@@ -100,31 +98,40 @@ int main() {
     SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
 #endif	 
 #ifdef USE_DNS
-    GetServerIP_UsingDNS(DEFAULT_SERVER_IP, MQTT_SERVER_DNS, SSN_SERVER_IP);
+    GetServerIP_UsingDNS(WIZ5500_network_information.dns, DEFAULT_SERVER_IP, MQTT_SERVER_DNS_STRING, SSN_SERVER_IP);
 #endif
-    // Setup MQTT connection for SSN communication with broker
+	// Setup MQTT connection for SSN communication with broker
 	SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
+	// MQTT get allowed failure counts to determine when a reconnection is necessary
+    MQTTallowedfailureCount = MQTTallowedfailureCounts(SSN_REPORT_INTERVAL);
+	printf("[MQTT] By Default, Number of Failures-to-Publish Before Reconnect = %d\n", MQTTallowedfailureCount);
     // Get MAC address for SSN if we didn't have one already
-	SSN_GET_MAC();
+	SSN_GET_MAC(MQTTallowedfailureCount);
 	// Get SSN configurations for SSN or pick from EEPROM if already assigned
-	SSN_GET_CONFIG();
-	MQTTallowedfailureCount = MQTTallowedfailureCounts(SSN_REPORT_INTERVAL);
+    SSN_GET_CONFIG(MQTTallowedfailureCount);
 	// Receive time of day from the server for accurate timestamps
-	SSN_GET_TIMEOFDAY();
+	SSN_GET_TIMEOFDAY(MQTTallowedfailureCount);
+	// MQTT get allowed failure counts to determine when a reconnection is necessary
+    MQTTallowedfailureCount = MQTTallowedfailureCounts(SSN_REPORT_INTERVAL);
+	printf("[MQTT] By Configuration, Number of Failures-to-Publish Before Reconnect = %d\n", MQTTallowedfailureCount);
 	// Clear the watchdog
 	ServiceWatchdog();
 	// Start the global clock that will trigger a response each half of a second through our half-second interrupt defined above Main function
 	setup_Global_Clock_And_Half_Second_Interrupt(PERIPH_CLK);
+	// a counter to check how many 100 millisecond intervals have passed
 	uint8_t ms_100_counter = 0;
+	// SSN heartbeat loop
 	while (SSN_IS_ALIVE) {
 		// Network critical section begins here. Disable global half second interrupt
 		DisableGlobalHalfSecondInterrupt();
-		// Re-Sync Time of Day after every 4 hours
-		SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(4 * 3600);
+		// Re-Sync Time of Day after every 4 hours (time in seconds)
+		SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(TIME_RESYNC_AFTER_HOURS * 3600, MQTTallowedfailureCount);
 #ifdef DHCPIP
+		// Request IP from DHCP after it expires based on lease time
         SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(getDHCPLeasetime());
-#endif        
-		if (ms_100_counter >= 20) {
+#endif
+		// Read time of day from one of the sensors after N seconds (10 is the number of 100 milliseconds in 1 second)
+		if (ms_100_counter >= TEMPERATURE_SENSOR_READ_AFTER_SECONDS * 10) {
 #ifdef TH_AM2320
 			// Read ambient temperature and humidity sensor
             SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
@@ -135,13 +142,16 @@ int main() {
             temperature_bytes[0] = NTC_Thermistor_4092_50k_special_bytes[0];
             temperature_bytes[1] = NTC_Thermistor_4092_50k_special_bytes[1];
 #endif
-//			SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
+#ifdef OTS_LS_MLX90614
+			SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
+#endif
+			// reset 100 millisecond counter
 			ms_100_counter = 0;
 		}
 		// Get load currents and status of machines
-		machine_status_change_flag = Get_Machines_Status_Update(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, SSN_CURRENT_SENSOR_THRESHOLDS,
-			SSN_CURRENT_SENSOR_MAXLOADS, Machine_load_currents, Machine_load_percentages, Machine_status, Machine_prev_status, &Machine_status_flag,
-			Machine_status_duration, Machine_status_timestamp);
+		machine_status_change_flag = Get_Machines_Status_Update(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, SSN_CURRENT_SENSOR_THRESHOLDS, 
+                SSN_CURRENT_SENSOR_MAXLOADS, Machine_load_currents, Machine_load_percentages, Machine_status, Machine_prev_status, &Machine_status_flag, 
+                Machine_status_duration, Machine_status_timestamp);
 		// Clear the watchdog
 		ServiceWatchdog();
 		// we will report our status update out of sync with reporting interval if a state changes, this will allow us for accurate timing measurements
@@ -150,43 +160,45 @@ int main() {
 			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, temperature_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
                     Machine_prev_status, Machine_status_flag, MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE, Machine_status_timestamp, ssn_static_clock, abnormal_activity);			
 			Clear_Machine_Status_flag(&Machine_status_flag);
-			if (message_publish_status != SUCCESSS) {
-				mqtt_failure_counts++;
-				printf("[ERROR] Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failure_counts, MQTTallowedfailureCount);
-			} else {
-				mqtt_failure_counts = 0;
-			}
-		}
+            if (message_publish_status != SUCCESSS) {
+                mqtt_failure_counts++;
+                printf("[ERROR] Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failure_counts, MQTTallowedfailureCount);
+            } 
+            else {
+                mqtt_failure_counts = 0;
+            }
+        }
 		if (report_now == true) {
 			message_count++;
 			report_now = false; // reset report flag
 			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, temperature_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
-                    Machine_status, Machine_status_flag, Machine_status_duration, Machine_status_timestamp, ssn_static_clock, abnormal_activity);
+                    Machine_prev_status, Machine_status_flag, MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE, Machine_status_timestamp, ssn_static_clock, abnormal_activity);			
 			Clear_Machine_Status_flag(&Machine_status_flag);
-			if (message_publish_status != SUCCESSS) {
-				mqtt_failure_counts++;
-				printf("[ERROR] Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failure_counts, MQTTallowedfailureCount);
-			} else {
-				mqtt_failure_counts = 0;
-			}
-		}
+            if (message_publish_status != SUCCESSS) {
+                mqtt_failure_counts++;
+                printf("[ERROR] Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failure_counts, MQTTallowedfailureCount);
+            } 
+            else {
+                mqtt_failure_counts = 0;
+            }		
+        }
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// MQTT background handler
 		start_ms_timer_with_interrupt();
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// Check if we failed to publish, check connections and reconnect if necessary
-		// check how many failure counts have we encountered and reconnect to broker if necessary
+        // Check if we failed to publish, check connections and reconnect if necessary
+        		// check how many failure counts have we encountered and reconnect to broker if necessary
 		if (mqtt_failure_counts >= MQTTallowedfailureCount) {
 			// assume our connection has broken, we'll reconnect at this point
 			printf("[MQTT] SSN Message Publication to MQTT Broker Failed and Retry Exceeded...\n");
-			message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
+            message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
 			// connection re-established, exit fault code and reset failure counts
 			mqtt_failure_counts = 0;
 		}
-		MQTTYield(&Client_MQTT, 100);
+    	MQTTYield(&Client_MQTT, 100);
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		stop_ms_timer_with_interrupt();
-		///////////////////////////////////////////////////////////////////// ///////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Network critical section ends here. Enable global half second interrupt
 		EnableGlobalHalfSecondInterrupt();
 		// sleep for 100 milliseconds
@@ -196,13 +208,3 @@ int main() {
 	// we should never reach this point
 	return 0;
 }
-
-
-//int main() {
-//	SSN_Setup();
-//	while(1) {
-//		SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(25, 40);
-//		sleep_for_microseconds(1000000);
-//	}
-//	return 0;
-//}

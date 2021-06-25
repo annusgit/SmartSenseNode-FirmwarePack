@@ -1,10 +1,11 @@
-
 #ifndef __FlashMemory_h__
 #define __FlashMemory_h__
 
 #include "../global.h"
 #include "../Drivers/UART/uart.h"
 #include "../Drivers/EEPROM/eeprom.h"
+#include "../Drivers/NETWORK/network.h"
+#include "../Drivers/MESSAGES/messages.h"
 
 /** 
  * Finds MAC address in EEPROM

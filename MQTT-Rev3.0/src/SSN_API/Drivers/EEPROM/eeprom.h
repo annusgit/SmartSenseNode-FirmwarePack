@@ -1,7 +1,5 @@
-
 #ifndef __eeprom_h__
 #define __eeprom_h__
-
 
 #define _SUPPRESS_PLIB_WARNING
 #define _DISABLE_OPENADC10_CONFIGPORT_WARNING
@@ -12,31 +10,32 @@
 #include <plib.h>
 
 /** EEPROM 24LC08 Address */
-#define EEPROM_24LC08_BASE_ADDRESS  0xA0 // Append block number and R/W bit
+#define EEPROM_24LC08_BASE_ADDRESS      0xA0 // Append block number and R/W bit
 /** EEPROM 24LC08 Read bit */
-#define EEPROM_24LC08_READ_BIT      0x00
+#define EEPROM_24LC08_READ_BIT          0x00
 /** EEPROM 24LC08 Write bit */
-#define EEPROM_24LC08_WRITE_BIT     0x01
+#define EEPROM_24LC08_WRITE_BIT         0x01
 /** EEPROM 24LC08 Read bit combined with address */
-#define EEPROM_BYTE_READ            0xA1
+#define EEPROM_BYTE_READ                0xA1
 /** EEPROM 24LC08 Write bit combined with address */
-#define EEPROM_BYTE_WRITE           0xA0
+#define EEPROM_BYTE_WRITE               0xA0
 /** EEPROM 24LC08 block size of 256 bytes */
-#define EEPROM_BLOCK_SIZE           256
-/** EEPROM 24LC08 test location for testing operation */
-#define EEPROM_TEST_LOCATION        0x50
-/** EEPROM 24LC08 test value */
-#define EEPROM_TEST_VALUE           0x91
+#define EEPROM_BLOCK_SIZE               256
 /** EEPROM 24LC08 clear value. All bytes must be set to 0xFF */
-#define EEPROM_CLEAR_VALUE          0xFF
+#define EEPROM_CLEAR_VALUE              0xFF
 /** EEPROM 24LC08 test passed */
-#define EEPROM_TEST_PASSED          1
+#define EEPROM_TEST_PASSED              1
 /** EEPROM 24LC08 test failed */
-#define EEPROM_TEST_FAILED          0
-
+#define EEPROM_TEST_FAILED              0
+/** EEPROM I2C loop wait count */
+#define I2C_EEPROM_OP_WAIT_LOOP_COUNT   500  // startup operation requires more time
+/** EEPROM how many locations to test in each block */
+#define EEPROM_PER_BLOCK_TEST_COUNT     1
 
 /** Our EEPROM chip has four blocks of memory, 256 bytes in each block */
 enum EEPROM_24LC08_BLOCKS {EEPROM_BLOCK_0=0, EEPROM_BLOCK_1, EEPROM_BLOCK_2, EEPROM_BLOCK_3, EEPROM_BLOCK_COUNT};
+/** A wait loop variable to make sure our I2C read functions always exit */
+extern uint32_t i2c_wait_loop_count;
 
 /** 
  * Opens I2C1 peripheral
@@ -46,22 +45,22 @@ void open_I2C1();
 /** 
  * Waits while I2C1 is busy reading or writing
  */
-void I2C1_wait_while_busy();
+bool I2C1_wait_while_busy();
 
 /** 
  * Transmit single bit for starting I2C communication
  */
-void I2C1_transmit_start_bit();
+bool I2C1_transmit_start_bit();
 
 /** 
  * Transmit single bit for stoping I2C communication
  */
-void I2C1_transmit_stop_bit();
+bool I2C1_transmit_stop_bit();
 
 /** 
  * Transmit single bit for restarting I2C communication
  */
-void I2C1_transmit_restart_bit();
+bool I2C1_transmit_restart_bit();
 
 /** 
  * Transmit single byte over I2C

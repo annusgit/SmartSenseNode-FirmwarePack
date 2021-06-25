@@ -1,8 +1,9 @@
 #include "network.h"
 
-char* StatusUpdatesChannel   = "StatusUpdates";
-char* GettersChannel         = "Getters";
+char StatusUpdatesChannel[13] = "StatusUpdates";
+char GettersChannel[7] = "Getters";
 char NodeExclusiveChannel[17];
+
 
 void WIZ5500_Reset() {
     /* Reset WIZ5500 for ~460ms */
@@ -15,17 +16,18 @@ void WIZ5500_Reset() {
 }
 
 void open_SPI2() {
-/* Basic SPI configuration, pin setup and reset for WIZNet5500 SPI */
-    PORTSetPinsDigitalOut(IOPORT_B, BIT_4);  // Pin-B4: Wiz-RST
-    PORTSetPinsDigitalIn(IOPORT_B, BIT_13);  // Pin-B13: Wiz-MISO, See page-131 note
-    PORTSetPinsDigitalOut(IOPORT_A, BIT_4);  // Pin-A2: Wiz-CS
-    // Peripheral Pin Select (PPS) for SPI2
-    SDI2R  = 0x0003; // MISO-2
-    RPB5R  = 0x0004; // MOSI-2
-    // SPI2 configuration settings
-    SPI2CON  = 0x00008065; // 8-bit transfer (For Framed Data, do: 0x80008065)
-    SPI2CON2 = 0x00001F00;
-    SPI2BRG  = 0x00000002;
+	/* Basic SPI configuration, pin setup and reset for WIZNet5500 SPI */
+	PORTSetPinsDigitalIn(IOPORT_B, BIT_13); // Pin-B13: Wiz-MISO (In), See page-131 note
+	PORTSetPinsDigitalOut(IOPORT_B, BIT_5); // Pin-B5: Wiz-MOSI (Out)
+	PORTSetPinsDigitalOut(IOPORT_B, BIT_4); // Pin-B4: Wiz-RST
+	// CS pin is not configured here but CS is grounded in hardware
+	// Peripheral Pin Select (PPS) for SPI2
+	SDI2R = 0x0003; // MISO-2
+	RPB5R = 0x0004; // MOSI-2
+	// SPI2 configuration settings
+	SPI2CON = 0x00008065; // 8-bit transfer (For Framed Data, do: 0x80008065)
+	SPI2CON2 = 0x00001F00;
+	SPI2BRG = 0x00000002;
 }
 
 void Ethernet_Reset() {
@@ -33,51 +35,16 @@ void Ethernet_Reset() {
     sleep_for_microseconds(100000);
 }
 
-void setup_Ethernet(uint32_t delay_loops) {
+void setup_Ethernet() {
     open_SPI2();
-    
-    // Setup Wiz5500 device
-    PORTClearBits(IOPORT_A, BIT_4); // Select Wiz5500
-    // Wiz5500 Reset
-    WIZ5500_Reset();
-    delay(delay_loops);
-    // Device Ready for SPI communication
-    
-    // register read/write and chip select call backs for non-framed mode
-    reg_wizchip_cs_cbfunc(WIZ5500_select, WIZ5500_deselect);
-    reg_wizchip_spi_cbfunc(WIZ5500_read_byte, WIZ5500_write_byte);
-    reg_wizchip_spiburst_cbfunc(WIZ5500_read_array, WIZ5500_write_array);
-    
-    // set basic ethernet parameters
-//    WIZ5500_network_information.mac[0] = mac_address[0];
-//    WIZ5500_network_information.mac[1] = mac_address[1];
-//    WIZ5500_network_information.mac[2] = mac_address[2];
-//    WIZ5500_network_information.mac[3] = mac_address[3];
-//    WIZ5500_network_information.mac[4] = mac_address[4];
-//    WIZ5500_network_information.mac[5] = mac_address[5];
-
-//    WIZ5500_network_information.ip[0] = 192;
-//    WIZ5500_network_information.ip[1] = 168;
-//    WIZ5500_network_information.ip[2] = 8;
-//    WIZ5500_network_information.ip[3] = 2;
-//    
-//    WIZ5500_network_information.sn[0] = 255;
-//    WIZ5500_network_information.sn[1] = 255;
-//    WIZ5500_network_information.sn[2] = 255;
-//    WIZ5500_network_information.sn[3] = 0;
-//    
-//    WIZ5500_network_information.gw[0] = 192;
-//    WIZ5500_network_information.gw[1] = 168;
-//    WIZ5500_network_information.gw[2] = 0;
-//    WIZ5500_network_information.gw[3] = 1;
-//    
-//    WIZ5500_network_information.dns[0] = 0;
-//    WIZ5500_network_information.dns[1] = 0;
-//    WIZ5500_network_information.dns[2] = 0;
-//    WIZ5500_network_information.dns[3] = 0;
-    
-//    WIZ5500_network_information.dhcp = NETINFO_DHCP;
-    WIZ5500_network_information.dhcp = NETINFO_STATIC;
+	// Wiz5500 Reset
+	WIZ5500_Reset();
+	sleep_for_microseconds(3000000);
+	// Device Ready for SPI communication
+	// register read/write and chip select call backs for non-framed mode
+	reg_wizchip_cs_cbfunc(WIZ5500_select, WIZ5500_deselect);
+	reg_wizchip_spi_cbfunc(WIZ5500_read_byte, WIZ5500_write_byte);
+	reg_wizchip_spiburst_cbfunc(WIZ5500_read_array, WIZ5500_write_array);
 }
 
 unsigned int SPI2_send(unsigned int data) {
@@ -154,7 +121,7 @@ void WIZ5500_network_initiate(void) {
 	// Display Network Information
 	ctlwizchip(CW_GET_ID,(void*)tmpstr);
 
-	if(netinfo.dhcp == NETINFO_DHCP) printf("\r\n=== %s NET CONF : DHCP ===\r\n",(char*)tmpstr);
+	if(netinfo.dhcp == NETINFO_DHCP) printf("\r\n=== %s NET CONF : DHCP ===\r\n", (char*)tmpstr);
 	else printf("\r\n=== %s NET CONF : Static ===\r\n",(char*)tmpstr);
 
 	printf("MAC: %02X:%02X:%02X:%02X:%02X:%02X\r\n",netinfo.mac[0],netinfo.mac[1],netinfo.mac[2], netinfo.mac[3],netinfo.mac[4],netinfo.mac[5]);
@@ -205,29 +172,29 @@ void Ethernet_Register_MAC(uint8_t* this_mac) {
     WIZ5500_network_information.mac[4] = this_mac[4];
     WIZ5500_network_information.mac[5] = this_mac[5];
 	// also create the exclusive MQTT channel here
-//	sprintf(NodeExclusiveChannel, "%02X:%02X:%02X:%02X:%02X:%02X", this_mac[0], this_mac[1], this_mac[2], this_mac[3], this_mac[4], this_mac[5]);
+	sprintf(NodeExclusiveChannel, "%02X:%02X:%02X:%02X:%02X:%02X", this_mac[0], this_mac[1], this_mac[2], this_mac[3], this_mac[4], this_mac[5]);
 }
 
 void Ethernet_Save_Static_IP(uint8_t* this_IP) {
-    uint8_t i; for(i=0; i<4; i++) {
+    int i; for(i=0; i<4; i++) {
         WIZ5500_network_information.ip[i] = this_IP[i];
     }
 }
 
 void Ethernet_Save_Subnet_Mask(uint8_t* this_subnet) {
-    uint8_t i; for(i=0; i<4; i++) {
+    int i; for(i=0; i<4; i++) {
         WIZ5500_network_information.sn[i] = this_subnet[i];
     }
 }
 
 void Ethernet_Save_Gateway_Address(uint8_t* this_gateway) {
-    uint8_t i; for(i=0; i<4; i++) {
+    int i; for(i=0; i<4; i++) {
         WIZ5500_network_information.gw[i] = this_gateway[i];
     }    
 }
 
 void Ethernet_Save_DNS(uint8_t* this_dns) {
-	uint8_t i; for(i=0; i<4; i++) {
+	int i; for(i=0; i<4; i++) {
         WIZ5500_network_information.dns[i] = this_dns[i];
     }    
 }
@@ -238,16 +205,16 @@ void Ethernet_get_IP_from_DHCP() {
     start_ms_timer_with_interrupt();
     /* wizchip initialize*/
     if(ctlwizchip(CW_INIT_WIZCHIP,(void*)memsize) == -1) {
-       printf("LOG: -> WIZCHIP Initialized fail.\r\n");
+       printf("[DHCP] WIZCHIP Initialized fail.\r\n");
        while(1);
     }
-    printf("LOG: -> Wizchip initialized successfully\n");
+    printf("[DHCP] Wizchip initialized successfully\n");
     /* PHY link status check */
     do {
        if(ctlwizchip(CW_GET_PHYLINK, (void*)&tmp) == -1)
-          printf("LOG: -> Unknown PHY Link status.\r\n");
+          printf("[DHCP] Unknown PHY Link status.\r\n");
     } while(tmp == PHY_LINK_OFF);
-    printf("LOG: -> Physical Link OK\n");
+    printf("[DHCP] Physical Link OK\n");
     /* Network initialization */
     WIZ5500_network_initiate(); // Static netinfo setting
     // Set MAC address before initiating DHCP
@@ -255,44 +222,44 @@ void Ethernet_get_IP_from_DHCP() {
     // Step-1: initiate dhcp
     DHCP_init(DHCP_SOCKET, gDATABUF);
     reg_dhcp_cbfunc(WIZ5500_IP_assigned_callback, WIZ5500_IP_assigned_callback, WIZ5500_IP_conflict_callback);
-    // printf("LOG: -> DHCP Requesting IP\n");
     /* DHCP Request IP Loop */
     int dhcp_status, request_started = 0;
+	Clear_LED_INDICATOR();
     while(1) {
         dhcp_status = DHCP_run();
         switch(dhcp_status) {
 			case DHCP_IP_ASSIGN:
-                printf("LOG: -> DHCP IP Assigned\n");
+                printf("[DHCP] DHCP IP Assigned\n");
                 break;
 			case DHCP_IP_CHANGED:
-				printf("LOG: -> DHCP IP Changed\n");
+				printf("[DHCP] DHCP IP Changed\n");
 				break;
 			case DHCP_IP_LEASED:
 				// TO DO YOUR NETWORK APPs.
-                printf("LOG: -> DHCP Standby\n");
+                printf("[DHCP] DHCP Standby\n");
 				break;
 			case DHCP_FAILED:
 				my_dhcp_retry++;
 				if(my_dhcp_retry > MY_MAX_DHCP_RETRY) {
-					#ifdef _MAIN_DEBUG_
-					printf("LOG: -> DHCP %d Failed\r\n", my_dhcp_retry);
-					#endif
+#ifdef _MAIN_DEBUG_
+					printf("[DHCP] DHCP %d Failed\r\n", my_dhcp_retry);
+#endif
 					my_dhcp_retry = 0;
-					DHCP_stop();      // if restart, recall DHCP_init()
-					WIZ5500_network_initiate();   // apply the default static network and print out netinfo to serial
+					// if restart, recall DHCP_init()
+					DHCP_stop();
+					// apply the default static network and print out netinfo to serial
+					WIZ5500_network_initiate();   
 				}
 				break;
 			default:
-                // printf("LOG: -> Default Case. Return code: %d\n", dhcp_status);
                 if (request_started > 0) {
-                    if (request_started % 500 == 0) {
-						printf(".");	
-                        SSN_LED_INDICATE(GETTING_IP_FROM_DHCP);
+					if (request_started % 2000 == 0) {
+						printf(".");
+						SSN_LED_INDICATE(GETTING_IP_FROM_DHCP);
 					}
-                }
-                else
-                    printf("LOG: -> DHCP Requesting IP\n");
-                request_started++;
+				} else
+					printf("[LOG] -> DHCP Requesting IP\n");
+				request_started++;
 				break;
 		}
         if (dhcp_status == DHCP_IP_LEASED) {
@@ -301,26 +268,25 @@ void Ethernet_get_IP_from_DHCP() {
             break;
         }
     }
-    Clear_LED_INDICATOR();
+	Clear_LED_INDICATOR();
     close(DHCP_SOCKET);
 }
 
 void Ethernet_set_Static_IP(uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway, uint8_t* dns) {
-    WIZ5500_network_information.dhcp = NETINFO_STATIC;
+    // WIZ5500_network_information.dhcp = NETINFO_STATIC;
     uint8_t tmp, memsize[2][8] = {{2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};
-    uint16_t my_dhcp_retry = 0;
     /* wizchip initialize*/
     if(ctlwizchip(CW_INIT_WIZCHIP,(void*)memsize) == -1) {
-       printf("LOG: -> WIZCHIP Initialized fail.\r\n");
+       printf("[STATIC_IP] -> WIZCHIP Initialized fail.\r\n");
        while(1);
     }
-    printf("LOG: -> Wizchip initialized successfully\n");
+    printf("[STATIC_IP] Wizchip initialized successfully\n");
     /* PHY link status check */
     do {
        if(ctlwizchip(CW_GET_PHYLINK, (void*)&tmp) == -1)
-          printf("LOG: -> Unknown PHY Link status.\r\n");
+          printf("[STATIC_IP] Unknown PHY Link status.\r\n");
     } while(tmp == PHY_LINK_OFF);
-    printf("LOG: -> Physical Link OK\n");
+    printf("[STATIC_IP] Physical Link OK\n");
     /* Network initialization */
     WIZ5500_network_initiate(); // Static netinfo setting
     // Set network credentials, MAC address, IP, subnet mask and gateway
@@ -330,35 +296,3 @@ void Ethernet_set_Static_IP(uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* g
 	Ethernet_Save_DNS(dns);
     WIZ5500_network_initiate(); // Static netinfo setting
 }
-
-int32_t Send_Message_Over_UDP(uint8_t socket_number, uint8_t* message, uint8_t message_byte_length, char* destination_ip, uint16_t destination_port) {
-//    uint16_t Messages_to_send_in_buffer = is_Message_to_be_transmitted(socket_number);
-//    if(Messages_to_send_in_buffer) {
-//        printf("Seems we had some pending messages: %d\n", Messages_to_send_in_buffer);
-//    }
-    return sendto(socket_number, message, message_byte_length, destination_ip, destination_port);
-}
-
-uint16_t is_Message_Received_Over_UDP(uint8_t socket_number) {
-//    unsigned int received_size = getSn_RX_RSR(socket_number);
-//    unsigned int number_of_received_messages = received_size / 1;
-    return getSn_RX_RSR(socket_number); //number_of_received_messages;
-}
-
-uint16_t is_Message_to_be_transmitted(uint8_t socket_number) {
-    return getSn_TX_FSR(socket_number);
-}
-
-uint8_t Recv_Message_Over_UDP(uint8_t socket_number, char* message, uint8_t message_byte_length, char* destination_ip, uint16_t destination_port) {
-    // Check the Sn_IR(RECV) Interrupt bit. 
-    // This is issued whenever data is received from a peer.
-    // This function returns zero if there was no data in recv buffer or 0 data size received
-//    printf("Received Buffer Size: %d %d\r\n", getSn_IR(socket_number), getSn_IMR(socket_number));
-        // equal to zero means set
-        // Clear the recv interrupt bit
-        int32_t data_size = recvfrom(socket_number, message, message_byte_length, destination_ip, &destination_port);
-//        setSn_IR(socket_number, new_recv_buffer_val);
-//        printf("Received Message\r\n");
-    return data_size;
-}
-

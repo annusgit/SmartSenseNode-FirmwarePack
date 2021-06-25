@@ -1,6 +1,7 @@
 #include "Communication.h"
 
-char* ConfigurationsChannel  = "Configurations";
+char ConfigurationsChannel[14]  = "Configurations";
+
 int Send_GETMAC_Message(uint8_t* NodeID) {
 	/* Clear the message array */
 	clear_array(message_to_send, max_send_message_size);
@@ -40,7 +41,7 @@ int Send_STATUSUPDATE_Message(uint8_t* NodeID, uint8_t* temperature_bytes, uint8
 		Machine_status_timestamp, ssn_uptime_in_seconds, abnormal_activity);
 	if (ssn_message_to_send_size != STATUS_UPDATE_MESSAGE_Size) {
 		// This is not possible but still..
-		printf("(ERROR): Message BAD due to INCORRECT BYTE SIZE\n");
+		printf("[ERROR] Message BAD due to INCORRECT BYTE SIZE\n");
 	}
 	return SendMessageMQTT(StatusUpdatesChannel, message_to_send, ssn_message_to_send_size);
 }

@@ -1,7 +1,6 @@
 #ifndef __network_h__
 #define __network_h__
 
-
 #define _SUPPRESS_PLIB_WARNING
 #define _DISABLE_OPENADC10_CONFIGPORT_WARNING
 
@@ -57,8 +56,8 @@ Network MQTT_Network;
 MQTTClient Client_MQTT;    
 MQTTMessage Message_MQTT;
 MQTTPacket_connectData MQTT_DataPacket;
-extern char* StatusUpdatesChannel;
-extern char* GettersChannel;
+extern char StatusUpdatesChannel[13];
+extern char GettersChannel[7];
 extern char NodeExclusiveChannel[17];
 unsigned char MQTT_buf[100];
 
@@ -105,7 +104,7 @@ void open_SPI2();
 /**
  * Sets up Ethernet for communication
  */
-void setup_Ethernet(uint32_t delay_loops);
+void setup_Ethernet();
 
 /**
  * Sends and Receives a single byte over SPI interface
@@ -167,22 +166,6 @@ void WIZ5500_IP_assigned_callback(void);
  */
 void WIZ5500_IP_conflict_callback(void);
 
-///**
-// * Sets up a timer interrupt required to make DHCP requests
-// * @param delay_time Period of interrupt in seconds
-// */
-//void setup_millisecond_timer_with_interrupt(float delay_time);
-//
-///**
-// * Starts the timer interrupt 
-// */
-//void start_ms_timer_with_interrupt();
-//
-///**
-// * Stops the timer interrupt 
-// */
-//void stop_ms_timer_with_interrupt();
-
 // API level function
 /**
  * Gets physical link status from the W5500 chip whether a network cable is connected to network or not
@@ -195,13 +178,9 @@ uint8_t Ethernet_get_physical_link_status();
  * @param this_mac The byte array containing the MAC address
  */
 void Ethernet_Register_MAC(uint8_t* this_mac);
-
 void Ethernet_Save_Static_IP(uint8_t* this_IP);
-
 void Ethernet_Save_Subnet_Mask(uint8_t* this_subnet);
-
 void Ethernet_Save_Gateway_Address(uint8_t* this_gateway);
-
 void Ethernet_Save_DNS(uint8_t* this_dns);
 
 /**
@@ -212,38 +191,6 @@ void Ethernet_get_IP_from_DHCP();
 /**
  * Setup a Static IP
  */
-
 void Ethernet_set_Static_IP(uint8_t* static_IP, uint8_t* subnet_mask, uint8_t* gateway, uint8_t* dns);
-
-/**
- * Sends a message over UDP
- * @param socket_number UDP socket number
- * @param message Byte array containing the message to send
- * @param message_byte_length Number of bytes of the message to send
- * @param desination_ip IP of destination server
- * @param destination_port Port of destination server
- * @return 
- */
-int32_t Send_Message_Over_UDP(uint8_t socket_number, uint8_t* message, uint8_t message_byte_length, char* destination_ip, uint16_t destination_port);
-
-/**
- * Tells whether a message was received or not and how many bytes are there in the buffer
- * @param socket_number UDP socket number
- * @return Number of bytes in receive buffer of W5500. May contain more than one message
- */
-uint16_t is_Message_Received_Over_UDP(uint8_t socket_number);
-
-uint16_t is_Message_to_be_transmitted(uint8_t socket_number);
-
-/**
- * Receives a message over UDP
- * @param socket_number UDP socket number of SSN
- * @param message The byte array in which the received message will be written into
- * @param message_byte_length Maximum byte count that may be received in a single message
- * @param destination_ip IP of destination server
- * @param destination_port Port of destination server
- * @return Number of bytes in received message
- */
-uint8_t Recv_Message_Over_UDP(uint8_t socket_number, char* message, uint8_t message_byte_length, char* destination_ip, uint16_t destination_port);
 
 #endif

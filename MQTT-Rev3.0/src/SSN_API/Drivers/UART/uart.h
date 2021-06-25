@@ -1,3 +1,4 @@
+
 #ifndef __uart_h__
 #define __uart_h__
 
@@ -7,7 +8,7 @@
  * Opens UART peripheral for communication 
  * @param baudrate
  */
-void open_UART2(unsigned int baudrate);  // printf
+void open_UART2(unsigned int baudrate);
 
 /** 
  * Transmits a byte array over serial interface
@@ -31,10 +32,6 @@ unsigned int SerialReceive_UART2(char *buffer, unsigned int max_size);
  */
 void setup_printf(unsigned int baudrate);
 
-/* UART1 for MODBUS */
-void open_UART1(unsigned int baudrate);
-int SerialTransmit_UART1(const char *buffer);
-unsigned int SerialReceive_UART1(char *buffer, unsigned int max_size);
 
 #endif
 

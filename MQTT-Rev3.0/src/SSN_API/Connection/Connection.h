@@ -5,6 +5,8 @@
 #include "../Drivers/UART/uart.h"
 #include "../Drivers/NETWORK/network.h"
 
+#define DNS_SOCKET_NUMBER   1
+
 /** 
  * Sets up Ethernet Connection for SSN
  * @param SSN_MAC_ADDRESS Six byte array containing the six bytes of SSN MAC address
@@ -23,6 +25,6 @@ uint8_t SetupConnectionWithStaticIPAndReturnSocket(uint8_t UDP_SOCKET, uint8_t* 
  * @return Will return a new socket for communication
  */
 uint8_t ResetConnection(uint8_t* SSN_CURRENT_MAC, uint8_t UDP_SOCKET);
-void GetServerIP_UsingDNS(uint8_t* DEFAULT_SERVER_IP, unsigned char* MQTT_SERVER_DNS, uint8_t* SSN_SERVER_IP);
+void GetServerIP_UsingDNS(uint8_t* DNS_ADDRESS, uint8_t* DEFAULT_SERVER_IP, unsigned char* MQTT_SERVER_DNS_STRING, uint8_t* SSN_SERVER_IP);
 
 #endif

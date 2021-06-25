@@ -91,7 +91,7 @@ extern int current_temperature_reading_index;
 extern bool first_N_temperature_readings_acquired;
 
 /** A wait loop variable to make sure our I2C read functions always exit */
-static uint32_t wait_loop_count = I2C_TEST_OP_WAIT_LOOP_COUNT;
+extern uint32_t i2c_wait_loop_count;
 
 // Device level functions
 /** 
@@ -215,8 +215,6 @@ int8_t sample_Temperature_Humidity_bytes_using_DHT22(uint8_t* temperature_bytes,
  * @return <b>NORMAL_AMBIENT_CONDITION</b> if normal; <b>ABNORMAL_AMBIENT_CONDITION</b> otherwise.
  */
 uint8_t ambient_condition_status(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MIN_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MAX_THRESHOLD);
-
-float average_value_of_temperature(float current_temperature);
 
 #endif
 
