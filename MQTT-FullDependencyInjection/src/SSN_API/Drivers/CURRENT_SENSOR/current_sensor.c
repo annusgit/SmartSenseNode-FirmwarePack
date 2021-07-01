@@ -253,7 +253,7 @@ float Current_CSensor_Read_RMS(uint8_t channel, uint16_t* adc_samples_array, uin
 
 bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, float* SSN_CURRENT_SENSOR_THRESHOLDS, uint8_t* SSN_CURRENT_SENSOR_MAXLOADS,
 	float* Machine_load_currents, uint8_t* Machine_load_percentages, uint8_t* Machine_status, uint8_t* Machine_prev_status, uint8_t* Machine_status_flag, uint32_t* Machine_status_duration,
-	uint32_t* Machine_status_timestamp) {
+	uint32_t* Machine_status_timestamp, uint32_t ssn_current_dynamic_clock_val) {
 	// This function will calculate the load currents, load percentages and machine on/off status for all four machines
 	// It will also calculate the time-in-state in SSN-Seconds and assign a timestamp to the state as well
 	// Off(0)/Idle(1)/On(2)
@@ -294,7 +294,7 @@ bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_
 			Machine_prev_status[i] = SENSOR_NOT_CONNECTED;
 			Machine_status[i] = MACHINE_OFF;
 			// assign the current SSN Clock timestamp
-			Machine_status_timestamp[i] = ssn_dynamic_clock;
+			Machine_status_timestamp[i] = ssn_current_dynamic_clock_val;
 			MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE[i] = 0; // because it was just turned on
 			Machine_status_duration[i] = 0; // because it just its state
 			*Machine_status_flag = (*Machine_status_flag) | (1 << i); // status flag assignment at the right bit location
@@ -316,7 +316,7 @@ bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_
 		/* Has the machine status changed just now? */
 		if (Machine_status[i] != Machine_prev_status[i]) {
 			// assign the current SSN Clock timestamp
-			Machine_status_timestamp[i] = ssn_dynamic_clock; // update the timestamp
+			Machine_status_timestamp[i] = ssn_current_dynamic_clock_val; // update the timestamp
 			MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE[i] = Machine_status_duration[i]; // save the max duration for which the machine remained in the previous state
 			Machine_status_duration[i] = 0; // because it just its state
 			*Machine_status_flag = (*Machine_status_flag) | (1 << i); // status flag assignment at the right bit location
@@ -326,7 +326,7 @@ bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_
 			/* Else the machine is sustaining its state */
 			// printf(">>>>>>>>>>>>>>>>>> States %d %d\n", Machine_status[i], this_machine_prev_status);
 			MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE[i] = Machine_status_duration[i]; // save the max duration before updating it
-			Machine_status_duration[i] = ssn_dynamic_clock - Machine_status_timestamp[i];
+			Machine_status_duration[i] = ssn_current_dynamic_clock_val - Machine_status_timestamp[i];
 		}
 	}
 	return status_change_flag;

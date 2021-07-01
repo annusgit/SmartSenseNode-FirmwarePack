@@ -2,11 +2,11 @@
 #define __SSN_API_h__
 
 #include <plib.h>
-#include "Drivers/TEMPERATURE_SENSOR/temperature_sensor.h"
+#include "Drivers/PSEUDO_RTCC/pseudo_rtcc.h"
+#include "SystemTests/SystemTests.h"
 #include "FlashMemory/FlashMemory.h"
 #include "Connection/Connection.h"
 #include "Communication/Communication.h"
-#include "SSN_API/Communication/MQTT_Communication.h"
 
 /** DNS Variables */
 extern uint8_t DEFAULT_SERVER_IP[4];
@@ -92,7 +92,7 @@ extern uint8_t MQTTallowedfailureCount;
 /** 
  *  Includes are needed peripherals and APIs for SSN functionality
  */
-void SSN_Setup();
+void SSN_Setup(uint32_t uart_baurdrate);
 void SSN_Show_Message();
 void SSN_COPY_MAC_FROM_MEMORY(uint8_t* ssn_mac_address, uint8_t* ssn_default_mac, uint8_t* ssn_prev_state, uint8_t* ssn_current_state, char* node_exclusive_channel);
 void SSN_GET_MAC(uint8_t* ssn_mac_address, uint8_t* ssn_prev_state, uint8_t* ssn_current_state, uint8_t allowed_mqtt_failure_counts, Network* net, MQTTClient* mqtt_client, 

@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "Drivers/PSEUDO_RTCC/pseudo_rtcc.h"
 
 #define SYSTEM_CLK                          60000000
 #define PERIPH_CLK                          30000000

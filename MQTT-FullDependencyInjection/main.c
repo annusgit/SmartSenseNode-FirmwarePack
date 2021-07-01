@@ -12,7 +12,6 @@
 #pragma config ICESEL       = ICS_PGx2		// ICE/ICD Comm Channel Select (Communicate on PGEC2/PGED2)
 #pragma config JTAGEN		= OFF           // JTAG Enable (Disabled)
 
-#include "SSN_API/SystemTests/SystemTests.h"
 #include "SSN_API/SSN_API.h"
 
 /** A millisecond timer interrupt required for DHCP and MQTT Yielding functions */
@@ -83,7 +82,7 @@ void __ISR(_TIMER_1_VECTOR, IPL4SOFT) Timer1IntHandler_SSN_Hearbeat(void) {
 
 int main() {
 	// Setup Smart Sense Node
-	SSN_Setup();
+	SSN_Setup(115200);
 	// Check the EEPROM, temperature sensor and network connection before proceeding
 	RunSystemTests(0, 100);
 	// We need a watchdog to make sure we don't get stuck forever
@@ -146,8 +145,8 @@ int main() {
 		if (ms_100_counter >= TEMPERATURE_SENSOR_READ_AFTER_SECONDS * 10) {
 #ifdef TH_AM2320
 			// Read ambient temperature and humidity sensor
-			SSN_GET_AMBIENT_CONDITION(temperature_bytes, relative_humidity_bytes, TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD, &SSN_PREV_STATE, &SSN_CURRENT_STATE, 
-				&abnormal_activity);
+			SSN_GET_AMBIENT_CONDITION(temperature_bytes, relative_humidity_bytes, TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, 
+                RELATIVE_HUMIDITY_MAX_THRESHOLD, &SSN_PREV_STATE, &SSN_CURRENT_STATE, &abnormal_activity);
 #endif
 #ifdef NTC_Thermistor
 			// Read thermistor and assign temperature bytes its value
@@ -165,9 +164,8 @@ int main() {
 			ms_100_counter = 0;
 		}
 		// Get load currents and status of machines
-		machine_status_change_flag = Get_Machines_Status_Update(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, SSN_CURRENT_SENSOR_THRESHOLDS,
-			SSN_CURRENT_SENSOR_MAXLOADS, Machine_load_currents, Machine_load_percentages, Machine_status, Machine_prev_status, &Machine_status_flag,
-			Machine_status_duration, Machine_status_timestamp);
+		machine_status_change_flag = Get_Machines_Status_Update(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, SSN_CURRENT_SENSOR_THRESHOLDS, SSN_CURRENT_SENSOR_MAXLOADS, 
+            Machine_load_currents, Machine_load_percentages, Machine_status, Machine_prev_status, &Machine_status_flag, Machine_status_duration, Machine_status_timestamp, ssn_dynamic_clock);
 		// Clear the watchdog
 		ServiceWatchdog();
 		// we will report our status update out of sync with reporting interval if a state changes, this will allow us for accurate timing measurements

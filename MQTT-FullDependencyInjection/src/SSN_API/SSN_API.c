@@ -82,9 +82,9 @@ uint8_t mqtt_failure_counts;
 uint8_t MQTTallowedfailureCount;
 
 
-void SSN_Setup() {
+void SSN_Setup(uint32_t uart_baurdrate) {
 	// Setup calls for all our peripherals/devices
-	setup_printf(115200);
+	setup_printf(uart_baurdrate);
 	SSN_Show_Message();
 	setup_EEPROM();
 	setup_Ethernet(5000000);
@@ -701,7 +701,7 @@ void SSN_RESET_IF_SOCKET_CORRUPTED(bool socket_is_fine, uint8_t* ssn_current_sta
 }
 
 void led_blink_test() {
-	SSN_Setup();
+	SSN_Setup(115200);
 	Clear_LED_INDICATOR();
 	while (true) {
 		No_Ethernet_LED_INDICATE();
@@ -714,7 +714,7 @@ void led_blink_test() {
 }
 //
 //void current_test() {
-//	SSN_Setup();
+//	SSN_Setup(115200);
 //	SSN_CURRENT_SENSOR_RATINGS[0] = 100;
 //	SSN_CURRENT_SENSOR_RATINGS[1] = 000;
 //	SSN_CURRENT_SENSOR_RATINGS[2] = 030;
@@ -729,7 +729,7 @@ void led_blink_test() {
 //}
 
 //void network_test() {
-//	SSN_Setup();
+//	SSN_Setup(115200);
 //	SSN_UDP_SOCKET = SetupConnectionWithStaticIPAndReturnSocket(SSN_UDP_SOCKET_NUM, SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
 //	uint8_t test_message_array[100] = "I am Annus Zulfiqar and I am trying to test this network";
 //	uint8_t test_message_size = 56;
@@ -748,7 +748,7 @@ void led_blink_test() {
 //}
 //
 //void watchdog_test() {
-//	SSN_Setup();
+//	SSN_Setup(115200);
 //	printf("################# Testing Watchdog #################\n");
 //	EnableWatchdog();
 //	int seconds = 1;
@@ -762,7 +762,7 @@ void led_blink_test() {
 //}
 //
 //int DHT22_Sensor_Test() {
-//	SSN_Setup();
+//	SSN_Setup(115200);
 //	while (true) {
 //		SSN_GET_AMBIENT_CONDITION(0, 100, 0, 100);
 //		ambient_condition_status(0, 100, 0, 100);
@@ -780,7 +780,7 @@ void led_blink_test() {
 //
 //int main() {
 //        // Basic setup for our SSN to work    
-//        SSN_Setup();
+//        SSN_Setup(115200);
 //        SSN_COPY_MAC_FROM_MEMORY();
 //        Ethernet_Register_MAC(SSN_MAC_ADDRESS);
 //        Ethernet_set_Static_IP(SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS);

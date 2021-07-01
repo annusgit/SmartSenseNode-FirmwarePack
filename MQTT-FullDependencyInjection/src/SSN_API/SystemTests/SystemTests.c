@@ -8,7 +8,6 @@ void RunSystemTests(int temperature_min_threshold, int temperature_max_threshold
 	uint8_t test_relative_humidity_bytes[2] = {0};
 	/** A test variable for ambient condition */
 	uint8_t test_abnormal_activity;
-	
 	// 1. Check EEPROM
     printf("[LOG] -- (1/3) EEPROM Test -- \n");
     if (EEPROM_Check() == EEPROM_TEST_PASSED) {
