@@ -38,7 +38,6 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
     SetupMQTTOptions(MQTTOptions, cliendId, QOS1, 1, MQTT_IP);
     printf("[MQTT] Setting Up MQTT Data Variables\n");
     SetupMQTTData(&MQTT_DataPacket);
-	uint32_t total_delay_in_us;
     while (1) {
         ServiceWatchdog();
         timeout = getConnTimeout(retry_count++);
@@ -51,7 +50,7 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
             start_ms_timer_with_interrupt();
             rc = MQTTConnect(mqtt_client, &MQTT_DataPacket);
             if (rc == SUCCESSS) {
-                printf("[MQTT] Successfully Connected to Broker at %d.%d.%d.%d as MQTT Client\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
+                printf("[MQTT] Successfully Connected to Broker at %d:%d:%d:%d as MQTT Client\n", MQTT_IP[0], MQTT_IP[1], MQTT_IP[2], MQTT_IP[3]);
                 // Now do some subscriptions
                 rc = MQTTSubscribe(mqtt_client, NodeExclusiveChannel, MQTTOptions->qos, messageArrivedoverMQTT);
                 printf("[MQTT] Subscribing to Node Exclusive Channel: %s\n", NodeExclusiveChannel);
@@ -70,17 +69,7 @@ int SetupMQTTClientConnection(Network* net, MQTTClient* mqtt_client, opts_struct
             printf("[**MQTT**]Too many [%d] retries attempted, SSN Restarting", retry_count);
             SoftReset();
         }
-        // sleep_for_microseconds_and_clear_watchdog(timeout*1000000);
-		/** Possible Culprit */
-		Clear_LED_INDICATOR();
-        total_delay_in_us = timeout*1000000;
-        while (total_delay_in_us > 1000000) {
-            SSN_LED_INDICATE(ESTABLISHING_MQTT_CONNECTION);
-            sleep_for_microseconds(1000000);
-            ServiceWatchdog();
-            total_delay_in_us -= 1000000;
-        }
-        Clear_LED_INDICATOR();
+        sleep_for_microseconds_and_clear_watchdog(timeout*1000000);
     }
     return SUCCESSS;
 }
@@ -115,9 +104,9 @@ int SendMessageMQTT(char* topic, uint8_t* messagetosend, uint8_t len) {
     // printf("Published %d\r\n", rc);
     if (rc != SUCCESSS) {
         // TODO: UDP Debug Message for MQTT Publication Failed
-        printf("[ERROR] Message Publication to MQTT Broker Failed\n");
+        printf("(ERROR): Message Publication to MQTT Broker Failed\n");
     } else {
-        printf("[LOG] %d-Byte Message Sent to MQTT Broker\n", len);
+        printf("(LOG): %d-Byte Message Sent to MQTT Broker\n", len);
     }
     stop_ms_timer_with_interrupt();
     return rc;

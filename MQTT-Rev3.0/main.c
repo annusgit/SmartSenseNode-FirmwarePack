@@ -13,9 +13,10 @@
 #pragma config JTAGEN		= OFF           // JTAG Enable (Disabled)
 
 #include "SSN_API/SSN_API.h"
+#include "SSN_API/Communication/MQTT_Communication.h"
 
 /** A millisecond timer interrupt required for DHCP and MQTT Yielding functions */
-void __ISR(_TIMER_2_VECTOR, IPL4SOFT) Timer2IntHandler(void) {
+void __ISR(_TIMER_2_VECTOR, IPL4SOFT) Timer2IntHandler(void){
 	// clear timer 2 interrupt flag
 	IFS0bits.T2IF = 0x00;
     // millisecond ticks for DHCP
@@ -51,6 +52,8 @@ void __ISR(_TIMER_1_VECTOR, IPL4SOFT) Timer1IntHandler_SSN_Hearbeat(void) {
 		// increment global uptime in seconds
 		ssn_uptime_in_seconds++;
 		ssn_dynamic_clock++;
+//        printf("static and dynamic clock %u %u\n\n", ssn_uptime_in_seconds, ssn_dynamic_clock);
+
 		// Is it time to report?
 		if (report_counter >= SSN_REPORT_INTERVAL) {
 			// Reset the reporting counter
@@ -89,64 +92,38 @@ int main() {
 	EnableWatchdog();
 	// First find MAC in flash memory or assign default MAC address
 	SSN_COPY_MAC_FROM_MEMORY();
-	// Choose STATIC or Dynamic IP assignment
-#ifdef DHCPIP
-    SetupConnectionWithDHCP(SSN_MAC_ADDRESS);
-#endif
-#ifdef STATICIP
+	// We can chose two ways to operate over UDP; static or dynamic IP
+	SetupConnectionWithDHCP(SSN_MAC_ADDRESS, DHCP_SOCKET);
 	// Setup Static IP for SSN to join existing network
-    SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
-#endif	 
-#ifdef USE_DNS
-    GetServerIP_UsingDNS(WIZ5500_network_information.dns, DEFAULT_SERVER_IP, MQTT_SERVER_DNS_STRING, SSN_SERVER_IP);
-#endif
+//	SetupConnectionWithStaticIP(SSN_MAC_ADDRESS, SSN_STATIC_IP, SSN_SUBNET_MASK, SSN_GATWAY_ADDRESS, SSN_DNS_ADDRESS);
 	// Setup MQTT connection for SSN communication with broker
 	SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
-	// MQTT get allowed failure counts to determine when a reconnection is necessary
-    MQTTallowedfailureCount = MQTTallowedfailureCounts(SSN_REPORT_INTERVAL);
-	printf("[MQTT] By Default, Number of Failures-to-Publish Before Reconnect = %d\n", MQTTallowedfailureCount);
     // Get MAC address for SSN if we didn't have one already
-	SSN_GET_MAC(MQTTallowedfailureCount);
+	SSN_GET_MAC();
 	// Get SSN configurations for SSN or pick from EEPROM if already assigned
-    SSN_GET_CONFIG(MQTTallowedfailureCount);
-	// Receive time of day from the server for accurate timestamps
-	SSN_GET_TIMEOFDAY(MQTTallowedfailureCount);
-	// MQTT get allowed failure counts to determine when a reconnection is necessary
+    SSN_GET_CONFIG();
     MQTTallowedfailureCount = MQTTallowedfailureCounts(SSN_REPORT_INTERVAL);
-	printf("[MQTT] By Configuration, Number of Failures-to-Publish Before Reconnect = %d\n", MQTTallowedfailureCount);
+	// Receive time of day from the server for accurate timestamps
+	SSN_GET_TIMEOFDAY();
 	// Clear the watchdog
 	ServiceWatchdog();
 	// Start the global clock that will trigger a response each half of a second through our half-second interrupt defined above Main function
 	setup_Global_Clock_And_Half_Second_Interrupt(PERIPH_CLK);
-	// a counter to check how many 100 millisecond intervals have passed
 	uint8_t ms_100_counter = 0;
-	// SSN heartbeat loop
 	while (SSN_IS_ALIVE) {
 		// Network critical section begins here. Disable global half second interrupt
 		DisableGlobalHalfSecondInterrupt();
-		// Re-Sync Time of Day after every 4 hours (time in seconds)
-		SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(TIME_RESYNC_AFTER_HOURS * 3600, MQTTallowedfailureCount);
-#ifdef DHCPIP
-		// Request IP from DHCP after it expires based on lease time
+		// Re-Sync Time of Day after every 4 hours
+		SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(4 * 3600);
         SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(getDHCPLeasetime());
-#endif
-		// Read time of day from one of the sensors after N seconds (10 is the number of 100 milliseconds in 1 second)
-		if (ms_100_counter >= TEMPERATURE_SENSOR_READ_AFTER_SECONDS * 10) {
-#ifdef TH_AM2320
-			// Read ambient temperature and humidity sensor
-            SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
-#endif
-#ifdef NTC_Thermistor
-			// Read thermistor and assign temperature bytes its value
+		if (ms_100_counter >= 20) {
+			// Read temperature and humidity sensor
+//			SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
+//			SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
 			SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
             temperature_bytes[0] = NTC_Thermistor_4092_50k_special_bytes[0];
-            temperature_bytes[1] = NTC_Thermistor_4092_50k_special_bytes[1];
-#endif
-#ifdef OTS_LS_MLX90614
-			SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
-#endif
-			// reset 100 millisecond counter
-			ms_100_counter = 0;
+            temperature_bytes[1] = NTC_Thermistor_4092_50k_special_bytes[1];			
+            ms_100_counter = 0;
 		}
 		// Get load currents and status of machines
 		machine_status_change_flag = Get_Machines_Status_Update(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, SSN_CURRENT_SENSOR_THRESHOLDS, 
@@ -171,8 +148,10 @@ int main() {
 		if (report_now == true) {
 			message_count++;
 			report_now = false; // reset report flag
+			// printf("Sending these temperatures: %.2f; %.2f\n", (float)((NTC_Thermistor_4092_50k_special_bytes[0] << 8) | NTC_Thermistor_4092_50k_special_bytes[1])/10.0f, 
+			//	(float)((MLX90614_special_bytes[0] << 8) | MLX90614_special_bytes[1])/10.0f);
 			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, temperature_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
-                    Machine_prev_status, Machine_status_flag, MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE, Machine_status_timestamp, ssn_static_clock, abnormal_activity);			
+                    Machine_status, Machine_status_flag, Machine_status_duration, Machine_status_timestamp, ssn_static_clock, abnormal_activity);
 			Clear_Machine_Status_flag(&Machine_status_flag);
             if (message_publish_status != SUCCESSS) {
                 mqtt_failure_counts++;
@@ -208,3 +187,13 @@ int main() {
 	// we should never reach this point
 	return 0;
 }
+
+//int main() {
+//	// Setup Smart Sense Node
+//	SSN_Setup();
+//	while(1) {
+//		SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(0, 100);
+//		sleep_for_microseconds(2000000);
+//	}
+//	return 0;
+//}

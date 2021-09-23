@@ -1,38 +1,21 @@
 #include "messages.h"
 
 uint8_t is_Valid_MAC(uint8_t* mac_address) {
-    // just compare first four bytes of our MAC with the series of MAC addresses that we have for our SSN
-    // First four bytes of our SSN MAC addresses will always be constant
-    uint8_t SSN_VALID_MAC_BYTES[4] = {0x70, 0xB3, 0xD5, 0xFE};
-    int i; for (i=0; i<4; i++) {
-		if (mac_address[i] != SSN_VALID_MAC_BYTES[i]) {
+	// just compare first four bytes of our MAC with the series of MAC addresses that we have for our SSN
+	// First four bytes of our SSN MAC addresses will always be constant
+	uint8_t i, SSN_VALID_MAC_BYTES[] = {0x70, 0xB3, 0xD5, 0xFE};
+	for (i = 0; i < 4; i++)
+		if (mac_address[i] != SSN_VALID_MAC_BYTES[i])
 			return 0;
-		}
-	}
-    return 1;
-}
-
-uint8_t is_Valid_MAC_String(char* mac_address_string) {
-    // just compare first 12 bytes of our MAC string with the series of MAC addresses that we have for our SSN
-    // First four bytes of our SSN MAC addresses will always be constant
-    char SSN_VALID_MAC_STRING[12] = "70:B3:D5:FE:";
-    int i; for (i = 0; i < 12; i++) {
-        if (mac_address_string[i] != SSN_VALID_MAC_STRING[i]) {
-            return 0;
-        }
-    }
-    return 1;
+	return 1;
 }
 
 uint8_t is_Valid_CONFIG(uint8_t* config_array) {
-    int i, valid = EEPROM_CONFIG_SIZE;
-    for (i=0; i<EEPROM_CONFIG_SIZE; i++) {
-		// 0xFF is EEPROM_CLEAR_VALUE 
-		if (config_array[i] == 0xFF) {
-			valid--;	
-		}
-	}
-    return valid > 0 ? 1 : valid;
+	uint8_t i, valid = EEPROM_CONFIG_SIZE;
+	for (i = 0; i < EEPROM_CONFIG_SIZE; i++)
+		if (config_array[i] == 0xFF) // 0xFF is EEPROM_CLEAR_VALUE 
+			valid--;
+	return valid > 0 ? 1 : valid;
 }
 
 void clear_array(uint8_t* this_array, uint32_t this_size) {
@@ -282,25 +265,9 @@ uint8_t decipher_received_message(uint8_t* message, uint8_t* params) {
 	return message_id;
 }
 
-uint8_t construct_retrieve_configuration_message(uint8_t* message_array, uint8_t* node_id, uint8_t* current_configs) {
-    uint8_t count = 0;
 
-    /* Send the NODE ID */
-    message_array[count++] = node_id[0];
-    message_array[count++] = node_id[1];
-    message_array[count++] = node_id[2];
-    message_array[count++] = node_id[3];
-    message_array[count++] = node_id[4];
-    message_array[count++] = node_id[5];
 
-    /* Send the MESSAGE ID */
-    message_array[count++] = RETRIEVE_CURRENT_CONFIG_MESSAGE_ID;
 
-    /* Attach the received configurations with this message */
-    for (count; count < EEPROM_CONFIG_SIZE + 7; count++) {
-        message_array[count] = current_configs[count - 7];
-    }
-    // return how many bytes the message is
-    return count;
-}
+
+
 

@@ -3,16 +3,23 @@
 
 #include "SSN_API.h"
 
-/** DNS Variables */
-uint8_t DEFAULT_SERVER_IP[4] = {192, 168, 0, 130};
-char MQTT_SERVER_DNS_STRING[22] = "mqtt.wisermachines.com";
-/** SSN Server Address (in case DNS fails) */
-uint8_t SSN_SERVER_IP[4] = {192, 168, 0, 130}; // {34, 87, 92, 5}; // 
+/** SSN Server Address */
+// uint8_t SSN_SERVER_IP[] = {192, 168, 0, 110};15.206.82.30
+uint8_t SSN_SERVER_IP[] = {15, 206, 82, 30};
+//uint8_t SSN_SERVER_IP[] = {34, 87, 92, 5};
+//uint8_t SSN_SERVER_IP[] = {115, 186, 183, 129};
+/** SSN Server PORT */
+//uint16_t SSN_SERVER_PORT = 36000;
+//uint8_t SSN_SERVER_IP[] = {192, 168, 0, 120};
+///** SSN Server PORT */
+//uint16_t SSN_SERVER_PORT = 36000;
+
+
 /** Static IP Assignment */
-uint8_t SSN_STATIC_IP[4] = {192, 168, 0, 110};
-uint8_t SSN_SUBNET_MASK[4] = {255, 255, 255, 0};
-uint8_t SSN_GATWAY_ADDRESS[4] = {192, 168, 0, 1};
-uint8_t SSN_DNS_ADDRESS[4] = {192, 168, 0, 1};
+uint8_t SSN_STATIC_IP[4]		= {172, 16, 41, 137};
+uint8_t SSN_SUBNET_MASK[4]		= {255, 255, 0, 0};
+uint8_t SSN_GATWAY_ADDRESS[4]	= {172, 16, 5, 1};
+uint8_t SSN_DNS_ADDRESS[4]		= {172, 16, 14, 12};
 
 /** A counter to maintain how many messages have been sent from SSN to Server since wakeup */
 uint32_t SSN_SENT_MESSAGES_COUNTER = 0;
@@ -24,12 +31,11 @@ uint8_t interrupts_per_second = 2;
 uint8_t half_second_counter = 0, delays_per_second_counter = 0;
 /** Counter variable for counting after how many intervals to send the status update */
 uint8_t report_counter = 0;
-/** A boolean to flag that an MQTT message is to be sent now */
 bool report_now = false;
 /** Current State of the SSN. There is no state machine of the SSN but we still use this variable to keep track at some instances */
 uint8_t SSN_CURRENT_STATE = NO_MAC_STATE, SSN_PREV_STATE;
 /** Report Interval of SSN set according to the configurations passed to the SSN */
-uint8_t SSN_REPORT_INTERVAL = 5;
+uint8_t SSN_REPORT_INTERVAL = 1;
 /** SSN current sensor configurations */
 uint8_t SSN_CONFIG[EEPROM_CONFIG_SIZE];
 /** Flags used to indicate if we have received configurations */
@@ -42,9 +48,8 @@ uint8_t SSN_CURRENT_SENSOR_RATINGS[4];
 uint8_t SSN_CURRENT_SENSOR_MAXLOADS[4];
 /** SSN machine thresholds for deciding IDLE state */
 float SSN_CURRENT_SENSOR_THRESHOLDS[4];
-/** SSN Temperature Thresholds */
+/** SSN Temperature and Humidity Sensor Thresholds */
 uint8_t TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD;
-/** SSN Humidity Thresholds */
 uint8_t RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD;
 /** SSN machine load currents array */
 float Machine_load_currents[NO_OF_MACHINES] = {0};
@@ -65,77 +70,39 @@ bool machine_status_change_flag = false;
 /** SSN UDP socket number */
 uint8_t SSN_UDP_SOCKET_NUM = 4;
 /** SSN default MAC address. This is the same for all SSNs */
-uint8_t SSN_DEFAULT_MAC[6] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+uint8_t SSN_DEFAULT_MAC[] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
 /** SSN current MAC address. May hold the default MAC or the one received from SSN Server. The last two bytes are the SSN Identity */
 uint8_t SSN_MAC_ADDRESS[6] = {0};
 /** SSN temperature sensor reading bytes */
-uint8_t temperature_bytes[2] = {0};
+uint8_t temperature_bytes[2];
 /** SSN relative humidity reading bytes */
-uint8_t relative_humidity_bytes[2]= {0};
+uint8_t relative_humidity_bytes[2];
 /** SSN temperature and humidity reading successful/unsuccessful status bit */
 int8_t temp_humidity_recv_status;
 /** SSN abnormal activity byte */
 uint8_t abnormal_activity;
 /** A variable to maintain a count of how many messages we have sent */
 uint32_t message_count = 0;
-/** Socket health check variable */
-int message_publish_status;
-/** MQTT failure counts */
-uint8_t mqtt_failure_counts;
-/** Maximum allowed MQTT failure counts */
+int message_publish_status = 0;
+uint8_t mqtt_failure_counts = 0;
 uint8_t MQTTallowedfailureCount;
+/** SSN loop variable */
+uint8_t i;
+unsigned char configreceivedstring[150];
 
 
 void SSN_Setup() {
 	// Setup calls for all our peripherals/devices
 	setup_printf(115200);
-	SSN_Show_Message();
 	setup_EEPROM();
 	setup_Ethernet(5000000);
 	setup_Current_Sensors();
 	setup_Temperature_Humidity_Sensor();
+//	setup_IR_Temperature_Sensor_And_Laser();
 	setup_LED_Indicator();
 	setup_Interrupts();
-	setup_millisecond_timer_with_interrupt();
+    setup_millisecond_timer_with_interrupt();
 	fault_count = 0;
-	// seed the random number generator using ADC reading on 4th input channel
-	srand(ADC1BUF3);
-}
-
-void SSN_Show_Message() {
-	printf("\n\n\n");
-	printf("###############################################################################################################\n");
-	printf("###############################################################################################################\n");
-	printf("###############################################################################################################\n");
-	printf("###############################################################################################################\n");
-	printf("##                            __    _                              \n");
-	printf("##                       _wr''        '-q__                        \n");
-	printf("##                    _dP                 9m_                      \n");
-	printf("##                  _#P                     9#_                    \n");
-	printf("##                 d#@                       9#m                   \n");
-	printf("##                d##                         ###                  \n");
-	printf("##               J###                         ###L                 Authors: Annus Zulfiqar, Maryum Aamer\n");
-	printf("##               {###K                       J###K                 Program Memory Used:  137KB/256KB (53%c)\n", 37);
-	printf("##               ]####K      ___aaa___      J####F                 Data Memory Used:     13KB/64KB (21%c)\n", 37);
-	printf("##           __gmM######_  w#P""   ""9#m  _d#####Mmw__                 Last Firmware Update: June 22nd, 2021\n");
-	printf("##        _g##############mZ_         __g##############m_          www.wisermachines.com\n");
-	printf("##      _d####M@PPPP@@M#######Mmp gm#########@@PPP9@M####m_        \n");
-	printf("##     a###''          ,Z'#####@'' '######'/g          ''M#m       \n");
-	printf("##    J#@'             0L  '*##     ##@'  J#              *#K      \n");
-	printf("##    #'               '#    '_gmwgm_~    dF               `#_     \n");
-	printf("##   7F                 '#_   ]#####F   _dK                 JE     \n");
-	printf("##   ]                    *m__ ##### __g@'                   F     \n");
-	printf("##                          'PJ#####LP'                            \n");
-	printf("##    `                       0######_                      '      \n");
-	printf("##                          _0########_                            \n");
-	printf("##        .               _d#####^#####m__              ,          \n");
-	printf("##         '*w_________am#####P'   ~9#####mw_________w*'           \n");
-	printf("##             ''9@#####@M''           ''P@#####@M''               \n");
-	printf("###############################################################################################################\n");
-	printf("###############################################################################################################\n");
-	printf("###############################################################################################################\n");
-	printf("###############################################################################################################\n");
-	printf("[LOG] Boot up in progress...\n");
 }
 
 void SSN_COPY_MAC_FROM_MEMORY() {
@@ -146,10 +113,11 @@ void SSN_COPY_MAC_FROM_MEMORY() {
 	}
 }
 
-void SSN_GET_MAC(uint8_t allowed_mqtt_failure_counts) {
-	uint16_t SendAfter = 0, mqtt_failed_count = 0;
+void SSN_GET_MAC() {
+	uint16_t SendAfter = 0;
 	// When we will receive a MAC address (if we didn't have it), we will reset the controller
 	while (SSN_CURRENT_STATE == NO_MAC_STATE) {
+//		SSN_CHECK_ETHERNET_CONNECTION();
 		SSN_PREV_STATE = SSN_CURRENT_STATE;
 		SSN_CURRENT_STATE = NO_MAC_STATE;
 		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
@@ -158,13 +126,10 @@ void SSN_GET_MAC(uint8_t allowed_mqtt_failure_counts) {
 		// request a MAC address after every 5 seconds
 		if (SendAfter % 50 == 0) {
 			message_publish_status = Send_GETMAC_Message(SSN_MAC_ADDRESS);
-			if (message_publish_status != SUCCESSS) {
-				message_publish_status = FAILURE;
-                mqtt_failed_count++;
-                printf("[ERROR] Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failed_count, allowed_mqtt_failure_counts);
-            } 
-            else {
-                mqtt_failed_count = 0;
+            if (message_publish_status != SUCCESSS) {
+                message_publish_status = FAILURE;
+//                printf("message publish status %d\n\n",message_publish_status);
+//                return message_publish_status;   
             }
 		}
 		// Give LED indication every second
@@ -173,60 +138,40 @@ void SSN_GET_MAC(uint8_t allowed_mqtt_failure_counts) {
 		}
 		SendAfter++;
 		ServiceWatchdog();
-		/** Replacing this with the next few lines of code */
-//		// MQTT process handler
-//		start_ms_timer_with_interrupt();
-//		MQTTYield(&Client_MQTT, 50);
-//		message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
-//		stop_ms_timer_with_interrupt();
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// MQTT background handler
+        // MQTT process handler
 		start_ms_timer_with_interrupt();
-		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Check if we failed to publish, check connections and reconnect if necessary
-        		// check how many failure counts have we encountered and reconnect to broker if necessary
-		if (mqtt_failed_count >= allowed_mqtt_failure_counts) {
-			// assume our connection has broken, we'll reconnect at this point
-			printf("[MQTT] SSN Message Publication to MQTT Broker Failed and Retry Exceeded...\n");
-            message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
-			// Reset current state back to no MAC state
-			SSN_CURRENT_STATE = NO_MAC_STATE;
-			// connection re-established, exit fault code and reset failure counts
-			mqtt_failed_count = 0;
-		}
-    	MQTTYield(&Client_MQTT, 100);
-		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		MQTTYield(&Client_MQTT, 50);
+		message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
+
 		stop_ms_timer_with_interrupt();
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// 100 milliseconds
 		sleep_for_microseconds(100000);
 	}
-	//	return message_publish_status;
+//	return message_publish_status;
 }
 
-void SSN_GET_CONFIG(uint8_t allowed_mqtt_failure_counts) {
+void SSN_GET_CONFIG() {
 	// Find configurations in EEPROM
 	SSN_PREV_STATE = SSN_CURRENT_STATE;
 	SSN_CURRENT_STATE = FindSensorConfigurationsInFlashMemory(SSN_CONFIG, &SSN_REPORT_INTERVAL, &TEMPERATURE_MIN_THRESHOLD, &TEMPERATURE_MAX_THRESHOLD, &RELATIVE_HUMIDITY_MIN_THRESHOLD,
 		&RELATIVE_HUMIDITY_MAX_THRESHOLD, SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_THRESHOLDS, SSN_CURRENT_SENSOR_MAXLOADS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS);
-	uint16_t SendAfter = 0, mqtt_failed_count = 0;
+	uint16_t SendAfter = 0;
 	while (SSN_CURRENT_STATE == NO_CONFIG_STATE) {
+//		SSN_CHECK_ETHERNET_CONNECTION();
 		SSN_PREV_STATE = SSN_CURRENT_STATE;
 		SSN_CURRENT_STATE = NO_CONFIG_STATE;
 		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
 			Clear_LED_INDICATOR();
 		}
-		if (CONFIG_received) { break; }
+		if (CONFIG_received) {
+			break;
+		}
 		// request a Configuration after every 5 seconds
 		if (SendAfter % 50 == 0) {
 			message_publish_status = Send_GETCONFIG_Message(SSN_MAC_ADDRESS);
-			if (message_publish_status != SUCCESSS) {
-				message_publish_status = FAILURE;
-                mqtt_failed_count++;
-                printf("[ERROR] Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failed_count, allowed_mqtt_failure_counts);
-            } 
-            else {
-                mqtt_failed_count = 0;
+            if (message_publish_status != SUCCESSS) {
+                message_publish_status = FAILURE;   
+//                return message_publish_status;   
             }
 		}
 		// Give LED indication every second
@@ -235,38 +180,20 @@ void SSN_GET_CONFIG(uint8_t allowed_mqtt_failure_counts) {
 		}
 		SendAfter++;
 		ServiceWatchdog();
-		/** Replacing this with the next few lines of code */
-//		// MQTT process handler
-//		start_ms_timer_with_interrupt();
-//		MQTTYield(&Client_MQTT, 50);
-//		message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
-//		stop_ms_timer_with_interrupt();
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// MQTT background handler
+		// MQTT process handler
 		start_ms_timer_with_interrupt();
-		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Check if we failed to publish, check connections and reconnect if necessary
-        		// check how many failure counts have we encountered and reconnect to broker if necessary
-		if (mqtt_failed_count >= allowed_mqtt_failure_counts) {
-			// assume our connection has broken, we'll reconnect at this point
-			printf("[MQTT] SSN Message Publication to MQTT Broker Failed and Retry Exceeded...\n");
-            message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
-			// connection re-established, exit fault code and reset failure counts
-			mqtt_failed_count = 0;
-		}
-    	MQTTYield(&Client_MQTT, 100);
-		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		MQTTYield(&Client_MQTT, 50);
+		message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
 		stop_ms_timer_with_interrupt();
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// 100 milliseconds
 		sleep_for_microseconds(100000);
 	}
-	//	return message_publish_status;
+//	return message_publish_status;
 }
 
-void SSN_GET_TIMEOFDAY(uint8_t allowed_mqtt_failure_counts) {
-	TimeOfDay_received = false;
-	uint16_t SendAfter = 0, mqtt_failed_count = 0;
+void SSN_GET_TIMEOFDAY() {
+    TimeOfDay_received = false;
+	uint16_t SendAfter = 0;
 	while (1) {
 		SSN_CHECK_ETHERNET_CONNECTION();
 		SSN_PREV_STATE = SSN_CURRENT_STATE;
@@ -286,14 +213,10 @@ void SSN_GET_TIMEOFDAY(uint8_t allowed_mqtt_failure_counts) {
 		}
 		// request time of day after every 5 seconds
 		if (SendAfter % 50 == 0 && !TimeOfDay_received) {
-			message_publish_status = Send_GETTimeOfDay_Message(SSN_MAC_ADDRESS);
-			if (message_publish_status != SUCCESSS) {
-				message_publish_status = FAILURE;
-                mqtt_failed_count++;
-                printf("[ERROR] Message Publication to MQTT Broker Failed (Count = %d/%d)\n", mqtt_failed_count, allowed_mqtt_failure_counts);
-            } 
-            else {
-                mqtt_failed_count = 0;
+			message_publish_status = Send_GETTimeOfDay_Message(SSN_MAC_ADDRESS);		
+            if (message_publish_status != SUCCESSS) {
+                message_publish_status = FAILURE;   
+//                return message_publish_status;   
             }
 		}
 		// Give LED indication every second
@@ -302,98 +225,73 @@ void SSN_GET_TIMEOFDAY(uint8_t allowed_mqtt_failure_counts) {
 		}
 		SendAfter++;
 		ServiceWatchdog();
-		/** Replacing this with the next few lines of code */
-//		// MQTT process handler
-//		start_ms_timer_with_interrupt();
-//		MQTTYield(&Client_MQTT, 50);
-//		message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
-//		stop_ms_timer_with_interrupt();
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// MQTT background handler
+		// MQTT process handler
 		start_ms_timer_with_interrupt();
-		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Check if we failed to publish, check connections and reconnect if necessary
-        		// check how many failure counts have we encountered and reconnect to broker if necessary
-		if (mqtt_failed_count >= allowed_mqtt_failure_counts) {
-			// assume our connection has broken, we'll reconnect at this point
-			printf("[MQTT] SSN Message Publication to MQTT Broker Failed and Retry Exceeded...\n");
-            message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
-			// connection re-established, exit fault code and reset failure counts
-			mqtt_failed_count = 0;
-		}
-    	MQTTYield(&Client_MQTT, 100);
-		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		stop_ms_timer_with_interrupt();
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		MQTTYield(&Client_MQTT, 50);
+		message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
+        stop_ms_timer_with_interrupt();
 		// 100 milliseconds
 		sleep_for_microseconds(100000);
 	}
-	//	return message_publish_status;
+//	return message_publish_status;
 }
 
 int SSN_Check_Connection_And_Reconnect(int return_code) {
-	int rc;
-	if (return_code != SUCCESSS) {
-		printf("[**MQTT**] Bad Return Code: %d\n", return_code);
-		SSN_CHECK_ETHERNET_CONNECTION();
-		CloseMQTTClientConnectionAndSocket(&Client_MQTT, TCP_SOCKET);
-		rc = SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
-		// printf("rc %d\n", rc);
-		return rc;
-	}
-	return SUCCESSS;
+    int rc;
+    if (return_code != SUCCESSS) {
+        printf("[**MQTT**] Bad Return Code: %d\n", return_code);
+        SSN_CHECK_ETHERNET_CONNECTION();
+        CloseMQTTClientConnectionAndSocket(&Client_MQTT, TCP_SOCKET);
+        rc = SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);   
+    }   
+    return SUCCESSS;
 }
 
 void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
+    start_ms_timer_with_interrupt();
+    MQTTYield(&Client_MQTT, 100);
+    stop_ms_timer_with_interrupt();
 	unsigned char testbuffer[BUFFER_SIZE];
 	MQTTMessage* message = md->message;
 	// printf("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n");
 	clear_array(testbuffer, 100);
-	/** Culprit */
-	start_ms_timer_with_interrupt();
-    MQTTYield(&Client_MQTT, 100);
-    stop_ms_timer_with_interrupt();
-	/** Culprit */
 	if (MQTTOptions.showtopics) {
 		memcpy(testbuffer, (char*) message->payload, (int) message->payloadlen);
-		*(testbuffer + (int) (message->payloadlen) + 1) = '\n';
+		*(testbuffer + (int) (message->payloadlen) + 1) = "\n";
+
 		uint8_t received_message_id;
 		uint32_t TimeOFDayTick;
 		received_message_id = decipher_received_message(testbuffer, params);
+
 		// based on which message was received (received_message_id), we extract and save the data
 		switch (received_message_id) {
 			case SET_MAC_MESSAGE_ID:
 				printf("<- SET_MAC MESSAGE RECEIVED: %X:%X:%X:%X:%X:%X\n", params[0], params[1], params[2], params[3], params[4], params[5]);
 				printf("Resetting Controller Now...\n");
 				// write the new MAC addresses to designated location in EEPROM
-				EEPROM_Write_Array(EEPROM_MAC_BLOCK, EEPROM_MAC_LOC, params, EEPROM_MAC_SIZE);
-				// convert and write the string of MAC address to designated location in EEPROM. 
-				// That will be used by MQTT API to connect to special channels for this node
-				sprintf(NodeExclusiveChannel, "%02X:%02X:%02X:%02X:%02X:%02X", params[0], params[1], params[2], params[3], params[4], params[5]);
-				EEPROM_Write_Array(EEPROM_MAC_STRING_BLOCK, EEPROM_MAC_STRING_LOC, NodeExclusiveChannel, EEPROM_MAC_STRING_SIZE);
-				// close MQTT connection
-				CloseMQTTClientConnectionAndSocket(&Client_MQTT, TCP_SOCKET);
+				EEPROM_Write_Array(EEPROM_BLOCK_0, EEPROM_MAC_LOC, params, EEPROM_MAC_SIZE);
 				// reset the SSN from software
 				SoftReset();
 				while (1);
 				break;
 
 			case SET_TIMEOFDAY_MESSAGE_ID:
-				if (!TimeOfDay_received) {
+				if(!TimeOfDay_received) {
 					TimeOFDayTick = get_uint32_from_bytes(params);
 					printf("<- SET_TIMEOFDAY MESSAGE RECEIVED: %d\n", TimeOFDayTick);
 					// assign incoming clock time to SSN Global Clock (Pseudo Clock because we don't have an RTCC)
 					set_ssn_time(TimeOFDayTick);
 					ssn_uptime_in_seconds = 0;
-					TimeOfDay_received = true;
+					TimeOfDay_received = true;					
 				}
 				break;
 
 			case SET_CONFIG_MESSAGE_ID:
 				// write the new config to designated location in EEPROM
-				EEPROM_Write_Array(EEPROM_CONFIG_BLOCK, EEPROM_CONFIG_LOC, params, EEPROM_CONFIG_SIZE);
+				EEPROM_Write_Array(EEPROM_BLOCK_0, EEPROM_CONFIG_LOC, params, EEPROM_CONFIG_SIZE);
 				// Copy received configurations to the SSN_CONFIG array
-				int i; for (i = 0; i < EEPROM_CONFIG_SIZE; i++) {
+				int i;
+				for (i = 0; i < EEPROM_CONFIG_SIZE; i++) {
 					SSN_CONFIG[i] = params[i];
 				}
 				// Copy from the configurations, the sensor ratings, thresholds and maximum load values to our variables
@@ -403,11 +301,9 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 					SSN_CURRENT_SENSOR_THRESHOLDS[i] = SSN_CONFIG[4 * i + 1] / 10.0f;
 					SSN_CURRENT_SENSOR_MAXLOADS[i] = SSN_CONFIG[4 * i + 2];
 					if (SSN_CONFIG[4 * i + 3] == 0) {
-						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 0.333;
+						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.0;
 					} else if (SSN_CONFIG[4 * i + 3] == 1) {
-						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.00;
-					} else if (SSN_CONFIG[4 * i + 3] == 2) {
-						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.65;
+						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 0.333;
 					}
 				}
 				TEMPERATURE_MIN_THRESHOLD = SSN_CONFIG[16];
@@ -418,9 +314,9 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 				SSN_REPORT_INTERVAL = SSN_CONFIG[20];
 				printf("[LOG] Received New Current Sensor Configuration from SSN Server: \n"
 					"     >> S1-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M1-Threshold: %.3f Arms | M1-Maxload: %03d Arms |\n"
-					"     >> S2-Rating: %03d Arms | S2-Scalar: %.3f Vrms | M2-Threshold: %.3f Arms | M2-Maxload: %03d Arms |\n"
-					"     >> S3-Rating: %03d Arms | S3-Scalar: %.3f Vrms | M3-Threshold: %.3f Arms | M3-Maxload: %03d Arms |\n"
-					"     >> S4-Rating: %03d Arms | S4-Scalar: %.3f Vrms | M4-Threshold: %.3f Arms | M4-Maxload: %03d Arms |\n"
+					"     >> S2-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M2-Threshold: %.3f Arms | M2-Maxload: %03d Arms |\n"
+					"     >> S3-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M3-Threshold: %.3f Arms | M3-Maxload: %03d Arms |\n"
+					"     >> S4-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M4-Threshold: %.3f Arms | M4-Maxload: %03d Arms |\n"
 					"     >> MIN TEMP : %03d C    | MAX TEMP : %03d C    |\n"
 					"     >> MIN RH   : %03d %    | MIN RH   : %03d %    |\n"
 					"     >> Report   : %d seconds\n",
@@ -433,7 +329,7 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 				for (i = 0; i < NO_OF_MACHINES; i++) {
 					Machine_status[i] = SENSOR_NOT_CONNECTED;
 				}
-				MQTTallowedfailureCount = MQTTallowedfailureCounts(SSN_REPORT_INTERVAL);
+                MQTTallowedfailureCount = MQTTallowedfailureCounts(SSN_REPORT_INTERVAL);
 				CONFIG_received = true;
 				break;
 
@@ -456,33 +352,27 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 			case DEBUG_RESET_SSN_MESSAGE_ID:
 				// stop the global timer
 				stop_Global_Clock();
-				// Close MQTT connection, TCP socket connection with the broker as well as the socket
-				CloseMQTTClientConnectionAndSocket(&Client_MQTT, TCP_SOCKET);
 				// reset the SSN
 				printf("[DEBUG] Resetting Controller Now...\n");
 				sleep_for_microseconds(1000000);
 				SoftReset();
 				while (1);
 				break;
-				
-            case RETRIEVE_CURRENT_CONFIG_MESSAGE_ID:
-				printf("<- RETRIEVE CURRENT CONFIG MESSAGE RECEIVED\n");
-				printf("[LOG] Sending Sensor Configuration to SSN Server: \n"
-					"     >> S1-Rating: %d Arms | M1-Threshold: %.2f Arms | M1-Maxload: %d Arms | S1-Scalar: %d Vrms | \n"
-					"     >> S2-Rating: %d Arms | M2-Threshold: %.2f Arms | M2-Maxload: %d Arms | S2-Scalar: %d Vrms | \n"
-					"     >> S3-Rating: %d Arms | M3-Threshold: %.2f Arms | M3-Maxload: %d Arms | S3-Scalar: %d Vrms | \n"
-					"     >> S4-Rating: %d Arms | M4-Threshold: %.2f Arms | M4-Maxload: %d Arms | S4-Scalar: %d Vrms | \n"
+            case RETRIEVE_CURRENT_CONFIG:
+                printf("<- RETRIEVE CURRENT CONFIG MESSAGE RECEIVED\n");
+                sprintf(configreceivedstring,"%02X:%02X:%02X:%02X:%02X:%02X, >> S1-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M1-Threshold: %.3f Arms | M1-Maxload: %03d Arms |\n"
+					"     >> S2-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M2-Threshold: %.3f Arms | M2-Maxload: %03d Arms |\n"
+					"     >> S3-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M3-Threshold: %.3f Arms | M3-Maxload: %03d Arms |\n"
+					"     >> S4-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M4-Threshold: %.3f Arms | M4-Maxload: %03d Arms |\n"
 					"     >> MIN TEMP : %03d C    | MAX TEMP : %03d C    |\n"
 					"     >> MIN RH   : %03d %    | MIN RH   : %03d %    |\n"
-					"     >> Report   : %d seconds\n",
-					SSN_CONFIG[0], SSN_CONFIG[1], SSN_CONFIG[2], SSN_CONFIG[3],
-					SSN_CONFIG[4], SSN_CONFIG[5], SSN_CONFIG[6], SSN_CONFIG[7],
-					SSN_CONFIG[8], SSN_CONFIG[9], SSN_CONFIG[10], SSN_CONFIG[11],
-					SSN_CONFIG[12], SSN_CONFIG[13], SSN_CONFIG[14], SSN_CONFIG[15],
-					SSN_CONFIG[16], SSN_CONFIG[17], SSN_CONFIG[18], SSN_CONFIG[19], SSN_CONFIG[20]);
-                Send_RETRIEVECONFIG_Message(SSN_MAC_ADDRESS, SSN_CONFIG);
-				break;
-				
+					"     >> Report   : %d seconds\n"
+                        ,SSN_MAC_ADDRESS[0],SSN_MAC_ADDRESS[1],SSN_MAC_ADDRESS[2],SSN_MAC_ADDRESS[3],SSN_MAC_ADDRESS[4],SSN_MAC_ADDRESS[5],
+                    SSN_CURRENT_SENSOR_RATINGS[0], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[0], SSN_CURRENT_SENSOR_THRESHOLDS[0], SSN_CURRENT_SENSOR_MAXLOADS[0],                        
+					SSN_CURRENT_SENSOR_RATINGS[1], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[1], SSN_CURRENT_SENSOR_THRESHOLDS[1], SSN_CURRENT_SENSOR_MAXLOADS[1],
+					SSN_CURRENT_SENSOR_RATINGS[2], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[2], SSN_CURRENT_SENSOR_THRESHOLDS[2], SSN_CURRENT_SENSOR_MAXLOADS[2],
+					SSN_CURRENT_SENSOR_RATINGS[3], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[3], SSN_CURRENT_SENSOR_THRESHOLDS[3], SSN_CURRENT_SENSOR_MAXLOADS[3],
+					TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD, SSN_REPORT_INTERVAL);
             default:
 				break;
 		}
@@ -501,7 +391,7 @@ void SSN_CHECK_ETHERNET_CONNECTION() {
 			Clear_LED_INDICATOR();
 		}
 		printf("[LOG] No Ethernet Physical Link Connection :/ \n");
-		SSN_LED_INDICATE(SSN_CURRENT_STATE);
+        SSN_LED_INDICATE(SSN_CURRENT_STATE);
 		// Service the watchdog timer to make sure we don't reset 
 		ServiceWatchdog();
 		sleep_for_microseconds(500000);
@@ -524,6 +414,7 @@ void SSN_CHECK_ETHERNET_CONNECTION() {
 void SSN_GET_AMBIENT_CONDITION(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MIN_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MAX_THRESHOLD) {
 #ifdef TH_AM2320
 	temp_humidity_recv_status = sample_Temperature_Humidity_bytes_using_AM2320(temperature_bytes, relative_humidity_bytes);
+//    printf("ssnapi %d\n", temp_humidity_recv_status);
 #endif
 #ifdef TH_DHT22
 	temp_humidity_recv_status = sample_Temperature_Humidity_bytes_using_DHT22(temperature_bytes, relative_humidity_bytes);
@@ -565,13 +456,13 @@ void SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(uint8_t TEMPERATURE_MIN_THRESHOLD, 
 	int integer_temperature;
 	if (object_celcius_temperature == MLX90614_COMM_ERROR_CODE) {
 		abnormal_activity = TEMP_SENSOR_READ_ERROR_CONDITION;
-	} else if (object_celcius_temperature > TEMPERATURE_MIN_THRESHOLD && object_celcius_temperature < TEMPERATURE_MAX_THRESHOLD) {
+	} else if (object_celcius_temperature > TEMPERATURE_MIN_THRESHOLD && object_celcius_temperature < TEMPERATURE_MAX_THRESHOLD){
 		abnormal_activity = NORMAL_AMBIENT_CONDITION;
 	} else {
 		abnormal_activity = ABNORMAL_AMBIENT_CONDITION;
 	}
 	/* convert to special bytes for backend */
-	integer_temperature = (int) (object_celcius_temperature * 10);
+	integer_temperature = (int)(object_celcius_temperature*10);
 	MLX90614_special_bytes[0] = ((0xFF00 & integer_temperature) >> 8);
 	MLX90614_special_bytes[1] = (0x00FF & integer_temperature);
 	if (abnormal_activity == NORMAL_AMBIENT_CONDITION) {
@@ -590,12 +481,11 @@ void SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(uint8_t TEMPERATURE_MIN_THRESHOLD, 
 }
 
 void SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD) {
-//	 printf("there\n");
+	// printf("there\n");
 	float object_celcius_temperature = Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius();
-    // get the average value of last N temperature readings
     object_celcius_temperature = average_value_of_temperature(object_celcius_temperature); 
-    printf("Thermistor Reading: %.2f\n", object_celcius_temperature);
-    int integer_temperature;
+	// printf("Thermistor Reading: %.2f\n", object_celcius_temperature);
+	int integer_temperature;
 	if (object_celcius_temperature > TEMPERATURE_MIN_THRESHOLD && object_celcius_temperature < TEMPERATURE_MAX_THRESHOLD){
 		abnormal_activity = NORMAL_AMBIENT_CONDITION;
 	} else {
@@ -618,7 +508,6 @@ void SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(uint8_t TEMPERATURE_MIN_THR
 			Clear_LED_INDICATOR();
 		}
 	}
-//	 printf("there\n");
 }
 
 void SSN_RESET_AFTER_N_SECONDS(uint32_t seconds) {
@@ -643,25 +532,25 @@ void SSN_RESET_AFTER_N_SECONDS_IF_NO_MACHINE_ON(uint32_t seconds) {
 	return;
 }
 
-void SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(uint32_t seconds, uint8_t allowed_mqtt_failure_counts) {
+void SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(uint32_t seconds) {
 	/* Check if we should reset (after given minutes when machines are not ON) */
-	if ((ssn_uptime_in_seconds % seconds) == 0 && ssn_uptime_in_seconds != 0) {
+	if (ssn_uptime_in_seconds % seconds==0 && ssn_uptime_in_seconds!=0) {
 		printf("[LOG] Requesting Time of Day for Routing Syncing...\n");
-		SSN_GET_TIMEOFDAY(allowed_mqtt_failure_counts);
+		SSN_GET_TIMEOFDAY();
 	}
 }
 
 void SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(uint32_t seconds) {
-	/* Check if we should reset (after given minutes when machines are not ON) */
-	if (ssn_uptime_in_seconds % seconds == 0 && ssn_uptime_in_seconds != 0) {
+    /* Check if we should reset (after given minutes when machines are not ON) */
+	if (ssn_uptime_in_seconds % seconds==0 && ssn_uptime_in_seconds!=0) {
 		printf("[LOG] Requesting IP from DHCP After Lease Time Expired...\n");
-		// close all existing sockets
-		printf("[LOG] Closing all existing connections and sockets...\n");
-		CloseMQTTClientConnectionAndSocket(&Client_MQTT, TCP_SOCKET);
-		// get new IP from DHCP
-		SetupConnectionWithDHCP(SSN_MAC_ADDRESS);
-		// create sockets and connections all over again
-		SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
+        // close all existing sockets
+        printf("[LOG] Closing all existing connections and sockets...\n");
+        CloseMQTTClientConnectionAndSocket(&Client_MQTT, TCP_SOCKET);
+        // get new IP from DHCP
+       	SetupConnectionWithDHCP(SSN_MAC_ADDRESS, DHCP_SOCKET);
+        // create sockets and connections all over again
+        SetupMQTTClientConnection(&MQTT_Network, &Client_MQTT, &MQTTOptions, SSN_SERVER_IP, NodeExclusiveChannel, SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT);
 	}
 	return;
 }

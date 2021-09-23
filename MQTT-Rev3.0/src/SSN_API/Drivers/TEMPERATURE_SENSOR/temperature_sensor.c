@@ -3,7 +3,20 @@
 float TEMPERATURE_READINGS_ARRAY[N_TEMPERATURE_READINGS];
 int current_temperature_reading_index = 0;
 bool first_N_temperature_readings_acquired = false;
-uint32_t i2c_wait_loop_count = I2C_TEST_OP_WAIT_LOOP_COUNT;
+
+//float NTC_Thermistor_4092_50k_LUT_Resistance[114] = {
+//	1956240, 1812199, 1679700, 1557748, 1445439, 1341952, 1246540, 1158525, 1077290, 1001621, 932353, 868317, 809086, 754271, 703517, 656499, 612919, 572506, 534686, 
+//	499905, 467604, 437592, 409692, 383745, 359601, 337126, 316194, 296522, 278353, 261408, 245599, 230842, 217062, 204189, 192156, 180906, 170291, 160449, 151235, 
+//	142605, 134519, 126941, 119834, 113168, 106912, 100988, 95475, 90296, 85428, 80852, 76547, 72497, 68685, 65095, 61685, 58500, 55499, 52669, 50000, 47481, 45104, 
+//	42859, 40739, 38718, 36826, 35037, 33345, 31745, 30230, 28796, 27438, 26152, 24923, 23768, 22674, 21635, 20651, 19716, 18829, 17987, 17187, 16421, 15699, 15013, 
+//	14360, 13740, 13150, 12588, 12053, 11544, 11055, 10593, 10154, 9734, 9335, 8954, 8590, 8243, 7912, 7593, 7292, 7004, 6729, 6466, 6215, 5975, 5745, 5526, 5314, 5113, 
+//	4921, 4737, 4561, 4392};
+//float NTC_Thermistor_4092_50k_LUT_Temperature_Celcius[114] = {
+//	-39.44, -38.33, -37.22, -36.11, -35.0, -33.89, -32.78, -31.67, -30.56, -29.44, -28.33, -27.22, -26.11, -25.0, -23.89, -22.78, -21.67, -20.56, -19.44, -18.33, -17.22, 
+//	-16.11, -15.0, -13.89, -12.78, -11.67, -10.56, -9.44, -8.33, -7.22, -6.11, -5.0, -3.89, -2.78, -1.67, -0.56, 0.56, 1.67, 2.78, 3.89, 5.0, 6.11, 7.22, 8.33, 9.44, 
+//	10.56, 11.67, 12.78, 13.89, 15.0, 16.11, 17.22, 18.33, 19.44, 20.56, 21.67, 22.78, 23.89, 25.0, 26.11, 27.22, 28.33, 29.44, 30.56, 31.67, 32.78, 33.89, 35.0, 36.11, 
+//	37.22, 38.33, 39.44, 40.56, 41.67, 42.78, 43.89, 45.0, 46.11, 47.22, 48.33, 49.44, 50.56, 51.67, 52.78, 53.89, 55.0, 56.11, 57.22, 58.33, 59.44, 60.56, 61.67, 62.78,
+//	63.89, 65.0, 66.11, 67.22, 68.33, 69.44, 70.56, 71.67, 72.78, 73.89, 75.0, 76.11, 77.22, 78.33, 79.44, 80.56, 81.67, 82.78, 83.89, 85.0, 86.11};
 
 float NTC_Thermistor_4092_50k_LUT_Resistance[THERMISTOR_LUT_SIZE] = {
 	4870621.06, 4487453.98, 4137440.56, 3817468.21, 3524738.25, 3256732.21, 3011181.86, 2786042.73, 2579470.54, 2389800.29, 2215527.65, 2055292.43, 1907863.82, 1772127.23, 1647072.59, 1531783.86, 
@@ -52,20 +65,13 @@ void setup_Temperature_Humidity_Sensor() {
 	//         Peripheral pin selection for the output pin
 	//        RPB2R = 0x00;
 #endif
-#ifdef OTS_LS_MLX90614
-	open_I2C2();
-	PORTSetPinsDigitalOut(IOPORT_A, BIT_4);
-	PORTSetBits(IOPORT_A, BIT_4);
-	PORTSetPinsDigitalOut(IOPORT_B, BIT_10);
-	PORTSetBits(IOPORT_B, BIT_10);
-#endif
 }
 
 bool I2C2_wait_while_busy() {
 	// returns 1 if runs normally, returns 0 in case of timeout
 	uint16_t wait = 0;
 	while (I2C2CON & 0x1F || I2C2STATbits.TRSTAT) {
-		if (wait++ >= i2c_wait_loop_count) {
+		if (wait++ >= wait_loop_count) {
 			return 0;
 		}
 	}
@@ -80,7 +86,7 @@ bool I2C2_transmit_start_bit() {
 	uint16_t wait = 0;
 	I2C2CONbits.SEN = 1;
 	while (I2C2CONbits.SEN == 1) {
-		if (wait++ >= i2c_wait_loop_count) {
+		if (wait++ >= wait_loop_count) {
 			return 0;
 		}
 	}
@@ -95,7 +101,7 @@ bool I2C2_transmit_stop_bit() {
 	uint16_t wait = 0;
 	I2C2CONbits.PEN = 1;
 	while (I2C2CONbits.PEN == 1) {
-		if (wait++ >= i2c_wait_loop_count) {
+		if (wait++ >= wait_loop_count) {
 			return 0;
 		}
 	}
@@ -109,7 +115,7 @@ bool I2C2_transmit_restart_bit() {
 	uint16_t wait = 0;
 	I2C2CONbits.RSEN = 1;
 	while (I2C2CONbits.RSEN == 1) {
-		if (wait++ >= i2c_wait_loop_count) {
+		if (wait++ >= wait_loop_count) {
 			return 0;
 		}
 	}
@@ -127,7 +133,7 @@ uint8_t I2C2_receive_byte() {
 	uint16_t wait = 0;
 	I2C2CONbits.RCEN = 1; // Receive enable
 	while (I2C2CONbits.RCEN || !I2C2STATbits.RBF) { // Wait until RCEN is cleared (automatic)  
-		if (wait++ >= i2c_wait_loop_count) {
+		if (wait++ >= wait_loop_count) {
 			return 0;
 		}
 	}
@@ -141,7 +147,7 @@ bool I2C2_is_byte_received() {
 	uint16_t wait = 0;
 	I2C2CONbits.RCEN = 1; // Receive enable
 	while (I2C2CONbits.RCEN || !I2C2STATbits.RBF) { // Wait until RCEN is cleared (automatic)  
-		if (wait++ >= i2c_wait_loop_count) {
+		if (wait++ >= wait_loop_count) {
 			return 0;
 		}
 	}
@@ -157,7 +163,7 @@ bool I2C2_ack(void) {
 	I2C2CONbits.ACKDT = 0; // Set hardware to send ACK bit
 	I2C2CONbits.ACKEN = 1; // Send ACK bit, will be automatically cleared by hardware when sent  
 	while (I2C2CONbits.ACKEN) { // Wait until ACKEN bit is cleared, meaning ACK bit has been sent
-		if (wait++ >= i2c_wait_loop_count) {
+		if (wait++ >= wait_loop_count) {
 			return 0;
 		}
 	}
@@ -168,6 +174,8 @@ bool I2C2_ack(void) {
 }
 
 bool AM2320_I2C2_Read_Temp_and_Humidity() {
+//    printf("AM2320_I2C2_Read_Temp_and_Humidity here\n");
+
 	// startup sequence, wake up the AM2320
 	// initiate start condition
 	if (!I2C2_transmit_start_bit()) return 0;
@@ -284,6 +292,8 @@ bool AM2320_I2C2_Read_Temp_and_Humidity() {
 	// transmit final stop bit
 	if (!I2C2_transmit_stop_bit()) return 0;
 	if (!I2C2_wait_while_busy()) return 0;
+//    printf("AM2320_I2C2_Read_Temp_and_Humidity ending here\n");
+    
 	return 1;
 }
 
@@ -427,7 +437,7 @@ float MLX90614_Read_Temperature_Ambient_Celcius(void) {
 /* NTC Thermistor 4092 50Kohm */
 float Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius() {
 	float reference_resistance = 3300, VDD = 3.3;
-	float reference_voltage = 3.3 * (float)sample_Current_Sensor_channel(2) / 1024;
+	float reference_voltage = 3.3 * (float)sample_Current_Sensor_channel(0) / 1024;
 	float reference_current = reference_voltage / reference_resistance;
 	float thermistor_voltage = VDD - reference_voltage;
 	float thermistor_resistance = thermistor_voltage / reference_current; // they are both in series
@@ -598,6 +608,8 @@ bool CheckSum() {
 
 int8_t sample_Temperature_Humidity_bytes_using_AM2320(uint8_t* temperature_bytes, uint8_t* relative_humidity_bytes) {
 	bool read_ok = AM2320_I2C2_Read_Temp_and_Humidity();
+//    printf("sample_Temperature_Humidity_bytes_using_AM2320 %d \n", read_ok);
+
 	if (!read_ok) {
 		// reset sensor's power source
 		//		PORTClearBits(IOPORT_A, BIT_4);
@@ -669,3 +681,4 @@ float average_value_of_temperature(float current_temperature) {
     printf("[LOG] Returning average temperature reading\n");
     return sum/N_TEMPERATURE_READINGS;
 }
+

@@ -1,3 +1,4 @@
+
 #ifndef __SystemTests_h__
 #define __SystemTests_h__
 
@@ -8,9 +9,9 @@
 #include "../Drivers/TEMPERATURE_SENSOR/temperature_sensor.h"
 
 /** Temperature reading bytes for internal testing only */
-uint8_t test_temperature_bytes[2]; 
+uint8_t temperature_bytes[2]; 
 /** Relative humidity reading bytes for internal testing only */
-uint8_t test_relative_humidity_bytes[2];
+uint8_t relative_humidity_bytes[2];
 
 /** 
  * Runs system diagnostic tests for checking if important peripherals are functioning properly; does not return if found faulty. 

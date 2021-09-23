@@ -7,60 +7,52 @@
 #include <xc.h>
 #include <p32xxxx.h>
 #include <plib.h>
-#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "Drivers/PSEUDO_RTCC/pseudo_rtcc.h"
 
-#define SYSTEM_CLK                          60000000
-#define PERIPH_CLK                          30000000
-#define SSN_DEFAULT_PORT                    8888
+#define SYSTEM_CLK                  60000000
+#define PERIPH_CLK                  30000000
+#define SSN_DEFAULT_PORT            8888
 
 /** Red led pin on SSN */
-#define RED_LED                             BIT_3
+#define RED_LED                     BIT_3
 /** Green led pin on SSN */
-#define GREEN_LED                           BIT_2
+#define GREEN_LED                   BIT_2
 
 /** Simple always True variable for loops */
-#define SSN_IS_ALIVE                        100
+#define SSN_IS_ALIVE                100
 
 /** States of our SSN */
-#define SELF_TEST_FAILED_STATE              0
-#define NO_CURRENT_SENSOR_STATE             1
-#define NO_ETHERNET_STATE                   2
-#define NO_MAC_STATE                        3
-#define NO_CONFIG_STATE                     4
-#define ACK_CONFIG_STATE                    5
-#define NO_TIMEOFDAY_STATE                  6
-#define ABNORMAL_ACTIVITY_STATE             7
-#define NORMAL_ACTIVITY_STATE               8
-// some additional states while we try to connect to the network
-#define GETTING_IP_FROM_DHCP                9
-#define LOOKING_UP_DNS                      10
-#define ESTABLISHING_MQTT_CONNECTION        11
+#define SELF_TEST_FAILED_STATE      0
+#define NO_CURRENT_SENSOR_STATE     1
+#define NO_ETHERNET_STATE           2
+#define NO_MAC_STATE                3
+#define NO_CONFIG_STATE             4   
+#define ACK_CONFIG_STATE            5
+#define NO_TIMEOFDAY_STATE          6
+#define ABNORMAL_ACTIVITY_STATE     7
+#define NORMAL_ACTIVITY_STATE       8
 
 /* EEPROM Read/Write Position for MAC address */
-#define EEPROM_MAC_BLOCK                    1
-#define EEPROM_MAC_LOC                      100
-#define EEPROM_MAC_SIZE                     6
-/* EEPROM Read/Write Position for MAC address string */
-#define EEPROM_MAC_STRING_BLOCK             2
-#define EEPROM_MAC_STRING_LOC               100
-#define EEPROM_MAC_STRING_SIZE              17
+#define EEPROM_MAC_LOC              0
 /* EEPROM Read/Write Position for current sensor configurations */
-#define EEPROM_CONFIG_BLOCK                 3
-#define EEPROM_CONFIG_LOC                   12
-#define EEPROM_CONFIG_SIZE                  21
+#define EEPROM_CONFIG_LOC           12
 
-#define TIME_Of_DAY_SIZE                    4
+/* EEPROM MAC address size */
+#define EEPROM_MAC_SIZE             6
+/* EEPROM current sensor configurations size */
+#define EEPROM_CONFIG_SIZE          21
+/* EEPROM time of day size */
+#define TIME_Of_DAY_SIZE            4
 /* Max number of machines that SSN can monitor */
-#define NO_OF_MACHINES                      4
+#define NO_OF_MACHINES              4
 
 /* Global MACRO Definitions for MQTT */
-//#define MQTT_TCP_SOCKET                   2
-#define MQTT_MAX_LEN                        100
-#define MQTT_BUFFER_SIZE                    2048
-#define MQTT_Port                           1883
+//#define MQTT_TCP_SOCKET             2
+#define MQTT_MAX_LEN                100
+#define MQTT_BUFFER_SIZE            2048
+#define MQTT_Port                   1883
 
 //#define __UDP_COMMUNICATION
 #define __MQTT_COMMUNICATION
@@ -89,17 +81,9 @@ uint32_t fault_count;
 //#define _TEMPSENSOR_DEBUG_
 //#define _NETWORK_DEBUG_
 
-#define TIME_RESYNC_AFTER_HOURS                 4
-#define TEMPERATURE_SENSOR_READ_AFTER_SECONDS   2
-
-//#define TH_AM2320
+#define TH_AM2320
 //#define TH_DHT22
-//#define NTC_Thermistor
-//#define OTS_LS_MLX90614
-
-#define DHCPIP
-//#define STATICIP
-//#define USE_DNS
+#define OTS_LS_MLX90614
 
 /** 
  * A simple loop count based delay 
@@ -326,15 +310,6 @@ static inline void Abnormal_Activity_LED_INDICATE() {
 }
 
 /** 
- * Indicates trying to connect to a network
- */
-static inline void establishing_connection_LED_INDICATE() {
-    /* Red OFF + Green Toggle = Green Toggle */
-    PORTSetBits(IOPORT_A, RED_LED);
-    PORTToggleBits(IOPORT_A, GREEN_LED);
-}
-
-/** 
  * Indicates SSN state from LED
  * @param this_state A variable indicating the current state of SSN 
  */
@@ -345,15 +320,7 @@ static inline void SSN_LED_INDICATE(uint8_t this_state) {
         case NO_MAC_STATE:
             Node_Up_Not_Configured_LED_INDICATE();
             break;
-        case GETTING_IP_FROM_DHCP:
-            establishing_connection_LED_INDICATE();
-            break;
-        case LOOKING_UP_DNS:
-            establishing_connection_LED_INDICATE();
-            break;
-        case ESTABLISHING_MQTT_CONNECTION:
-            establishing_connection_LED_INDICATE();
-            break;        /* No configuration? */
+        /* No configuration? */
         case NO_CONFIG_STATE:
             Node_Up_Not_Configured_LED_INDICATE();
             break;
@@ -372,6 +339,10 @@ static inline void SSN_LED_INDICATE(uint8_t this_state) {
         /* self tests have failed, so... */
         case SELF_TEST_FAILED_STATE:
             Self_Test_Failed_LED_INDICATE();
+            break;
+        /* there is no ethernet ? */
+        case NO_CURRENT_SENSOR_STATE:
+            Current_Sensors_Disconnected_LED_INDICATE();
             break;
         /* self tests have failed, so... */
         case ABNORMAL_ACTIVITY_STATE:

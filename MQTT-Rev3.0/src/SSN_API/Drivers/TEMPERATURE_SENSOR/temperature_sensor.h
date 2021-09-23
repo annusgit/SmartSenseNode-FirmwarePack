@@ -77,7 +77,11 @@ uint8_t NTC_Thermistor_4092_50k_special_bytes[2];
 /* NTC Thermistor 4092 50k Temperater Sensor Variables */
 
 //#define TH_DHT22_DEBUG
-
+//#define _TEMPSENSOR_DEBUG_
+#define N_TEMPERATURE_READINGS      10
+float TEMPERATURE_READINGS_ARRAY[N_TEMPERATURE_READINGS];
+int current_temperature_reading_index;
+bool first_N_temperature_readings_acquired;
 /** The data received from the temperature sensor AM2320, i.e., Control byte, number of bytes' byte, 4 data bytes, 2 CRC bytes */ 
 /** It is used by DHT22 if that is our active sensor */
 uint8_t recv_data[8];
@@ -85,13 +89,8 @@ uint8_t recv_data[8];
 /** This is a digital read sample counter for DHT22 One-Wire protocol */
 uint32_t sample_counter[82];
 
-#define N_TEMPERATURE_READINGS      10
-extern float TEMPERATURE_READINGS_ARRAY[N_TEMPERATURE_READINGS];
-extern int current_temperature_reading_index;
-extern bool first_N_temperature_readings_acquired;
-
 /** A wait loop variable to make sure our I2C read functions always exit */
-extern uint32_t i2c_wait_loop_count;
+static uint32_t wait_loop_count = I2C_TEST_OP_WAIT_LOOP_COUNT;
 
 // Device level functions
 /** 
@@ -215,6 +214,7 @@ int8_t sample_Temperature_Humidity_bytes_using_DHT22(uint8_t* temperature_bytes,
  * @return <b>NORMAL_AMBIENT_CONDITION</b> if normal; <b>ABNORMAL_AMBIENT_CONDITION</b> otherwise.
  */
 uint8_t ambient_condition_status(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MIN_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MAX_THRESHOLD);
+float average_value_of_temperature(float current_temperature);
 
 #endif
 
