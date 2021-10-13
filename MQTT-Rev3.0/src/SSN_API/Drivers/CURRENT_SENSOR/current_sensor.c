@@ -157,6 +157,11 @@ void Calculate_True_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, float* 
     float sensor_relative_voltage[NO_OF_MACHINES] = {0}, non_zero_voltage_squared_running_sum[NO_OF_MACHINES] = {0}, non_zero_voltage_count[NO_OF_MACHINES] = {0}, CURRENT_RMS_VALUE[NO_OF_MACHINES] = {0};
     float sensor_relative_scalar;
     uint32_t i, count = 0;
+    for (i=0; i<NO_OF_MACHINES; i++){
+        RMS_CURRENTS[i] = 0;
+    }   
+//    printf("\ncurrents %.2f, %.2f, %.2f, %.2f\n", RMS_CURRENTS[0], RMS_CURRENTS[1], RMS_CURRENTS[2], RMS_CURRENTS[3]);
+    
     while(count < num_samples) {
         for (i = 0; i < NO_OF_MACHINES; i++) {
 //            if(SENSOR_RATINGS[i]==100) {
@@ -217,7 +222,19 @@ void Calculate_True_RMS_Current_On_All_Channels(uint8_t* SENSOR_RATINGS, float* 
         }
         RMS_CURRENTS[i] = buffer_sum/n_for_rms_averaging;
     }
-//    printf("%.2f, %.2f, %.2f, %.2f\n", CURRENT_RMS_VALUE[0], CURRENT_RMS_VALUE[1], CURRENT_RMS_VALUE[2], CURRENT_RMS_VALUE[3]);
+//    printf("%.2f, %.2f, %.2f, %.2f\n", RMS_CURRENTS[0], RMS_CURRENTS[1], RMS_CURRENTS[2], RMS_CURRENTS[3]);
+    for(i=0; i<NO_OF_MACHINES; i++){
+        if (machine_count_variable == 1 && i == 0){
+            RMS_CURRENTS[i] = RMS_CURRENTS[i];
+        }
+        else if (machine_count_variable == 3 && i != 3){
+            RMS_CURRENTS[i] = RMS_CURRENTS[i];
+        }
+        else 
+            RMS_CURRENTS[i] = 0;
+    }
+//    printf("%.2f, %.2f, %.2f, %.2f\n", RMS_CURRENTS[0], RMS_CURRENTS[1], RMS_CURRENTS[2], RMS_CURRENTS[3]);
+
 }
 
 float Current_VSensor_Read_RMS(uint8_t channel, uint16_t* adc_samples_array, uint16_t num_samples, uint8_t sensor_max_value) {
@@ -265,22 +282,46 @@ bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_
     // All Sensor Max Load Currents in SSN_CONFIG are at: 3, 6, 9, 12   =>  SSN_CONFIG[3*i+3]
     
     bool status_change_flag = false;
+    uint8_t i = 0;
+    for (i=0; i<NO_OF_MACHINES; i++){
+        Machine_load_currents[i] = 0;
+    }   
+//    printf("\ncurrents %.2f, %.2f, %.2f, %.2f\n", Machine_load_currents[0], Machine_load_currents[1], Machine_load_currents[2], Machine_load_currents[3]);
     
     /* Sample all channels and record their respective RMS currents before proceeding */
     Calculate_True_RMS_Current_On_All_Channels(SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, 150, Machine_load_currents);
-    
-//    // Round-off machine currents to 2-decimal places
-//    uint8_t i; for(i=0; i<NO_OF_MACHINES; i++) {
-//        Machine_load_currents[i] = round_float_to_2_decimal_place(Machine_load_currents[i]);
-//    }
-    
-    /* Decide the states of these machines based on current values and assign them timestamps */
-    uint8_t i, this_machine_rating, this_machine_maxload, this_machine_prev_status;
-    float this_machine_threshold;
-    for (i = 0; i < NO_OF_MACHINES; i++) {
-        // Round-off machine currents to 2-decimal places
+    float machine_load_average = 0;
+//    uint8_t i = 0;
+    for (i=0; i<NO_OF_MACHINES; i++){
+        if (Machine_load_currents[i] == 0){
+            break;
+        }
+        else
+        {        
+            machine_load_average += Machine_load_currents[i];
+//            printf("currents %.2f\n", machine_load_average);
+        }
+    }
+    machine_load_average = machine_load_average / machine_count_variable;
+//    printf("machine count variable%d \n", machine_count_variable);
+
+    //    printf("%.2f, %.2f, %.2f, %.2f\n", CURRENT_RMS_VALUE[0], CURRENT_RMS_VALUE[1], CURRENT_RMS_VALUE[2], CURRENT_RMS_VALUE[3]);
+//    printf("avg %.2f currents %.2f, %.2f, %.2f, %.2f\n", machine_load_average, Machine_load_currents[0], Machine_load_currents[1], Machine_load_currents[2], Machine_load_currents[3]);
+                //    // Round-off machine currents to 2-decimal places
+//    uint8_t i; 
+    for(i=0; i<NO_OF_MACHINES; i++) {
         Machine_load_currents[i] = round_float_to_2_decimal_place(Machine_load_currents[i]);
+    }
+    machine_load_average = round_float_to_2_decimal_place(machine_load_average);
+    /* Decide the states of these machines based on current values and assign them timestamps */
+//    uint8_t i, 
+    uint8_t this_machine_rating, this_machine_maxload, this_machine_prev_status;
+    float this_machine_threshold;
+//    for (i = 0; i < NO_OF_MACHINES; i++) {
+//        // Round-off machine currents to 2-decimal places
+//        Machine_load_currents[i] = round_float_to_2_decimal_place(Machine_load_currents[i]);
         /* Get the parameters from the Configurations */
+    i = 0;
         this_machine_rating     = SSN_CURRENT_SENSOR_RATINGS[i];
         this_machine_threshold  = SSN_CURRENT_SENSOR_THRESHOLDS[i]; // the thresholds 
         this_machine_maxload    = SSN_CURRENT_SENSOR_MAXLOADS[i];
@@ -288,7 +329,7 @@ bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_
         // if the sensor is rated 0, it simply means no sensor attached, so everything is 0
         if (this_machine_rating == 0) {
             // load current is 0
-            Machine_load_currents[i] = 0;
+            machine_load_average = 0;
             // load percentage is 0
             Machine_load_percentages[i] = 0;
             // Machine Status is "OFF"
@@ -298,7 +339,7 @@ bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_
             // assign a completely zero timestamp
             Machine_status_timestamp[i] = 0;
             // no need to proceed from here
-            continue;
+//            continue;
         }
         if (Machine_status[i]==SENSOR_NOT_CONNECTED){
             Machine_prev_status[i] = SENSOR_NOT_CONNECTED;
@@ -309,11 +350,11 @@ bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_
             Machine_status_duration[i] = 0; // because it just its state
             *Machine_status_flag = (*Machine_status_flag) | (1 << i); // status flag assignment at the right bit location
             status_change_flag = true; // set the flag to true
-            continue;
+//            continue;
         }
         
         // Calculate the load percentage on the machine based on the maximum rated load and load current
-        Machine_load_percentages[i] = (unsigned char)(100*Machine_load_currents[i]/this_machine_maxload);
+        Machine_load_percentages[i] = (unsigned char)(100*machine_load_average/this_machine_maxload);
         // Assign Machine Status based on RMS Load Current and threshold current for this machine
         // Also check previous state and decide how to update the machine status duration and timestamp
         Machine_prev_status[i] = Machine_status[i];
@@ -341,7 +382,7 @@ bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_
         }
 //        printf(">>>>>>>>>>>>>>>>>>  Duration %u  %u  \n", ssn_dynamic_clock, Machine_status_timestamp[i]);
         
-    }
+//    }
     return status_change_flag;
 }
 

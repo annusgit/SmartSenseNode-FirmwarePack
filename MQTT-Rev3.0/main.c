@@ -120,9 +120,9 @@ int main() {
 			// Read temperature and humidity sensor
 //			SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
 //			SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
-			SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
-            temperature_bytes[0] = NTC_Thermistor_4092_50k_special_bytes[0];
-            temperature_bytes[1] = NTC_Thermistor_4092_50k_special_bytes[1];			
+//			SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
+//            temperature_bytes[0] = NTC_Thermistor_4092_50k_special_bytes[0];
+//            temperature_bytes[1] = NTC_Thermistor_4092_50k_special_bytes[1];			
             ms_100_counter = 0;
 		}
 		// Get load currents and status of machines

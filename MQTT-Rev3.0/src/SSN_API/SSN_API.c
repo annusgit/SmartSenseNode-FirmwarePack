@@ -4,7 +4,7 @@
 #include "SSN_API.h"
 
 /** SSN Server Address */
-// uint8_t SSN_SERVER_IP[] = {192, 168, 0, 110};15.206.82.30
+// uint8_t SSN_SERVER_IP[] = {192, 168, 0, 110};//15.206.82.30
 uint8_t SSN_SERVER_IP[] = {15, 206, 82, 30};
 //uint8_t SSN_SERVER_IP[] = {34, 87, 92, 5};
 //uint8_t SSN_SERVER_IP[] = {115, 186, 183, 129};
@@ -301,10 +301,14 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 					SSN_CURRENT_SENSOR_THRESHOLDS[i] = SSN_CONFIG[4 * i + 1] / 10.0f;
 					SSN_CURRENT_SENSOR_MAXLOADS[i] = SSN_CONFIG[4 * i + 2];
 					if (SSN_CONFIG[4 * i + 3] == 0) {
-						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.0;
-					} else if (SSN_CONFIG[4 * i + 3] == 1) {
 						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 0.333;
-					}
+					} else if (SSN_CONFIG[4 * i + 3] == 1) {
+						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.0;
+					} else
+//                    else if (SSN_CONFIG[4 * i + 3] == 2)
+                    {
+						SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[i] = 1.65;
+                    }
 				}
 				TEMPERATURE_MIN_THRESHOLD = SSN_CONFIG[16];
 				TEMPERATURE_MAX_THRESHOLD = SSN_CONFIG[17];
@@ -329,6 +333,11 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 				for (i = 0; i < NO_OF_MACHINES; i++) {
 					Machine_status[i] = SENSOR_NOT_CONNECTED;
 				}
+                if (SSN_CURRENT_SENSOR_RATINGS[1] == 0){
+                    machine_count_variable = 1;
+                }
+                else
+                    machine_count_variable = 3;
                 MQTTallowedfailureCount = MQTTallowedfailureCounts(SSN_REPORT_INTERVAL);
 				CONFIG_received = true;
 				break;
