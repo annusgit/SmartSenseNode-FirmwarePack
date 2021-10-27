@@ -142,7 +142,7 @@ void SSN_GET_MAC() {
 		start_ms_timer_with_interrupt();
 		MQTTYield(&Client_MQTT, 50);
 		message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
-
+		SSN_CURRENT_STATE = NO_MAC_STATE;        
 		stop_ms_timer_with_interrupt();
 		// 100 milliseconds
 		sleep_for_microseconds(100000);
@@ -184,6 +184,7 @@ void SSN_GET_CONFIG() {
 		start_ms_timer_with_interrupt();
 		MQTTYield(&Client_MQTT, 50);
 		message_publish_status = SSN_Check_Connection_And_Reconnect(message_publish_status);
+		SSN_CURRENT_STATE = NO_CONFIG_STATE;        
 		stop_ms_timer_with_interrupt();
 		// 100 milliseconds
 		sleep_for_microseconds(100000);
