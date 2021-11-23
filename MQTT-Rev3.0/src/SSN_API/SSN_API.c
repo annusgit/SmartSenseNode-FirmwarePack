@@ -36,6 +36,7 @@ bool report_now = false;
 uint8_t SSN_CURRENT_STATE = NO_MAC_STATE, SSN_PREV_STATE;
 /** Report Interval of SSN set according to the configurations passed to the SSN */
 uint8_t SSN_REPORT_INTERVAL = 1;
+uint8_t THERMISTOR_CONFIG = 0;
 /** SSN current sensor configurations */
 uint8_t SSN_CONFIG[EEPROM_CONFIG_SIZE];
 /** Flags used to indicate if we have received configurations */
@@ -77,6 +78,8 @@ uint8_t SSN_MAC_ADDRESS[6] = {0};
 uint8_t temperature_bytes[2];
 /** SSN relative humidity reading bytes */
 uint8_t relative_humidity_bytes[2];
+/** SSN thermistor temperature sensor bytes */
+uint8_t thermistor_temperature_bytes[4];
 /** SSN temperature and humidity reading successful/unsuccessful status bit */
 int8_t temp_humidity_recv_status;
 /** SSN abnormal activity byte */
@@ -154,7 +157,7 @@ void SSN_GET_CONFIG() {
 	// Find configurations in EEPROM
 	SSN_PREV_STATE = SSN_CURRENT_STATE;
 	SSN_CURRENT_STATE = FindSensorConfigurationsInFlashMemory(SSN_CONFIG, &SSN_REPORT_INTERVAL, &TEMPERATURE_MIN_THRESHOLD, &TEMPERATURE_MAX_THRESHOLD, &RELATIVE_HUMIDITY_MIN_THRESHOLD,
-		&RELATIVE_HUMIDITY_MAX_THRESHOLD, SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_THRESHOLDS, SSN_CURRENT_SENSOR_MAXLOADS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS);
+		&RELATIVE_HUMIDITY_MAX_THRESHOLD, SSN_CURRENT_SENSOR_RATINGS, SSN_CURRENT_SENSOR_THRESHOLDS, SSN_CURRENT_SENSOR_MAXLOADS, SSN_CURRENT_SENSOR_VOLTAGE_SCALARS, &THERMISTOR_CONFIG);
 	uint16_t SendAfter = 0;
 	while (SSN_CURRENT_STATE == NO_CONFIG_STATE) {
 //		SSN_CHECK_ETHERNET_CONNECTION();
@@ -254,12 +257,10 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
     stop_ms_timer_with_interrupt();
 	unsigned char testbuffer[BUFFER_SIZE];
 	MQTTMessage* message = md->message;
-	// printf("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n");
 	clear_array(testbuffer, 100);
 	if (MQTTOptions.showtopics) {
 		memcpy(testbuffer, (char*) message->payload, (int) message->payloadlen);
 		*(testbuffer + (int) (message->payloadlen) + 1) = "\n";
-
 		uint8_t received_message_id;
 		uint32_t TimeOFDayTick;
 		received_message_id = decipher_received_message(testbuffer, params);
@@ -317,6 +318,7 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 				RELATIVE_HUMIDITY_MAX_THRESHOLD = SSN_CONFIG[19];
 				// save new reporting interval
 				SSN_REPORT_INTERVAL = SSN_CONFIG[20];
+				THERMISTOR_CONFIG = SSN_CONFIG[21];
 				printf("[LOG] Received New Current Sensor Configuration from SSN Server: \n"
 					"     >> S1-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M1-Threshold: %.3f Arms | M1-Maxload: %03d Arms |\n"
 					"     >> S2-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M2-Threshold: %.3f Arms | M2-Maxload: %03d Arms |\n"
@@ -324,12 +326,14 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) {
 					"     >> S4-Rating: %03d Arms | S1-Scalar: %.3f Vrms | M4-Threshold: %.3f Arms | M4-Maxload: %03d Arms |\n"
 					"     >> MIN TEMP : %03d C    | MAX TEMP : %03d C    |\n"
 					"     >> MIN RH   : %03d %    | MIN RH   : %03d %    |\n"
-					"     >> Report   : %d seconds\n",
+					"     >> Report   : %d seconds\n"
+					"     >> Thermistor Configuration   : %d\n",
 					SSN_CURRENT_SENSOR_RATINGS[0], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[0], SSN_CURRENT_SENSOR_THRESHOLDS[0], SSN_CURRENT_SENSOR_MAXLOADS[0],
 					SSN_CURRENT_SENSOR_RATINGS[1], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[1], SSN_CURRENT_SENSOR_THRESHOLDS[1], SSN_CURRENT_SENSOR_MAXLOADS[1],
 					SSN_CURRENT_SENSOR_RATINGS[2], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[2], SSN_CURRENT_SENSOR_THRESHOLDS[2], SSN_CURRENT_SENSOR_MAXLOADS[2],
 					SSN_CURRENT_SENSOR_RATINGS[3], SSN_CURRENT_SENSOR_VOLTAGE_SCALARS[3], SSN_CURRENT_SENSOR_THRESHOLDS[3], SSN_CURRENT_SENSOR_MAXLOADS[3],
-					TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD, SSN_REPORT_INTERVAL);
+					TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD, SSN_REPORT_INTERVAL, 
+                    THERMISTOR_CONFIG);
 				// Reset Machine States 
 				for (i = 0; i < NO_OF_MACHINES; i++) {
 					Machine_status[i] = SENSOR_NOT_CONNECTED;
@@ -422,6 +426,10 @@ void SSN_CHECK_ETHERNET_CONNECTION() {
 }
 
 void SSN_GET_AMBIENT_CONDITION(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MIN_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MAX_THRESHOLD) {
+    temperature_bytes[0] = 0;
+    temperature_bytes[1] = 0;
+    relative_humidity_bytes[0] = 0;
+    relative_humidity_bytes[1] = 0;
 #ifdef TH_AM2320
 	temp_humidity_recv_status = sample_Temperature_Humidity_bytes_using_AM2320(temperature_bytes, relative_humidity_bytes);
 //    printf("ssnapi %d\n", temp_humidity_recv_status);
@@ -490,11 +498,15 @@ void SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(uint8_t TEMPERATURE_MIN_THRESHOLD, 
 	}
 }
 
-void SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD) {
-	// printf("there\n");
-	float object_celcius_temperature = Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius();
-    object_celcius_temperature = average_value_of_temperature(object_celcius_temperature); 
-	// printf("Thermistor Reading: %.2f\n", object_celcius_temperature);
+void SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD, uint8_t no_of_channels) {
+//	printf("there\n"); 
+    int i;
+    for (i = 0; i < no_of_channels; i++){
+//	printf("here\n");
+	float object_celcius_temperature = Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius(i);
+//	printf("1Thermistor Reading %d is: %.2f\n ", i, object_celcius_temperature);
+    object_celcius_temperature = average_value_of_temperature(i, object_celcius_temperature); 
+//	printf("Thermistor Reading %d is: %.2f\n", i, object_celcius_temperature);
 	int integer_temperature;
 	if (object_celcius_temperature > TEMPERATURE_MIN_THRESHOLD && object_celcius_temperature < TEMPERATURE_MAX_THRESHOLD){
 		abnormal_activity = NORMAL_AMBIENT_CONDITION;
@@ -503,8 +515,8 @@ void SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(uint8_t TEMPERATURE_MIN_THR
 	}
 	/* convert to special bytes for backend */
 	integer_temperature = (int)(object_celcius_temperature*10);
-	NTC_Thermistor_4092_50k_special_bytes[0] = ((0xFF00 & integer_temperature) >> 8);
-	NTC_Thermistor_4092_50k_special_bytes[1] = (0x00FF & integer_temperature);
+	thermistor_temperature_bytes[i * no_of_channels + 0] = ((0xFF00 & integer_temperature) >> 8);
+	thermistor_temperature_bytes[i * no_of_channels + 1] = (0x00FF & integer_temperature);
 	if (abnormal_activity == NORMAL_AMBIENT_CONDITION) {
 		SSN_PREV_STATE = SSN_CURRENT_STATE;
 		SSN_CURRENT_STATE = NORMAL_ACTIVITY_STATE;
@@ -517,7 +529,21 @@ void SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(uint8_t TEMPERATURE_MIN_THR
 		if (SSN_PREV_STATE != SSN_CURRENT_STATE) {
 			Clear_LED_INDICATOR();
 		}
-	}
+	}        
+    }
+    if (no_of_channels == 0){
+        thermistor_temperature_bytes[0] = 0;
+        thermistor_temperature_bytes[1] = 0;
+        thermistor_temperature_bytes[2] = 0;
+        thermistor_temperature_bytes[3] = 0;
+    }   
+    else if (no_of_channels == 1 ){
+        thermistor_temperature_bytes[2] = 0;
+        thermistor_temperature_bytes[3] = 0;    
+    }
+//    	printf("exit\n");
+
+
 }
 
 void SSN_RESET_AFTER_N_SECONDS(uint32_t seconds) {

@@ -42,7 +42,7 @@
 /* EEPROM MAC address size */
 #define EEPROM_MAC_SIZE             6
 /* EEPROM current sensor configurations size */
-#define EEPROM_CONFIG_SIZE          21
+#define EEPROM_CONFIG_SIZE          22
 /* EEPROM time of day size */
 #define TIME_Of_DAY_SIZE            4
 /* Max number of machines that SSN can monitor */

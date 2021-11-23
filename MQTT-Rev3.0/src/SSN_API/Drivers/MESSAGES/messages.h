@@ -51,7 +51,7 @@
 #define GET_CONFIG_MESSAGE_Size         7
 #define SET_CONFIG_MESSAGE_Size         28
 #define ACK_CONFIG_MESSAGE_Size         16
-#define STATUS_UPDATE_MESSAGE_Size      65
+#define STATUS_UPDATE_MESSAGE_Size      69
 #define RESET_MACHINE_TIME_MESSAGE_Size 4
 
 
@@ -127,7 +127,7 @@ uint8_t construct_ack_configuration_message(uint8_t* message_array, uint8_t* nod
  */
 uint8_t construct_status_update_message(uint8_t* message_array, uint8_t* node_id, uint8_t* temperature_bytes, uint8_t* relative_humidity_bytes, float* Machine_load_currents, 
         uint8_t* Machine_load_percentages, uint8_t* Machine_status, uint8_t Machine_status_flag, uint32_t* Machine_status_duration, uint32_t* Machine_status_timestamp, 
-        uint32_t node_uptime_in_seconds, uint8_t abnormal_activity);
+        uint32_t node_uptime_in_seconds, uint8_t abnormal_activity, uint8_t* thermistor_temperature_bytes);
 
 /**
  * Deciphers the received message and returns whatever data was received with it

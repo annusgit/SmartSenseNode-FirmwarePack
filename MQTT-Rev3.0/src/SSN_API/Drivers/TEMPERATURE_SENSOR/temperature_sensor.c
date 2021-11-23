@@ -1,7 +1,9 @@
 #include "temperature_sensor.h"
 
-float TEMPERATURE_READINGS_ARRAY[N_TEMPERATURE_READINGS];
-int current_temperature_reading_index = 0;
+float TEMPERATURE_READINGS_ARRAY_0[N_TEMPERATURE_READINGS];
+float TEMPERATURE_READINGS_ARRAY_1[N_TEMPERATURE_READINGS];
+int current_temperature_reading_index_0 = 0;
+int current_temperature_reading_index_1 = 0;
 bool first_N_temperature_readings_acquired = false;
 
 //float NTC_Thermistor_4092_50k_LUT_Resistance[114] = {
@@ -435,13 +437,13 @@ float MLX90614_Read_Temperature_Ambient_Celcius(void) {
 /* MLX90614 Functions */
 
 /* NTC Thermistor 4092 50Kohm */
-float Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius() {
+float Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius(uint8_t adc_channel) {
 	float reference_resistance = 3300, VDD = 3.3;
-	float reference_voltage = 3.3 * (float)sample_Current_Sensor_channel(0) / 1024;
+	float reference_voltage = 3.3 * (float)sample_Current_Sensor_channel(adc_channel) / 1024;
 	float reference_current = reference_voltage / reference_resistance;
 	float thermistor_voltage = VDD - reference_voltage;
 	float thermistor_resistance = thermistor_voltage / reference_current; // they are both in series
-	// printf("Thermistor Resistance: %.2f\n", thermistor_resistance);
+//	 printf("Thermistor Resistance: %.2f\n", thermistor_resistance);
 	// binary search the Thermistor LUT to find the appropriate corresponding temperature for this value of resistance
 	uint8_t first = 0, last = THERMISTOR_LUT_SIZE - 1, mid;
 	bool found = false;
@@ -663,10 +665,18 @@ uint8_t ambient_condition_status(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMP
 	return ABNORMAL_AMBIENT_CONDITION;
 }
 
-float average_value_of_temperature(float current_temperature) {
-    TEMPERATURE_READINGS_ARRAY[current_temperature_reading_index++] = current_temperature;
-    if (current_temperature_reading_index >= N_TEMPERATURE_READINGS) {
-        current_temperature_reading_index = 0;
+float average_value_of_temperature(uint8_t thermistor_channel, float current_temperature) {
+    if (thermistor_channel==0){
+//        printf("here the thermistor channel is 0 so returning thermistor 0 temperature %.2f\n", current_temperature);
+        TEMPERATURE_READINGS_ARRAY_0[current_temperature_reading_index_0++] = current_temperature;
+    }
+    else{
+        TEMPERATURE_READINGS_ARRAY_1[current_temperature_reading_index_1++] = current_temperature;    
+//        printf("the thermistor channel is 1 so returning thermistor 1 temperature %.2f\n", current_temperature);
+    }
+   if (current_temperature_reading_index_0 >= N_TEMPERATURE_READINGS || current_temperature_reading_index_1 >= N_TEMPERATURE_READINGS) {
+        current_temperature_reading_index_0 = 0;
+        current_temperature_reading_index_1 = 0;
         first_N_temperature_readings_acquired = true;
     } else {
         if (!first_N_temperature_readings_acquired) {
@@ -676,9 +686,22 @@ float average_value_of_temperature(float current_temperature) {
     }
     float sum = 0;
     uint8_t k; for (k=0; k<N_TEMPERATURE_READINGS; k++) {
-        sum += TEMPERATURE_READINGS_ARRAY[k];
+        if (thermistor_channel==0){
+//            printf("the thermistor channel is 0 so returning thermistor 0 temperature\n");
+            sum += TEMPERATURE_READINGS_ARRAY_0[k];
+//            printf("the temperature readings array is %0.2f\t %0.2f \t %0.2f\t %0.2f \t %0.2f\t %0.2f \t %0.2f\t %0.2f \t %0.2f\t %0.2f \t\n", TEMPERATURE_READINGS_ARRAY_0[k] );
+//            printf("the temperature readings array is %0.2f \t\n", TEMPERATURE_READINGS_ARRAY_0[k] );
+//            printf("the sum is %.2f\n\n", sum);
+        }
+        else{
+//            printf("the thermistor channel is 1 so returning thermistor 0 temperature\n");
+            sum += TEMPERATURE_READINGS_ARRAY_1[k];
+//            printf("the temperature readings array is %0.2f \t\n", TEMPERATURE_READINGS_ARRAY_0[k] );
+//            printf("the sum is %.2f\n\n", sum);
+        }
     }
     printf("[LOG] Returning average temperature reading\n");
     return sum/N_TEMPERATURE_READINGS;
 }
 
+ 

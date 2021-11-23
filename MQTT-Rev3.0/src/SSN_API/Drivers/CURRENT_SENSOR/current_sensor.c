@@ -330,6 +330,7 @@ bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_
         if (this_machine_rating == 0) {
             // load current is 0
             machine_load_average = 0;
+            Machine_load_currents[0] = 0;
             // load percentage is 0
             Machine_load_percentages[i] = 0;
             // Machine Status is "OFF"
@@ -341,6 +342,7 @@ bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_
             // no need to proceed from here
 //            continue;
         }
+        else{
         if (Machine_status[i]==SENSOR_NOT_CONNECTED){
             Machine_prev_status[i] = SENSOR_NOT_CONNECTED;
             Machine_status[i] = MACHINE_OFF;
@@ -352,6 +354,7 @@ bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_
             status_change_flag = true; // set the flag to true
 //            continue;
         }
+//        printf("after 2nd if machine status time stamp is  %u\n", Machine_status_duration[0]);
         
         // Calculate the load percentage on the machine based on the maximum rated load and load current
         Machine_load_percentages[i] = (unsigned char)(100*machine_load_average/this_machine_maxload);
@@ -381,8 +384,10 @@ bool Get_Machines_Status_Update(uint8_t* SSN_CURRENT_SENSOR_RATINGS, float* SSN_
             Machine_status_duration[i] = ssn_dynamic_clock - Machine_status_timestamp[i];
         }
 //        printf(">>>>>>>>>>>>>>>>>>  Duration %u  %u  \n", ssn_dynamic_clock, Machine_status_timestamp[i]);
-        
-//    }
+
+//    }            
+        }
+
     return status_change_flag;
 }
 

@@ -79,8 +79,10 @@ uint8_t NTC_Thermistor_4092_50k_special_bytes[2];
 //#define TH_DHT22_DEBUG
 //#define _TEMPSENSOR_DEBUG_
 #define N_TEMPERATURE_READINGS      10
-float TEMPERATURE_READINGS_ARRAY[N_TEMPERATURE_READINGS];
-int current_temperature_reading_index;
+float TEMPERATURE_READINGS_ARRAY_0[N_TEMPERATURE_READINGS];
+float TEMPERATURE_READINGS_ARRAY_1[N_TEMPERATURE_READINGS];
+int current_temperature_reading_index_0;
+int current_temperature_reading_index_1;
 bool first_N_temperature_readings_acquired;
 /** The data received from the temperature sensor AM2320, i.e., Control byte, number of bytes' byte, 4 data bytes, 2 CRC bytes */ 
 /** It is used by DHT22 if that is our active sensor */
@@ -152,7 +154,7 @@ float MLX90614_Read_Temperature_Object_Celcius();
 float MLX90614_Read_Temperature_Ambient_Fahrenheit();
 float MLX90614_Read_Temperature_Object_Fahrenheit();
 
-float Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius();
+float Thermistor_NTC_4092_50k_Get_Object_Temperature_In_Celcius(uint8_t adc_channel);
 
 /** 
  * Performs CRC check on received data
@@ -214,7 +216,7 @@ int8_t sample_Temperature_Humidity_bytes_using_DHT22(uint8_t* temperature_bytes,
  * @return <b>NORMAL_AMBIENT_CONDITION</b> if normal; <b>ABNORMAL_AMBIENT_CONDITION</b> otherwise.
  */
 uint8_t ambient_condition_status(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MIN_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MAX_THRESHOLD);
-float average_value_of_temperature(float current_temperature);
+float average_value_of_temperature(uint8_t thermistor_channel, float current_temperature);
 
 #endif
 

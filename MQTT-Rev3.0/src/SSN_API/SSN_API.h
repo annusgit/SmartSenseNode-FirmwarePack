@@ -181,6 +181,7 @@ extern bool report_now;
 extern uint8_t SSN_CURRENT_STATE, SSN_PREV_STATE;
 /** Report Interval of SSN set according to the configurations passed to the SSN */
 extern uint8_t SSN_REPORT_INTERVAL;
+extern uint8_t THERMISTOR_CONFIG;
 /** SSN current sensor configurations */
 extern uint8_t SSN_CONFIG[EEPROM_CONFIG_SIZE];
 /** Flags used to indicate if we have received configurations */
@@ -222,6 +223,7 @@ extern uint8_t SSN_MAC_ADDRESS[6];
 extern uint8_t temperature_bytes[2];
 /** SSN relative humidity reading bytes */
 extern uint8_t relative_humidity_bytes[2];
+extern uint8_t thermistor_temperature_bytes[4];
 /** SSN temperature and humidity reading successful/unsuccessful status bit */
 extern int8_t temp_humidity_recv_status; 
 /** SSN abnormal activity bit */
@@ -254,7 +256,7 @@ void SSN_RECEIVE_ASYNC_MESSAGE_OVER_MQTT(MessageData* md) ;
 void SSN_CHECK_ETHERNET_CONNECTION();
 void SSN_GET_AMBIENT_CONDITION(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MIN_THRESHOLD, uint8_t RELATIVE_HUMIDITY_MAX_THRESHOLD);
 void SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD);
-void SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD);
+void SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(uint8_t TEMPERATURE_MIN_THRESHOLD, uint8_t TEMPERATURE_MAX_THRESHOLD, uint8_t no_of_channels);
 void SSN_RESET_AFTER_N_SECONDS(uint32_t seconds);
 void SSN_RESET_AFTER_N_SECONDS_IF_NO_MACHINE_ON(uint32_t seconds);
 void SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(uint32_t seconds);

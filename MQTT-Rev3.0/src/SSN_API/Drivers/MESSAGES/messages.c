@@ -104,7 +104,7 @@ uint8_t construct_get_timeofday_message(uint8_t* message_array, uint8_t* node_id
 
 uint8_t construct_status_update_message(uint8_t* message_array, uint8_t* node_id, uint8_t* temperature_bytes, uint8_t* relative_humidity_bytes, float* Machine_load_currents,
 	uint8_t* Machine_load_percentages, uint8_t* Machine_status, uint8_t Machine_status_flag, uint32_t* Machine_status_duration, uint32_t* Machine_status_timestamp,
-	uint32_t node_uptime_in_seconds, uint8_t abnormal_activity) {
+	uint32_t node_uptime_in_seconds, uint8_t abnormal_activity,uint8_t* thermistor_temperature_bytes) {
 
 	uint8_t count = 0;
 	uint8_t temp_array[4];
@@ -220,6 +220,14 @@ uint8_t construct_status_update_message(uint8_t* message_array, uint8_t* node_id
 
 	/* Send abnormal activity status */
 	message_array[count++] = abnormal_activity;
+    
+	/* Send the thermistor temp in two bytes */
+    message_array[count++] = thermistor_temperature_bytes[0];	
+	message_array[count++] = thermistor_temperature_bytes[1];
+    
+	/* Send the thermistor temp in two bytes */    
+    message_array[count++] = thermistor_temperature_bytes[2];
+	message_array[count++] = thermistor_temperature_bytes[3];
 
 	// return how many bytes the message is
 	return count;

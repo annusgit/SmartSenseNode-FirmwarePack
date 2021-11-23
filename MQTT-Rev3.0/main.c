@@ -117,10 +117,10 @@ int main() {
 		SSN_REQUEST_Time_of_Day_AFTER_N_SECONDS(4 * 3600);
         SSN_REQUEST_IP_From_DHCP_AFTER_N_SECONDS(getDHCPLeasetime());
 		if (ms_100_counter >= 20) {
+			SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, THERMISTOR_CONFIG);
 			// Read temperature and humidity sensor
-//			SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
+			SSN_GET_AMBIENT_CONDITION(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD, RELATIVE_HUMIDITY_MIN_THRESHOLD, RELATIVE_HUMIDITY_MAX_THRESHOLD);
 //			SSN_GET_OBJECT_TEMPERATURE_CONDITION_IR(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
-//			SSN_GET_OBJECT_TEMPERATURE_CONDITION_Thermistor(TEMPERATURE_MIN_THRESHOLD, TEMPERATURE_MAX_THRESHOLD);
 //            temperature_bytes[0] = NTC_Thermistor_4092_50k_special_bytes[0];
 //            temperature_bytes[1] = NTC_Thermistor_4092_50k_special_bytes[1];			
             ms_100_counter = 0;
@@ -135,7 +135,7 @@ int main() {
 		if (machine_status_change_flag == true) {
 			message_count++;
 			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, temperature_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
-                    Machine_prev_status, Machine_status_flag, MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE, Machine_status_timestamp, ssn_static_clock, abnormal_activity);			
+                    Machine_prev_status, Machine_status_flag, MACHINES_STATE_TIME_DURATION_UPON_STATE_CHANGE, Machine_status_timestamp, ssn_static_clock, abnormal_activity, thermistor_temperature_bytes);			
 			Clear_Machine_Status_flag(&Machine_status_flag);
             if (message_publish_status != SUCCESSS) {
                 mqtt_failure_counts++;
@@ -151,7 +151,7 @@ int main() {
 			// printf("Sending these temperatures: %.2f; %.2f\n", (float)((NTC_Thermistor_4092_50k_special_bytes[0] << 8) | NTC_Thermistor_4092_50k_special_bytes[1])/10.0f, 
 			//	(float)((MLX90614_special_bytes[0] << 8) | MLX90614_special_bytes[1])/10.0f);
 			message_publish_status = Send_STATUSUPDATE_Message(SSN_MAC_ADDRESS, temperature_bytes, relative_humidity_bytes, Machine_load_currents, Machine_load_percentages, 
-                    Machine_status, Machine_status_flag, Machine_status_duration, Machine_status_timestamp, ssn_static_clock, abnormal_activity);
+                    Machine_status, Machine_status_flag, Machine_status_duration, Machine_status_timestamp, ssn_static_clock, abnormal_activity, thermistor_temperature_bytes);
 			Clear_Machine_Status_flag(&Machine_status_flag);
             if (message_publish_status != SUCCESSS) {
                 mqtt_failure_counts++;
